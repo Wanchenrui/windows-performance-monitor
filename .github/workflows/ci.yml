@@ -49,15 +49,52 @@ jobs:
         with:
           dotnet-version: "10.0.302"
           cache: true
-          cache-dependency-path: |
-            src/PerfMonitor.Contracts/packages.lock.json
-            tests/PerfMonitor.ContractTests/packages.lock.json
+          cache-dependency-path: "**/packages.lock.json"
 
       - name: Restore locked .NET dependencies
         run: dotnet restore .\PerfMonitor.slnx --locked-mode
 
-      - name: Deserialize Python golden fixtures in .NET
+      - name: Run contract, Agent, differential, and soak gates
         run: dotnet test .\PerfMonitor.slnx --configuration Release --no-restore
+
+      - name: Publish and smoke-test .NET Agent
+        shell: powershell
+        run: |
+          dotnet publish .\src\PerfMonitor.Agent\PerfMonitor.Agent.csproj `
+            --configuration Release --no-restore `
+            --output .\artifacts\agent
+          if ($LASTEXITCODE -ne 0) { throw ".NET Agent publish failed" }
+          .\artifacts\agent\perf-monitor-agent.exe `
+            --once --warmup-seconds 3 `
+            --output .\artifacts\agent-snapshot.json
+          if ($LASTEXITCODE -ne 0) { throw ".NET Agent smoke test failed" }
+          $Snapshot = Get-Content `
+            -LiteralPath .\artifacts\agent-snapshot.json |
+            Select-Object -Last 1 |
+            ConvertFrom-Json
+          if ($Snapshot.contractVersion -ne "1.0") {
+            throw "Unexpected contract version"
+          }
+          if ($Snapshot.productVersion -ne "0.4.0") {
+            throw "Unexpected product version"
+          }
+          foreach ($Group in @(
+            "systemCpu", "memory", "volumes", "uptime",
+            "processes", "sampler", "self")) {
+            if ($Snapshot.groups.PSObject.Properties.Name -notcontains $Group) {
+              throw "Missing Agent group: $Group"
+            }
+          }
+
+      - name: Upload .NET Agent evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: perf-monitor-agent-${{ github.sha }}
+          path: |
+            artifacts/agent/**
+            artifacts/agent-snapshot.json
+          if-no-files-found: error
+          retention-days: 14
 
   build-and-smoke:
     needs: [test, contract-dotnet]
