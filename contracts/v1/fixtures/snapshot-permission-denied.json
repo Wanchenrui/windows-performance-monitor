@@ -1,0 +1,198 @@
+{
+  "contractVersion": "1.0",
+  "productVersion": "0.3.0",
+  "instanceId": "11111111111111111111111111111111",
+  "sequence": 42,
+  "scheduledAtUtc": "2026-07-29T08:00:00.000+00:00",
+  "startedAtUtc": "2026-07-29T08:00:00.002+00:00",
+  "completedAtUtc": "2026-07-29T08:00:00.036+00:00",
+  "dataAgeSeconds": 0.2,
+  "summary": {
+    "availability": "partial",
+    "freshness": "fresh"
+  },
+  "retention": {
+    "historyWindowSeconds": 3600.0,
+    "historyPointLimit": 86400
+  },
+  "groups": {
+    "systemCpu": {
+      "providerId": "windows.system-cpu.psutil.v1",
+      "observedAtUtc": "2026-07-29T08:00:00.005+00:00",
+      "availability": "available",
+      "freshness": "fresh",
+      "coverage": {
+        "status": "complete"
+      },
+      "errors": [],
+      "data": {
+        "metrics": {
+          "system.cpu.utilization.percent": {
+            "value": 23.5,
+            "unit": "percent",
+            "sourceId": "windows.system-cpu-times.v1"
+          },
+          "system.cpu.logical_processor.count": {
+            "value": 16,
+            "unit": "count",
+            "sourceId": "windows.system-cpu-times.v1"
+          }
+        }
+      }
+    },
+    "memory": {
+      "providerId": "windows.memory.global-status.v1",
+      "observedAtUtc": "2026-07-29T08:00:00.007+00:00",
+      "availability": "available",
+      "freshness": "fresh",
+      "coverage": {
+        "status": "complete"
+      },
+      "errors": [],
+      "data": {
+        "metrics": {
+          "system.memory.utilization.percent": {
+            "value": 61.2,
+            "unit": "percent",
+            "sourceId": "windows.global-memory-status-ex.v1"
+          },
+          "system.memory.used.bytes": {
+            "value": 21028454400,
+            "unit": "byte",
+            "sourceId": "windows.global-memory-status-ex.v1"
+          },
+          "system.memory.available.bytes": {
+            "value": 13331021824,
+            "unit": "byte",
+            "sourceId": "windows.global-memory-status-ex.v1"
+          },
+          "system.memory.total.bytes": {
+            "value": 34359476224,
+            "unit": "byte",
+            "sourceId": "windows.global-memory-status-ex.v1"
+          }
+        }
+      }
+    },
+    "volumes": {
+      "providerId": "windows.volume.psutil.v1",
+      "observedAtUtc": "2026-07-29T08:00:00.012+00:00",
+      "availability": "available",
+      "freshness": "fresh",
+      "coverage": {
+        "status": "complete"
+      },
+      "errors": [],
+      "data": [
+        {
+          "volumeId": "C:\\",
+          "mountpoint": "C:\\",
+          "fileSystem": "NTFS",
+          "isSystem": true,
+          "metrics": {
+            "system.volume.utilization.percent": {
+              "value": 54.0,
+              "unit": "percent",
+              "sourceId": "windows.volume-api.v1"
+            },
+            "system.volume.used.bytes": {
+              "value": 270000000000,
+              "unit": "byte",
+              "sourceId": "windows.volume-api.v1"
+            },
+            "system.volume.free.bytes": {
+              "value": 230000000000,
+              "unit": "byte",
+              "sourceId": "windows.volume-api.v1"
+            },
+            "system.volume.total.bytes": {
+              "value": 500000000000,
+              "unit": "byte",
+              "sourceId": "windows.volume-api.v1"
+            }
+          }
+        }
+      ]
+    },
+    "uptime": {
+      "providerId": "windows.uptime.boot-time.v1",
+      "observedAtUtc": "2026-07-29T08:00:00.013+00:00",
+      "availability": "available",
+      "freshness": "fresh",
+      "coverage": {
+        "status": "complete"
+      },
+      "errors": [],
+      "data": {
+        "metrics": {
+          "system.uptime.seconds": {
+            "value": 123456,
+            "unit": "second",
+            "sourceId": "windows.boot-time.v1"
+          }
+        }
+      }
+    },
+    "processes": {
+      "providerId": "windows.process.win32.v1",
+      "observedAtUtc": "2026-07-29T08:00:00.034+00:00",
+      "availability": "permission_denied",
+      "freshness": "fresh",
+      "coverage": {
+        "status": "limited",
+        "enumerated": 220,
+        "readable": 0,
+        "skipped": 220,
+        "skippedByReason": {
+          "provider_failure": 220
+        }
+      },
+      "errors": [
+        {
+          "errorCode": "access_denied",
+          "metricId": "process.cpu.normalized.percent"
+        }
+      ],
+      "data": null
+    },
+    "sampler": {
+      "providerId": "perfmonitor.sampler.fixed-period.v1",
+      "observedAtUtc": "2026-07-29T08:00:00.036+00:00",
+      "availability": "available",
+      "freshness": "fresh",
+      "coverage": {
+        "status": "complete"
+      },
+      "errors": [],
+      "data": {
+        "metrics": {
+          "sampler.interval.seconds": {
+            "value": 1.0,
+            "unit": "second",
+            "sourceId": "perfmonitor.monotonic-scheduler.v1"
+          },
+          "sampler.duration.milliseconds": {
+            "value": 34.0,
+            "unit": "millisecond",
+            "sourceId": "perfmonitor.monotonic-scheduler.v1"
+          },
+          "sampler.jitter.milliseconds": {
+            "value": 2.0,
+            "unit": "millisecond",
+            "sourceId": "perfmonitor.monotonic-scheduler.v1"
+          },
+          "sampler.missed_intervals.count": {
+            "value": 0,
+            "unit": "count",
+            "sourceId": "perfmonitor.monotonic-scheduler.v1"
+          },
+          "sampler.skipped_intervals.count": {
+            "value": 0,
+            "unit": "count",
+            "sourceId": "perfmonitor.monotonic-scheduler.v1"
+          }
+        }
+      }
+    }
+  }
+}

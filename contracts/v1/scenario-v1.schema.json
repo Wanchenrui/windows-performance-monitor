@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.perfmonitor.local/v1/scenario-v1.schema.json",
+  "title": "PerfMonitor Contract Scenario v1",
+  "type": "object",
+  "required": ["contractVersion", "scenarioId", "snapshots"],
+  "properties": {
+    "contractVersion": {"const": "1.0"},
+    "scenarioId": {"type": "string", "minLength": 1},
+    "snapshots": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "$ref": "https://schemas.perfmonitor.local/v1/snapshot-v1.schema.json"
+      }
+    }
+  },
+  "additionalProperties": true
+}

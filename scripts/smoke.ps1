@@ -58,7 +58,7 @@ try {
     if ($Health.service -ne "perf-monitor") {
         throw "健康接口服务标识错误：$($Health.service)"
     }
-    if ($Health.appVersion -ne "0.2.1") {
+    if ($Health.productVersion -ne "0.3.0") {
         throw "健康接口版本错误：$($Health.appVersion)"
     }
     if (-not $Health.instanceId) {
@@ -73,7 +73,7 @@ try {
     Write-Output (
         "冒烟测试通过：service={0} version={1} instanceId={2}" -f `
             $Health.service,
-            $Health.appVersion,
+            $Health.productVersion,
             $Health.instanceId
     )
 }

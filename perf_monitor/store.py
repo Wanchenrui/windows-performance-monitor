@@ -1,4 +1,4 @@
-"""线程安全的实时快照与有界 RAM 历史窗口。"""
+﻿"""线程安全的实时快照与有界 RAM 历史窗口。"""
 
 from __future__ import annotations
 
@@ -48,6 +48,10 @@ class MetricStore:
             "sequence": 0,
             "collectedAt": None,
             "collectedAtEpochMs": None,
+            "scheduledAtUtc": None,
+            "startedAtUtc": None,
+            "completedAtUtc": None,
+            "providerObservedAtUtc": {},
             "overview": {},
             "processes": [],
             "processCollection": {},
@@ -211,6 +215,7 @@ class MetricStore:
             "sourcePointCount": len(records),
             "pointCount": len(points),
             "downsampled": len(points) < len(records),
+            "requestedMaxPoints": max_points,
             "points": points,
         }
 
@@ -306,6 +311,7 @@ class MetricStore:
             "apiVersion": API_VERSION,
             "appVersion": APP_VERSION,
             "instanceId": self.instance_id,
+            "sampleIntervalSeconds": self.sample_interval_seconds,
             "endpoints": {
                 "snapshot": "/api/v1/snapshot",
                 "history": "/api/v1/history",

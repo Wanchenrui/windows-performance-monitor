@@ -1,4 +1,4 @@
-"""仅监听回环地址的版本化本地 HTTP 接口。"""
+﻿"""仅监听回环地址的版本化本地 HTTP 接口。"""
 
 from __future__ import annotations
 
@@ -10,11 +10,14 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import parse_qs, urlsplit
 
-from . import API_VERSION, APP_VERSION, SERVICE_ID
-from .store import (
-    DEFAULT_HISTORY_QUERY_MAX_POINTS,
-    SUPPORTED_HISTORY_METRICS,
+from .contract_v1 import (
+    HISTORY_METRIC_TO_INTERNAL,
+    build_capabilities,
+    build_health,
+    build_history,
+    build_snapshot,
 )
+from .store import DEFAULT_HISTORY_QUERY_MAX_POINTS
 
 
 class LocalThreadingHTTPServer(ThreadingHTTPServer):
@@ -102,13 +105,16 @@ class DashboardHandler(BaseHTTPRequestHandler):
         request = urlsplit(self.path)
         path = request.path
         if path == "/api/v1/snapshot":
-            self._send_json(200, self.store.get_snapshot())
+            self._send_json(200, build_snapshot(self.store.get_snapshot()))
             return
         if path == "/api/v1/history":
             self._serve_history(request.query)
             return
         if path == "/api/v1/capabilities":
-            self._send_json(200, self.store.get_capabilities())
+            self._send_json(
+                200,
+                build_capabilities(self.store.get_capabilities()),
+            )
             return
         if path == "/api/stats":
             self._send_json_with_headers(
@@ -121,18 +127,8 @@ class DashboardHandler(BaseHTTPRequestHandler):
             )
             return
         if path in ("/api/health", "/api/v1/health"):
-            payload = self.store.get_snapshot()
-            self._send_json(
-                200,
-                {
-                    "service": SERVICE_ID,
-                    "appVersion": APP_VERSION,
-                    "apiVersion": API_VERSION,
-                    "instanceId": payload["instanceId"],
-                    "sequence": payload["sequence"],
-                    "health": payload["health"],
-                },
-            )
+            snapshot = build_snapshot(self.store.get_snapshot())
+            self._send_json(200, build_health(snapshot))
             return
         if path in self._STATIC_FILES:
             filename, content_type = self._STATIC_FILES[path]
@@ -158,25 +154,36 @@ class DashboardHandler(BaseHTTPRequestHandler):
             params = parse_qs(query, keep_blank_values=True)
             metrics_raw = params.get(
                 "metrics",
-                [",".join(SUPPORTED_HISTORY_METRICS)],
+                [",".join(HISTORY_METRIC_TO_INTERNAL)],
             )
-            metrics = tuple(
-                metric.strip()
-                for raw in metrics_raw
-                for metric in raw.split(",")
-                if metric.strip()
+            metric_ids = tuple(
+                dict.fromkeys(
+                    metric.strip()
+                    for raw in metrics_raw
+                    for metric in raw.split(",")
+                    if metric.strip()
+                )
+            )
+            unsupported = set(metric_ids) - set(HISTORY_METRIC_TO_INTERNAL)
+            if unsupported:
+                names = ", ".join(sorted(unsupported))
+                raise ValueError(f"不支持的历史指标：{names}")
+            internal_metrics = tuple(
+                HISTORY_METRIC_TO_INTERNAL[metric_id]
+                for metric_id in metric_ids
             )
             from_epoch_ms = self._optional_integer(params, "from")
             to_epoch_ms = self._optional_integer(params, "to")
             max_points = self._optional_integer(params, "maxPoints")
             if max_points is None:
                 max_points = DEFAULT_HISTORY_QUERY_MAX_POINTS
-            payload = self.store.get_history(
-                metrics=metrics,
+            legacy = self.store.get_history(
+                metrics=internal_metrics,
                 from_epoch_ms=from_epoch_ms,
                 to_epoch_ms=to_epoch_ms,
                 max_points=max_points,
             )
+            payload = build_history(legacy, metric_ids)
         except (TypeError, ValueError) as exc:
             self._send_json(
                 400,

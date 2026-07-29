@@ -1,10 +1,11 @@
-# Python
+﻿# Python
 __pycache__/
 *.py[cod]
 .pytest_cache/
 .coverage
 htmlcov/
 .venv/
+.tools/
 
 # PyInstaller 与发布产物
 build/
@@ -21,3 +22,6 @@ dist/
 Thumbs.db
 Desktop.ini
 
+# .NET
+bin/
+obj/

@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.perfmonitor.local/v1/history-v1.schema.json",
+  "title": "PerfMonitor History Contract v1",
+  "type": "object",
+  "required": [
+    "contractVersion",
+    "productVersion",
+    "instanceId",
+    "query",
+    "sourcePointCount",
+    "pointCount",
+    "downsampled",
+    "points"
+  ],
+  "properties": {
+    "contractVersion": {"const": "1.0"},
+    "productVersion": {"type": "string", "minLength": 1},
+    "instanceId": {"type": "string", "pattern": "^[0-9a-f]{32}$"},
+    "query": {
+      "type": "object",
+      "required": ["metricIds", "fromEpochMs", "toEpochMs", "maxPoints"],
+      "properties": {
+        "metricIds": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "fromEpochMs": {"type": ["integer", "null"]},
+        "toEpochMs": {"type": ["integer", "null"]},
+        "maxPoints": {"type": "integer", "minimum": 1, "maximum": 5000}
+      },
+      "additionalProperties": true
+    },
+    "sourcePointCount": {"type": "integer", "minimum": 0},
+    "pointCount": {"type": "integer", "minimum": 0, "maximum": 5000},
+    "downsampled": {"type": "boolean"},
+    "points": {
+      "type": "array",
+      "maxItems": 5000,
+      "items": {
+        "type": "object",
+        "required": ["startEpochMs", "endEpochMs", "sequence", "metrics"],
+        "properties": {
+          "startEpochMs": {"type": "integer"},
+          "endEpochMs": {"type": "integer"},
+          "sequence": {"type": "integer", "minimum": 1},
+          "metrics": {
+            "type": "object",
+            "minProperties": 1,
+            "additionalProperties": {
+              "type": "object",
+              "required": ["unit", "min", "max", "avg", "last"],
+              "properties": {
+                "unit": {"enum": ["percent", "byte", "second", "millisecond", "count"]},
+                "min": {"type": ["number", "null"]},
+                "max": {"type": ["number", "null"]},
+                "avg": {"type": ["number", "null"]},
+                "last": {"type": ["number", "null"]}
+              },
+              "additionalProperties": true
+            }
+          }
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "additionalProperties": true
+}

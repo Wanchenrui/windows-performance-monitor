@@ -1,4 +1,4 @@
-"""低扰动 Windows 性能指标采集器。
+﻿"""低扰动 Windows 性能指标采集器。
 
 0.2.0 变更：移除每个采样周期创建 PowerShell/WMI 子进程的实现，改用
 psutil 封装的 Windows 原生系统与进程 API。所有百分比、字节数和数据源都
@@ -9,11 +9,13 @@ from __future__ import annotations
 
 import os
 import time
+from datetime import datetime, timezone
 from typing import Any
 
 import psutil
 
 from .windows_process import WindowsProcessProvider
+from .errors import stable_error_code
 
 
 MIB = 1024 * 1024
@@ -79,9 +81,14 @@ class NativeWindowsCollector:
         message = str(exc).strip() or exc.__class__.__name__
         return {
             "metric": metric,
-            "code": exc.__class__.__name__,
+            "code": stable_error_code(exc),
+            "nativeCode": exc.__class__.__name__,
             "message": message[:300],
         }
+
+    @staticmethod
+    def _observed_at_utc() -> str:
+        return datetime.now(timezone.utc).isoformat(timespec="milliseconds")
 
     def collect(self, sample_monotonic: float | None = None) -> dict[str, Any]:
         """采集一个批次；单项失败不会伪装成 0，也不会阻断其余指标。"""
@@ -90,6 +97,7 @@ class NativeWindowsCollector:
             time.monotonic() if sample_monotonic is None else sample_monotonic
         )
         errors: list[dict[str, str]] = []
+        observed_at: dict[str, str] = {}
         overview: dict[str, Any] = {
             "cpu": None,
             "memory": None,
@@ -106,6 +114,8 @@ class NativeWindowsCollector:
             }
         except Exception as exc:  # pragma: no cover - 依赖操作系统异常注入验证
             errors.append(self._issue("cpu", exc))
+        finally:
+            observed_at["systemCpu"] = self._observed_at_utc()
 
         try:
             memory = psutil.virtual_memory()
@@ -118,6 +128,8 @@ class NativeWindowsCollector:
             }
         except Exception as exc:  # pragma: no cover - 依赖操作系统异常注入验证
             errors.append(self._issue("memory", exc))
+        finally:
+            observed_at["memory"] = self._observed_at_utc()
 
         try:
             disks = self._collect_disks()
@@ -129,6 +141,8 @@ class NativeWindowsCollector:
                 raise RuntimeError(f"未找到系统盘 {self.system_drive}")
         except Exception as exc:
             errors.append(self._issue("disk", exc))
+        finally:
+            observed_at["volumes"] = self._observed_at_utc()
 
         try:
             overview["uptimeSeconds"] = max(
@@ -136,6 +150,8 @@ class NativeWindowsCollector:
             )
         except Exception as exc:  # pragma: no cover - 依赖操作系统异常注入验证
             errors.append(self._issue("uptime", exc))
+        finally:
+            observed_at["uptime"] = self._observed_at_utc()
 
         process_meta: dict[str, int] = {
             "enumerated": 0,
@@ -147,6 +163,8 @@ class NativeWindowsCollector:
         except Exception as exc:
             processes = []
             errors.append(self._issue("processes", exc))
+        finally:
+            observed_at["processes"] = self._observed_at_utc()
 
         available_groups = sum(
             (
@@ -170,6 +188,7 @@ class NativeWindowsCollector:
             "overview": overview,
             "processes": processes,
             "processCollection": process_meta,
+            "providerObservedAtUtc": observed_at,
         }
 
     def _collect_disks(self) -> list[dict[str, Any]]:
@@ -205,7 +224,7 @@ class NativeWindowsCollector:
     def _collect_processes(
         self, sample_monotonic: float
     ) -> tuple[list[dict[str, Any]], dict[str, int]]:
-        current_cpu: dict[tuple[int, float], tuple[float, float]] = {}
+        current_cpu: dict[tuple[int, int], tuple[float, float]] = {}
         rows: list[dict[str, Any]] = []
         skipped = 0
 
@@ -247,6 +266,7 @@ class NativeWindowsCollector:
                 rows.append(
                     {
                         "pid": pid,
+                        "creationTimeTicks": counters.create_time_ticks,
                         "name": process_name,
                         "cpuNormalizedPct": _round_or_none(normalized, 1),
                         "cpuCoreEquivalentPct": _round_or_none(

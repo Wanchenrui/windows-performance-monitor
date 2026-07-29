@@ -1,0 +1,11 @@
+{
+  "contractVersion": "1.0",
+  "providers": [
+    {"groupId": "systemCpu", "providerId": "windows.system-cpu.psutil.v1", "requiredPrivilege": "user", "costClass": "low"},
+    {"groupId": "memory", "providerId": "windows.memory.global-status.v1", "requiredPrivilege": "user", "costClass": "low"},
+    {"groupId": "volumes", "providerId": "windows.volume.psutil.v1", "requiredPrivilege": "user", "costClass": "low"},
+    {"groupId": "uptime", "providerId": "windows.uptime.boot-time.v1", "requiredPrivilege": "user", "costClass": "low"},
+    {"groupId": "processes", "providerId": "windows.process.win32.v1", "requiredPrivilege": "user", "costClass": "medium"},
+    {"groupId": "sampler", "providerId": "perfmonitor.sampler.fixed-period.v1", "requiredPrivilege": "user", "costClass": "low"}
+  ]
+}

@@ -1,0 +1,251 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.perfmonitor.local/v1/snapshot-v1.schema.json",
+  "title": "PerfMonitor Snapshot Contract v1",
+  "type": "object",
+  "required": [
+    "contractVersion",
+    "productVersion",
+    "instanceId",
+    "sequence",
+    "scheduledAtUtc",
+    "startedAtUtc",
+    "completedAtUtc",
+    "dataAgeSeconds",
+    "summary",
+    "retention",
+    "groups"
+  ],
+  "properties": {
+    "contractVersion": {"const": "1.0"},
+    "productVersion": {"type": "string", "minLength": 1},
+    "instanceId": {"type": "string", "pattern": "^[0-9a-f]{32}$"},
+    "sequence": {"type": "integer", "minimum": 0},
+    "scheduledAtUtc": {"$ref": "#/$defs/dateTimeOrNull"},
+    "startedAtUtc": {"$ref": "#/$defs/dateTimeOrNull"},
+    "completedAtUtc": {"$ref": "#/$defs/dateTimeOrNull"},
+    "dataAgeSeconds": {"type": ["number", "null"], "minimum": 0},
+    "summary": {"$ref": "#/$defs/summary"},
+    "retention": {
+      "type": "object",
+      "required": ["historyWindowSeconds", "historyPointLimit"],
+      "properties": {
+        "historyWindowSeconds": {"type": "number", "exclusiveMinimum": 0},
+        "historyPointLimit": {"type": "integer", "minimum": 1}
+      },
+      "additionalProperties": true
+    },
+    "groups": {
+      "type": "object",
+      "required": ["systemCpu", "memory", "volumes", "uptime", "processes", "sampler"],
+      "properties": {
+        "systemCpu": {"$ref": "#/$defs/scalarGroup"},
+        "memory": {"$ref": "#/$defs/scalarGroup"},
+        "volumes": {"$ref": "#/$defs/volumeGroup"},
+        "uptime": {"$ref": "#/$defs/scalarGroup"},
+        "processes": {"$ref": "#/$defs/processGroup"},
+        "sampler": {"$ref": "#/$defs/scalarGroup"}
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true,
+  "$defs": {
+    "dateTimeOrNull": {
+      "anyOf": [
+        {"type": "string", "format": "date-time"},
+        {"type": "null"}
+      ]
+    },
+    "availability": {
+      "enum": [
+        "available",
+        "partial",
+        "unavailable",
+        "not_supported",
+        "permission_denied",
+        "timeout",
+        "error"
+      ]
+    },
+    "freshness": {"enum": ["warming_up", "fresh", "stale"]},
+    "summary": {
+      "type": "object",
+      "required": ["availability", "freshness"],
+      "properties": {
+        "availability": {"$ref": "#/$defs/availability"},
+        "freshness": {"$ref": "#/$defs/freshness"}
+      },
+      "additionalProperties": true
+    },
+    "coverage": {
+      "type": "object",
+      "required": ["status"],
+      "properties": {
+        "status": {"enum": ["complete", "limited"]},
+        "enumerated": {"type": "integer", "minimum": 0},
+        "readable": {"type": "integer", "minimum": 0},
+        "skipped": {"type": "integer", "minimum": 0},
+        "skippedByReason": {
+          "type": "object",
+          "propertyNames": {
+            "enum": [
+              "access_denied",
+              "process_exited",
+              "not_supported",
+              "timeout",
+              "invalid_data",
+              "resource_exhausted",
+              "provider_failure"
+            ]
+          },
+          "additionalProperties": {"type": "integer", "minimum": 0}
+        }
+      },
+      "additionalProperties": true
+    },
+    "error": {
+      "type": "object",
+      "required": ["errorCode", "metricId"],
+      "properties": {
+        "errorCode": {
+          "enum": [
+            "access_denied",
+            "process_exited",
+            "not_supported",
+            "timeout",
+            "invalid_data",
+            "resource_exhausted",
+            "provider_failure"
+          ]
+        },
+        "metricId": {"type": ["string", "null"]}
+      },
+      "additionalProperties": true
+    },
+    "metric": {
+      "type": "object",
+      "required": ["value", "unit", "sourceId"],
+      "properties": {
+        "value": {"type": ["number", "null"]},
+        "unit": {"enum": ["percent", "byte", "second", "millisecond", "count"]},
+        "sourceId": {"type": "string", "minLength": 1}
+      },
+      "additionalProperties": true
+    },
+    "metricMap": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {"$ref": "#/$defs/metric"}
+    },
+    "baseGroup": {
+      "type": "object",
+      "required": [
+        "providerId",
+        "observedAtUtc",
+        "availability",
+        "freshness",
+        "coverage",
+        "errors",
+        "data"
+      ],
+      "properties": {
+        "providerId": {"type": "string", "minLength": 1},
+        "observedAtUtc": {"$ref": "#/$defs/dateTimeOrNull"},
+        "availability": {"$ref": "#/$defs/availability"},
+        "freshness": {"$ref": "#/$defs/freshness"},
+        "coverage": {"$ref": "#/$defs/coverage"},
+        "errors": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/error"}
+        }
+      },
+      "additionalProperties": true
+    },
+    "scalarGroup": {
+      "allOf": [
+        {"$ref": "#/$defs/baseGroup"},
+        {
+          "properties": {
+            "data": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "required": ["metrics"],
+                  "properties": {"metrics": {"$ref": "#/$defs/metricMap"}},
+                  "additionalProperties": true
+                },
+                {"type": "null"}
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "volumeGroup": {
+      "allOf": [
+        {"$ref": "#/$defs/baseGroup"},
+        {
+          "properties": {
+            "data": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": ["volumeId", "mountpoint", "fileSystem", "isSystem", "metrics"],
+                    "properties": {
+                      "volumeId": {"type": "string"},
+                      "mountpoint": {"type": ["string", "null"]},
+                      "fileSystem": {"type": ["string", "null"]},
+                      "isSystem": {"type": "boolean"},
+                      "metrics": {"$ref": "#/$defs/metricMap"}
+                    },
+                    "additionalProperties": true
+                  }
+                },
+                {"type": "null"}
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "processGroup": {
+      "allOf": [
+        {"$ref": "#/$defs/baseGroup"},
+        {
+          "properties": {
+            "data": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": ["identity", "name", "cpuReady", "metrics"],
+                    "properties": {
+                      "identity": {
+                        "type": "object",
+                        "required": ["pid", "creationTimeTicks"],
+                        "properties": {
+                          "pid": {"type": "integer", "minimum": 0},
+                          "creationTimeTicks": {"type": ["integer", "null"], "minimum": 0}
+                        },
+                        "additionalProperties": true
+                      },
+                      "name": {"type": ["string", "null"]},
+                      "cpuReady": {"type": "boolean"},
+                      "metrics": {"$ref": "#/$defs/metricMap"}
+                    },
+                    "additionalProperties": true
+                  }
+                },
+                {"type": "null"}
+              ]
+            }
+          }
+        }
+      ]
+    }
+  }
+}

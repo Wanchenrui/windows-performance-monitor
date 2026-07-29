@@ -1,4 +1,4 @@
-"""基于单调时钟的固定周期采样调度器。"""
+﻿"""基于单调时钟的固定周期采样调度器。"""
 
 from __future__ import annotations
 
@@ -6,8 +6,10 @@ import logging
 import math
 import threading
 import time
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from typing import Any, Callable
+
+from .errors import stable_error_code
 
 
 def calculate_next_tick(
@@ -49,10 +51,16 @@ class FixedPeriodSampler:
         self.store = store
         self.interval_seconds = float(interval_seconds)
         self.clock = clock
-        self.wall_clock = wall_clock or (lambda: datetime.now().astimezone())
+        self.wall_clock = wall_clock or (lambda: datetime.now(timezone.utc))
         self.logger = logger or logging.getLogger(__name__)
         self._stop_event = threading.Event()
         self._thread: threading.Thread | None = None
+
+    @staticmethod
+    def _as_utc(value: datetime) -> datetime:
+        if value.tzinfo is None:
+            value = value.astimezone()
+        return value.astimezone(timezone.utc)
 
     def start(self) -> None:
         if self._thread and self._thread.is_alive():
@@ -71,6 +79,7 @@ class FixedPeriodSampler:
 
     def _run(self) -> None:
         epoch = self.clock()
+        epoch_utc = self._as_utc(self.wall_clock())
         tick = 1  # 预留一个完整周期给非阻塞 CPU 计数器建立基线。
         missed_total = 0
 
@@ -82,9 +91,10 @@ class FixedPeriodSampler:
 
             started = self.clock()
             jitter_ms = max(0.0, (started - deadline) * 1000.0)
-            captured_at = self.wall_clock()
-            if captured_at.tzinfo is None:
-                captured_at = captured_at.astimezone()
+            started_at_utc = self._as_utc(self.wall_clock())
+            scheduled_at_utc = epoch_utc + timedelta(
+                seconds=tick * self.interval_seconds
+            )
 
             try:
                 result = self.collector.collect(started)
@@ -95,7 +105,8 @@ class FixedPeriodSampler:
                     "errors": [
                         {
                             "metric": "collector",
-                            "code": exc.__class__.__name__,
+                            "code": stable_error_code(exc),
+                            "nativeCode": exc.__class__.__name__,
                             "message": (str(exc).strip() or exc.__class__.__name__)[
                                 :300
                             ],
@@ -107,6 +118,7 @@ class FixedPeriodSampler:
                 }
 
             finished = self.clock()
+            completed_at_utc = self._as_utc(self.wall_clock())
             next_tick, skipped = calculate_next_tick(
                 epoch,
                 tick,
@@ -117,8 +129,27 @@ class FixedPeriodSampler:
             duration_ms = max(0.0, (finished - started) * 1000.0)
 
             snapshot = {
-                "collectedAt": captured_at.isoformat(timespec="milliseconds"),
-                "collectedAtEpochMs": int(captured_at.timestamp() * 1000),
+                "collectedAt": completed_at_utc.isoformat(
+                    timespec="milliseconds"
+                ),
+                "collectedAtEpochMs": int(
+                    completed_at_utc.timestamp() * 1000
+                ),
+                "scheduledAtUtc": scheduled_at_utc.isoformat(
+                    timespec="milliseconds"
+                ),
+                "startedAtUtc": started_at_utc.isoformat(
+                    timespec="milliseconds"
+                ),
+                "completedAtUtc": completed_at_utc.isoformat(
+                    timespec="milliseconds"
+                ),
+                "scheduledAtMonotonic": deadline,
+                "startedAtMonotonic": started,
+                "completedAtMonotonic": finished,
+                "providerObservedAtUtc": (
+                    result.get("providerObservedAtUtc") or {}
+                ),
                 "overview": result.get("overview") or {},
                 "processes": result.get("processes") or [],
                 "processCollection": result.get("processCollection") or {},
@@ -146,4 +177,3 @@ class FixedPeriodSampler:
                     skipped,
                 )
             tick = next_tick
-

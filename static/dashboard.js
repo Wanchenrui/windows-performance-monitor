@@ -1,4 +1,4 @@
-"use strict";
+﻿"use strict";
 
 const COLORS = {
   green: "#34d399",
@@ -22,6 +22,172 @@ function byId(id) {
 
 function finite(value) {
   return typeof value === "number" && Number.isFinite(value);
+}
+
+const ERROR_TEXT = {
+  access_denied: "权限不足",
+  process_exited: "进程已退出",
+  not_supported: "当前系统不支持",
+  timeout: "采集超时",
+  invalid_data: "采集数据无效",
+  resource_exhausted: "系统资源不足",
+  provider_failure: "Provider 采集失败",
+};
+
+function metricValue(group, metricId) {
+  const metrics = group && group.data && !Array.isArray(group.data)
+    ? group.data.metrics || {}
+    : {};
+  const metric = metrics[metricId] || {};
+  return Object.hasOwn(metric, "value") ? metric.value : null;
+}
+
+function normalizeContractSnapshot(payload) {
+  if (payload.contractVersion !== "1.0") {
+    return payload;
+  }
+  const groups = payload.groups || {};
+  const cpuGroup = groups.systemCpu || {};
+  const memoryGroup = groups.memory || {};
+  const volumeGroup = groups.volumes || {};
+  const uptimeGroup = groups.uptime || {};
+  const processGroup = groups.processes || {};
+  const samplerGroup = groups.sampler || {};
+  const summary = payload.summary || {};
+  const freshness = summary.freshness || "warming_up";
+  const availability = summary.availability || "error";
+  const availabilityStatus = {
+    available: "ok",
+    partial: "partial",
+    unavailable: payload.sequence ? "error" : "starting",
+    not_supported: "partial",
+    permission_denied: "partial",
+    access_denied: "partial",
+    timeout: "partial",
+    error: "error",
+  }[availability] || "error";
+  const completedEpochMs = payload.completedAtUtc
+    ? Date.parse(payload.completedAtUtc)
+    : null;
+
+  const volumes = Array.isArray(volumeGroup.data)
+    ? volumeGroup.data.map((volume) => ({
+      device: volume.volumeId,
+      mountpoint: volume.mountpoint,
+      fileSystem: volume.fileSystem,
+      isSystem: volume.isSystem === true,
+      percent: metricValue({ data: volume }, "system.volume.utilization.percent"),
+      usedBytes: metricValue({ data: volume }, "system.volume.used.bytes"),
+      freeBytes: metricValue({ data: volume }, "system.volume.free.bytes"),
+      totalBytes: metricValue({ data: volume }, "system.volume.total.bytes"),
+      source: (volume.metrics &&
+        volume.metrics["system.volume.utilization.percent"] || {}).sourceId || "",
+    }))
+    : [];
+  const processes = Array.isArray(processGroup.data)
+    ? processGroup.data.map((process) => ({
+      pid: (process.identity || {}).pid,
+      name: process.name,
+      cpuReady: process.cpuReady === true,
+      cpuNormalizedPct: metricValue(
+        { data: process },
+        "process.cpu.normalized.percent"
+      ),
+      cpuCoreEquivalentPct: metricValue(
+        { data: process },
+        "process.cpu.core_equivalent.percent"
+      ),
+      workingSetBytes: metricValue(
+        { data: process },
+        "process.memory.working_set.bytes"
+      ),
+      privateBytes: metricValue(
+        { data: process },
+        "process.memory.private.bytes"
+      ),
+    }))
+    : [];
+  const errors = Object.entries(groups).flatMap(([groupId, group]) =>
+    (Array.isArray(group.errors) ? group.errors : []).map((issue) => ({
+      metric: issue.metricId || groupId,
+      code: issue.errorCode,
+      message: ERROR_TEXT[issue.errorCode] || "未知 Provider 错误",
+    }))
+  );
+  const coverage = processGroup.coverage || {};
+
+  return {
+    appVersion: payload.productVersion,
+    apiVersion: payload.contractVersion,
+    instanceId: payload.instanceId,
+    sequence: payload.sequence,
+    collectedAt: payload.completedAtUtc,
+    collectedAtEpochMs: finite(completedEpochMs) ? completedEpochMs : null,
+    historyWindowSeconds: (payload.retention || {}).historyWindowSeconds,
+    overview: {
+      cpu: {
+        percent: metricValue(cpuGroup, "system.cpu.utilization.percent"),
+        logicalCpuCount: metricValue(
+          cpuGroup,
+          "system.cpu.logical_processor.count"
+        ),
+        source: (((cpuGroup.data || {}).metrics || {})[
+          "system.cpu.utilization.percent"
+        ] || {}).sourceId || "",
+      },
+      memory: {
+        percent: metricValue(memoryGroup, "system.memory.utilization.percent"),
+        usedBytes: metricValue(memoryGroup, "system.memory.used.bytes"),
+        availableBytes: metricValue(
+          memoryGroup,
+          "system.memory.available.bytes"
+        ),
+        totalBytes: metricValue(memoryGroup, "system.memory.total.bytes"),
+        source: (((memoryGroup.data || {}).metrics || {})[
+          "system.memory.utilization.percent"
+        ] || {}).sourceId || "",
+      },
+      disks: volumes,
+      systemDisk: volumes.find((volume) => volume.isSystem) || null,
+      uptimeSeconds: metricValue(uptimeGroup, "system.uptime.seconds"),
+    },
+    processes,
+    processCollection: {
+      status: coverage.status,
+      enumerated: coverage.enumerated,
+      skipped: coverage.skipped,
+    },
+    sample: {
+      intervalSeconds: metricValue(
+        samplerGroup,
+        "sampler.interval.seconds"
+      ),
+      durationMs: metricValue(
+        samplerGroup,
+        "sampler.duration.milliseconds"
+      ),
+      jitterMs: metricValue(
+        samplerGroup,
+        "sampler.jitter.milliseconds"
+      ),
+      missedIntervalsTotal: metricValue(
+        samplerGroup,
+        "sampler.missed_intervals.count"
+      ),
+      skippedIntervalsAfterSample: metricValue(
+        samplerGroup,
+        "sampler.skipped_intervals.count"
+      ),
+    },
+    health: {
+      status: freshness === "stale" ? "stale" : availabilityStatus,
+      availabilityStatus,
+      freshness,
+      stale: freshness === "stale",
+      ageSeconds: payload.dataAgeSeconds,
+      errors,
+    },
+  };
 }
 
 function clampPercent(value) {
@@ -324,7 +490,7 @@ async function refresh() {
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}`);
     }
-    const data = await response.json();
+    const data = normalizeContractSnapshot(await response.json());
     selectInstance(data);
     if (!historyReady) {
       try {
@@ -359,7 +525,7 @@ async function loadHistory(data) {
     : Date.now();
   const startMs = endMs - (data.historyWindowSeconds || 3600) * 1000;
   const query = new URLSearchParams({
-    metrics: "cpu,mem",
+    metrics: "system.cpu.utilization.percent,system.memory.utilization.percent",
     from: String(Math.floor(startMs)),
     to: String(Math.ceil(endMs)),
     maxPoints: String(HISTORY_QUERY_MAX_POINTS),
@@ -375,7 +541,16 @@ async function loadHistory(data) {
     return;
   }
   historySamples = Array.isArray(payload.points)
-    ? payload.points.filter((point) => finite(point.epochMs))
+    ? payload.points.map((point) => ({
+      sequence: point.sequence,
+      epochMs: point.endEpochMs,
+      cpu: ((point.metrics || {})[
+        "system.cpu.utilization.percent"
+      ] || {}).last,
+      mem: ((point.metrics || {})[
+        "system.memory.utilization.percent"
+      ] || {}).last,
+    })).filter((point) => finite(point.epochMs))
     : [];
   historyDownsampled = payload.downsampled === true;
   lastSequence = historySamples.reduce(

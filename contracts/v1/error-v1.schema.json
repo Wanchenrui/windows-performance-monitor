@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.perfmonitor.local/v1/error-v1.schema.json",
+  "title": "PerfMonitor HTTP Error",
+  "type": "object",
+  "required": ["error"],
+  "properties": {
+    "error": {
+      "enum": ["invalid_query", "not_found", "static_asset_unavailable"]
+    },
+    "message": {"type": "string"},
+    "asset": {"type": "string"}
+  },
+  "additionalProperties": true
+}

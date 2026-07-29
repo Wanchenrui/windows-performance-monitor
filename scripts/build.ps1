@@ -9,6 +9,9 @@ $ExePath = Join-Path $ProjectRoot "dist\perf-monitor.exe"
 $ManifestPath = Join-Path $ProjectRoot "dist\build-manifest.json"
 $RuntimeLockPath = Join-Path $ProjectRoot "requirements.txt"
 $DevelopmentLockPath = Join-Path $ProjectRoot "requirements-dev.txt"
+$DotnetSdkLockPath = Join-Path $ProjectRoot "global.json"
+$ContractsLockPath = Join-Path $ProjectRoot "src\PerfMonitor.Contracts\packages.lock.json"
+$ContractTestsLockPath = Join-Path $ProjectRoot "tests\PerfMonitor.ContractTests\packages.lock.json"
 
 if (-not (Test-Path -LiteralPath $VenvPython)) {
     throw "未找到 .venv。请先运行 scripts\setup.ps1。"
@@ -80,6 +83,15 @@ try {
             ).Hash
             requirementsDev = (
                 Get-FileHash -LiteralPath $DevelopmentLockPath -Algorithm SHA256
+            ).Hash
+            dotnetSdk = (
+                Get-FileHash -LiteralPath $DotnetSdkLockPath -Algorithm SHA256
+            ).Hash
+            dotnetContracts = (
+                Get-FileHash -LiteralPath $ContractsLockPath -Algorithm SHA256
+            ).Hash
+            dotnetContractTests = (
+                Get-FileHash -LiteralPath $ContractTestsLockPath -Algorithm SHA256
             ).Hash
         }
         python = $PythonVersion
