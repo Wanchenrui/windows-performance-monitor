@@ -171,7 +171,7 @@ public sealed class SnapshotAssembler : IProviderResultSink
             .Select(group => group.ObservedAtUtc!.Value)
             .DefaultIfEmpty()
             .Max();
-        var dataAge = observed == default
+        double? dataAge = observed == default
             ? null
             : Math.Max(0, (now - observed).TotalSeconds);
 
