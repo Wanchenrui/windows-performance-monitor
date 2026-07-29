@@ -1,19 +1,23 @@
 ﻿# 电脑性能监控
 
-当前版本为 `0.3.0`：已冻结语言无关 contract v1 的 Windows 10/11 本地
-性能监控参考实现。Python 采集器从本版本起作为指标口径 oracle，不再扩展
-GPU、温度、诊断或优化动作。
+当前版本为 `0.4.0`：在冻结的 contract v1 上新增 `net10.0-windows`
+非提权 Agent，并以 Python 0.3 作为只读指标口径 oracle 做旁路差分。Python
+路径不再增加指标；Desktop、Named Pipe、SQLite、诊断和 Broker 仍不属于
+本版本。
 
-## 0.3 的工程边界
+## 0.4 的工程边界
 
-- 系统与进程指标由 `psutil` 的 Windows 原生后端采集，不再周期性启动
-  PowerShell/WMI 子进程。
-- 默认按 1 秒固定周期采样，调度期限为
-  \(t_k=t_0+kT\)。采集超时会跳过已经过期的周期并记录缺口，不累积漂移。
-- RAM 中的历史记录按真实时间裁剪，默认保留最近 60 分钟，并有 86,400
-  点绝对上限。历史接口单次最多返回 5,000 个时间桶。
-- HTTP 接口只监听 `127.0.0.1`，没有远程访问和遥测上传。
-- GPU、网络、温度、告警、SQLite 历史库和优化动作不在本版本范围内。
+- `.NET 10` Agent 直接使用 Windows API 采集 CPU、内存、卷容量、uptime
+  和进程指标，并采集自身 CPU、内存与 GC heap。
+- CPU、内存、uptime、自监控按 1 秒，进程按 2 秒，卷容量按 30 秒独立
+  调度。每个 Provider 使用绝对期限、超时、同 Provider 不重入、有界并发
+  和失败退避；单个 Provider 失败只降级对应指标组。
+- `SnapshotAssembler` 每次发布完整不可变视图，availability、freshness 和
+  coverage 保持正交；进程差分键仍为 `(PID, creationTimeTicks)`。
+- Python 0.3 HTTP/UI 只保留为 oracle、golden fixture 生成器和回退基线，
+  不再承担后续产品能力扩建。
+- GPU、网络、温度、告警、SQLite、正式 IPC、Desktop 和优化动作不在本
+  版本范围内。
 
 ## 首次运行
 
@@ -95,8 +99,9 @@ U_p=100\%\times
 - `GET /api/stats`：旧 `apiVersion=0.2.1` 的 deprecated 有界适配器；新
   客户端不得依赖。
 
-产品版本为 `0.3.0`，公开 `contractVersion` 独立固定为 `1.0`。Schema、
-ID 目录、兼容规则、IPC framing 与 golden fixtures 位于 `contracts/v1/`。
+.NET Agent 的产品版本为 `0.4.0`，只读 Python oracle 保持 `0.3.0`；
+两者公开 `contractVersion` 均独立固定为 `1.0`。Schema、ID 目录、兼容
+规则、IPC framing 与 golden fixtures 位于 `contracts/v1/`。
 
 ## 测试
 
@@ -113,6 +118,41 @@ ID 目录、兼容规则、IPC framing 与 golden fixtures 位于 `contracts/v1/
 ```powershell
 dotnet test .\PerfMonitor.slnx --configuration Release
 ```
+
+发布并获取一次 .NET Agent 快照：
+
+```powershell
+dotnet publish .\src\PerfMonitor.Agent\PerfMonitor.Agent.csproj `
+  --configuration Release --output .\artifacts\agent
+.\artifacts\agent\perf-monitor-agent.exe `
+  --once --quiet --warmup-seconds 3 `
+  --output .\artifacts\agent-snapshot.json
+```
+
+Python/.NET 差分门禁按同窗均值比较 CPU 与内存，并精确检查单位、source
+ID、卷总容量、空值语义和进程身份：
+
+```powershell
+.\scripts\compare_agents.ps1 `
+  -AgentPath .\artifacts\agent\perf-monitor-agent.exe `
+  -Samples 20 `
+  -OutputPath .\artifacts\agent-differential.json
+```
+
+CPU/内存均值绝对差默认不得超过 3/1 个百分点；P95 会记录为证据，但不把
+相位敏感的瞬时峰值当作相等门禁。
+
+真实 72 小时发布长稳使用同一个可执行脚本，默认时长为 259,200 秒：
+
+```powershell
+.\scripts\run_agent_soak.ps1 `
+  -AgentPath .\artifacts\agent\perf-monitor-agent.exe `
+  -OutputPath .\artifacts\agent-soak-72h.json
+```
+
+CI 另运行短时真实进程资源门禁，并用单元测试快速推进 259,200 个绝对期限。
+短时/虚拟结果不能替代 `release72HourGate.actualWallClockPassed=true` 的
+真实墙钟证据。
 
 在目标 Windows 机器上执行 10 秒参考计数器对照：
 
@@ -155,8 +195,13 @@ perf_monitor/store.py               原子快照与有界 RAM 历史
 perf_monitor/server.py              contract v1 HTTP/兼容适配器
 contracts/v1/                       Schema、ID 目录、IPC 与 fixtures
 src/PerfMonitor.Contracts/          net10.0 DTO
+src/PerfMonitor.Core/               Provider 契约、调度器与原子快照
+src/PerfMonitor.Collectors.Windows/ 非提权 Windows Provider
+src/PerfMonitor.Agent/              net10.0 Agent 生命周期与 JSONL 输出
 static/                             contract v1 浏览器客户端
-tests/                              Python 与 .NET 契约门禁
+tests/                              Python/.NET 契约、故障与长稳门禁
+scripts/compare_agents.ps1          Python/.NET 同窗差分
+scripts/run_agent_soak.ps1          真实进程资源与 72 小时发布门禁
 ```
 
 该拆分是原型迁移边界，不代表最终商业架构。后续原生代理、SQLite、IPC、
@@ -164,7 +209,7 @@ tests/                              Python 与 .NET 契约门禁
 
 ## 回退与已知风险
 
-- `v0.2.1` 是 Python 基线封口标签；0.3.0 可直接回退到该标签，不涉及
-  数据库或安装格式迁移。
+- `v0.3.0` 是冻结契约和 Python oracle 标签；0.4.0 可直接回退到该标签，
+  不涉及数据库或安装格式迁移。
 - 低于 1 秒的采样会增加进程枚举开销，只用于测试，不建议作为默认配置。
 - 传感器、GPU 和温度尚未实现；界面不会用 0 代替这些缺失能力。
