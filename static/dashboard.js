@@ -8,6 +8,14 @@ const COLORS = {
   unavailable: "#4a5165",
 };
 
+const HISTORY_QUERY_MAX_POINTS = 2000;
+const CLIENT_HISTORY_POINT_LIMIT = 5000;
+let historySamples = [];
+let historyDownsampled = false;
+let activeInstanceId = null;
+let lastSequence = 0;
+let historyReady = false;
+
 function byId(id) {
   return document.getElementById(id);
 }
@@ -162,7 +170,10 @@ function drawChart(samples, windowSeconds, sampleIntervalSeconds) {
 function renderHealth(data) {
   const health = data.health || {};
   const sample = data.sample || {};
-  const status = health.status || "error";
+  const availability = health.availabilityStatus || health.status || "error";
+  const freshness = health.freshness ||
+    (health.stale ? "stale" : "fresh");
+  const status = freshness === "stale" ? "stale" : availability;
   const banner = byId("health-banner");
   const statusText = {
     starting: "等待首次采样",
@@ -180,6 +191,11 @@ function renderHealth(data) {
   }
   if (finite(sample.durationMs)) {
     detailParts.push(`采集 ${sample.durationMs.toFixed(1)} 毫秒`);
+  }
+  if (freshness === "stale" && availability === "partial") {
+    detailParts.push("最近一次采集为部分可用");
+  } else if (freshness === "stale" && availability === "error") {
+    detailParts.push("最近一次采集失败");
   }
 
   banner.className = `health ${status}`;
@@ -280,10 +296,11 @@ function render(data) {
   renderProcesses(data);
 
   const historyMinutes = Math.round((data.historyWindowSeconds || 3600) / 60);
+  const aggregationLabel = historyDownsampled ? " · 已降采样" : "";
   byId("chart-title").textContent =
-    `性能趋势 · 最近 ${historyMinutes} 分钟（真实时间）`;
+    `性能趋势 · 最近 ${historyMinutes} 分钟（真实时间${aggregationLabel}）`;
   drawChart(
-    Array.isArray(data.history) ? data.history : [],
+    historySamples,
     data.historyWindowSeconds || 3600,
     (data.sample || {}).intervalSeconds || 1
   );
@@ -303,15 +320,96 @@ function renderDisconnected(error) {
 
 async function refresh() {
   try {
-    const response = await fetch("/api/stats", { cache: "no-store" });
+    const response = await fetch("/api/v1/snapshot", { cache: "no-store" });
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}`);
     }
-    render(await response.json());
+    const data = await response.json();
+    selectInstance(data);
+    if (!historyReady) {
+      try {
+        await loadHistory(data);
+      } catch (error) {
+        console.warn("历史数据加载失败，将在下一周期重试", error);
+      }
+    }
+    appendSnapshot(data);
+    render(data);
   } catch (error) {
     renderDisconnected(error);
   } finally {
     window.setTimeout(refresh, 1000);
+  }
+}
+
+function selectInstance(data) {
+  if (data.instanceId === activeInstanceId) {
+    return;
+  }
+  activeInstanceId = data.instanceId || null;
+  historySamples = [];
+  historyDownsampled = false;
+  lastSequence = 0;
+  historyReady = false;
+}
+
+async function loadHistory(data) {
+  const endMs = finite(data.collectedAtEpochMs)
+    ? data.collectedAtEpochMs
+    : Date.now();
+  const startMs = endMs - (data.historyWindowSeconds || 3600) * 1000;
+  const query = new URLSearchParams({
+    metrics: "cpu,mem",
+    from: String(Math.floor(startMs)),
+    to: String(Math.ceil(endMs)),
+    maxPoints: String(HISTORY_QUERY_MAX_POINTS),
+  });
+  const response = await fetch(`/api/v1/history?${query}`, {
+    cache: "no-store",
+  });
+  if (!response.ok) {
+    throw new Error(`历史接口 HTTP ${response.status}`);
+  }
+  const payload = await response.json();
+  if (payload.instanceId !== activeInstanceId) {
+    return;
+  }
+  historySamples = Array.isArray(payload.points)
+    ? payload.points.filter((point) => finite(point.epochMs))
+    : [];
+  historyDownsampled = payload.downsampled === true;
+  lastSequence = historySamples.reduce(
+    (highest, point) => Math.max(highest, point.sequence || 0),
+    0
+  );
+  historyReady = true;
+}
+
+function appendSnapshot(data) {
+  const sequence = data.sequence || 0;
+  if (!sequence || sequence <= lastSequence || !finite(data.collectedAtEpochMs)) {
+    return;
+  }
+  const overview = data.overview || {};
+  const cpu = overview.cpu || {};
+  const memory = overview.memory || {};
+  historySamples.push({
+    sequence,
+    epochMs: data.collectedAtEpochMs,
+    t: data.collectedAt,
+    cpu: finite(cpu.percent) ? cpu.percent : null,
+    mem: finite(memory.percent) ? memory.percent : null,
+    status: (data.health || {}).status || "error",
+  });
+  lastSequence = sequence;
+
+  const cutoffMs = data.collectedAtEpochMs -
+    (data.historyWindowSeconds || 3600) * 1000;
+  historySamples = historySamples.filter(
+    (point) => point.epochMs >= cutoffMs
+  );
+  if (historySamples.length > CLIENT_HISTORY_POINT_LIMIT) {
+    historySamples = historySamples.slice(-CLIENT_HISTORY_POINT_LIMIT);
   }
 }
 

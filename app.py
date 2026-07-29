@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 """电脑性能实时监控 0.2。
 
-0.2.0 变更：
+0.2.1 变更：
   - 使用 Windows 原生 API 后端采集，不再周期性创建 PowerShell 进程；
-  - 固定周期调度、原子快照、真实时间历史窗口与采集健康状态；
-  - 浏览器只由本入口打开一次，并通过本地端口识别已有实例；
+  - 实时快照与有界历史查询分离，前端不再重复下载完整历史；
+  - 使用互斥体、当前用户状态文件和随机 instanceId 识别已有实例；
   - 托盘依赖缺失时降级为控制台运行，不再直接崩溃。
 """
 
@@ -17,6 +17,7 @@ import os
 import sys
 import threading
 import time
+import uuid
 import webbrowser
 from datetime import datetime
 from logging.handlers import RotatingFileHandler
@@ -72,6 +73,13 @@ def _history_minutes(value: str) -> float:
     return minutes
 
 
+def _positive_seconds(value: str) -> float:
+    seconds = float(value)
+    if seconds <= 0:
+        raise argparse.ArgumentTypeError("秒数必须大于 0")
+    return seconds
+
+
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=f"{APP_NAME} {APP_VERSION}（仅监听本机回环地址）"
@@ -115,6 +123,12 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         choices=("DEBUG", "INFO", "WARNING", "ERROR"),
         default=os.environ.get("PERF_MONITOR_LOG_LEVEL", "INFO").upper(),
         help="日志级别，默认 INFO",
+    )
+    parser.add_argument(
+        "--exit-after-seconds",
+        type=_positive_seconds,
+        default=None,
+        help=argparse.SUPPRESS,
     )
     args = parser.parse_args(argv)
 
@@ -164,13 +178,16 @@ def configure_logging(level: str) -> Path | None:
     return log_path
 
 
-def probe_existing_instance(url: str) -> bool:
-    """只把能返回本产品服务标识的监听者识别为已有实例。"""
+def probe_existing_instance(url: str, expected_instance_id: str) -> bool:
+    """同时匹配状态文件中的随机实例 ID，拒绝只伪造 service 的监听者。"""
 
     try:
         with urlopen(f"{url}/api/health", timeout=0.8) as response:
             payload = json.loads(response.read().decode("utf-8"))
-        return payload.get("service") == SERVICE_ID
+        return (
+            payload.get("service") == SERVICE_ID
+            and payload.get("instanceId") == expected_instance_id
+        )
     except (OSError, ValueError, HTTPError, URLError, json.JSONDecodeError):
         return False
 
@@ -227,13 +244,14 @@ def instance_state_path() -> Path:
     return local_app_data / "PerfMonitor" / "instance.json"
 
 
-def write_instance_state(path: Path, port: int) -> None:
+def write_instance_state(path: Path, port: int, instance_id: str) -> None:
     """原子写入已有实例发现信息；不包含令牌或用户数据。"""
 
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_suffix(".tmp")
     payload = {
         "service": SERVICE_ID,
+        "instanceId": instance_id,
         "pid": os.getpid(),
         "port": port,
         "startedAt": datetime.now().astimezone().isoformat(
@@ -247,18 +265,32 @@ def write_instance_state(path: Path, port: int) -> None:
     os.replace(temporary, path)
 
 
-def read_instance_url(path: Path) -> str | None:
+def read_instance_identity(path: Path) -> tuple[str, str] | None:
     try:
         payload = json.loads(path.read_text(encoding="utf-8"))
         port = int(payload["port"])
+        instance_id = str(payload["instanceId"])
         if (
             payload.get("service") != SERVICE_ID
             or not 1 <= port <= 65535
+            or uuid.UUID(hex=instance_id).hex != instance_id
         ):
             return None
-        return f"http://{HOST}:{port}"
-    except (OSError, ValueError, TypeError, KeyError, json.JSONDecodeError):
+        return f"http://{HOST}:{port}", instance_id
+    except (
+        AttributeError,
+        OSError,
+        ValueError,
+        TypeError,
+        KeyError,
+        json.JSONDecodeError,
+    ):
         return None
+
+
+def read_instance_url(path: Path) -> str | None:
+    identity = read_instance_identity(path)
+    return identity[0] if identity else None
 
 
 def remove_own_instance_state(path: Path) -> None:
@@ -278,8 +310,12 @@ def discover_existing_instance(
 ) -> str | None:
     deadline = time.monotonic() + timeout
     while time.monotonic() < deadline:
-        url = read_instance_url(path)
-        if url and probe_existing_instance(url):
+        identity = read_instance_identity(path)
+        if (
+            identity
+            and probe_existing_instance(identity[0], identity[1])
+        ):
+            url, _ = identity
             return url
         time.sleep(0.1)
     return None
@@ -389,22 +425,19 @@ def run_primary_instance(
     logger: logging.Logger,
     log_path: Path | None,
     url: str,
+    instance_id: str,
 ) -> int:
     state_path = instance_state_path()
     store = MetricStore(
         history_window_seconds=args.history_minutes * 60.0,
         sample_interval_seconds=args.sample_interval,
+        instance_id=instance_id,
     )
     try:
         server = create_server(HOST, args.port, store, STATIC_DIR)
     except OSError as exc:
-        if probe_existing_instance(url):
-            logger.info("检测到已有实例：%s", url)
-            if not args.no_browser:
-                open_page(url, logger)
-            return 0
         logger.error(
-            "端口 %d 无法绑定，且监听者不是本程序：%s",
+            "端口 %d 无法绑定：%s",
             args.port,
             exc,
         )
@@ -443,8 +476,15 @@ def run_primary_instance(
     try:
         server_thread.start()
         sampler.start()
+        if args.exit_after_seconds is not None:
+            exit_timer = threading.Timer(
+                args.exit_after_seconds,
+                stop_event.set,
+            )
+            exit_timer.daemon = True
+            exit_timer.start()
         try:
-            write_instance_state(state_path, args.port)
+            write_instance_state(state_path, args.port, instance_id)
         except OSError as exc:
             logger.warning("写入实例发现信息失败：%s", exc)
         if not args.no_browser:
@@ -507,7 +547,13 @@ def main(argv: list[str] | None = None) -> int:
         return 2
 
     try:
-        return run_primary_instance(args, logger, log_path, url)
+        return run_primary_instance(
+            args,
+            logger,
+            log_path,
+            url,
+            uuid.uuid4().hex,
+        )
     finally:
         instance_guard.close()
 

@@ -1,6 +1,6 @@
 -r requirements.txt
 
-# 0.2.0 测试与 Windows 打包工具链锁定
+# 0.2.1 测试与 Windows 打包工具链锁定
 altgraph==0.17.4
 colorama==0.4.6
 iniconfig==2.3.0

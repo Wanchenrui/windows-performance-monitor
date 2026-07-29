@@ -8,9 +8,13 @@ import socket
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
-from urllib.parse import urlsplit
+from urllib.parse import parse_qs, urlsplit
 
 from . import API_VERSION, APP_VERSION, SERVICE_ID
+from .store import (
+    DEFAULT_HISTORY_QUERY_MAX_POINTS,
+    SUPPORTED_HISTORY_METRICS,
+)
 
 
 class LocalThreadingHTTPServer(ThreadingHTTPServer):
@@ -70,31 +74,61 @@ class DashboardHandler(BaseHTTPRequestHandler):
         self.wfile.write(body)
 
     def _send_json(self, status: int, payload: dict[str, Any]) -> None:
+        self._send_json_with_headers(status, payload)
+
+    def _send_json_with_headers(
+        self,
+        status: int,
+        payload: dict[str, Any],
+        headers: dict[str, str] | None = None,
+    ) -> None:
         body = json.dumps(
             payload,
             ensure_ascii=False,
             allow_nan=False,
             separators=(",", ":"),
         ).encode("utf-8")
-        self._send_bytes(
-            status,
-            body,
-            "application/json; charset=utf-8",
-        )
+        self.send_response(status)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        if headers:
+            for name, value in headers.items():
+                self.send_header(name, value)
+        self._security_headers()
+        self.end_headers()
+        self.wfile.write(body)
 
     def do_GET(self) -> None:
-        path = urlsplit(self.path).path
-        if path == "/api/stats":
-            self._send_json(200, self.store.get_payload())
+        request = urlsplit(self.path)
+        path = request.path
+        if path == "/api/v1/snapshot":
+            self._send_json(200, self.store.get_snapshot())
             return
-        if path == "/api/health":
-            payload = self.store.get_payload()
+        if path == "/api/v1/history":
+            self._serve_history(request.query)
+            return
+        if path == "/api/v1/capabilities":
+            self._send_json(200, self.store.get_capabilities())
+            return
+        if path == "/api/stats":
+            self._send_json_with_headers(
+                200,
+                self.store.get_payload(),
+                {
+                    "Deprecation": "true",
+                    "Link": '</api/v1/snapshot>; rel="successor-version"',
+                },
+            )
+            return
+        if path in ("/api/health", "/api/v1/health"):
+            payload = self.store.get_snapshot()
             self._send_json(
                 200,
                 {
                     "service": SERVICE_ID,
                     "appVersion": APP_VERSION,
                     "apiVersion": API_VERSION,
+                    "instanceId": payload["instanceId"],
                     "sequence": payload["sequence"],
                     "health": payload["health"],
                 },
@@ -118,6 +152,56 @@ class DashboardHandler(BaseHTTPRequestHandler):
             return
 
         self._send_json(404, {"error": "not_found"})
+
+    def _serve_history(self, query: str) -> None:
+        try:
+            params = parse_qs(query, keep_blank_values=True)
+            metrics_raw = params.get(
+                "metrics",
+                [",".join(SUPPORTED_HISTORY_METRICS)],
+            )
+            metrics = tuple(
+                metric.strip()
+                for raw in metrics_raw
+                for metric in raw.split(",")
+                if metric.strip()
+            )
+            from_epoch_ms = self._optional_integer(params, "from")
+            to_epoch_ms = self._optional_integer(params, "to")
+            max_points = self._optional_integer(params, "maxPoints")
+            if max_points is None:
+                max_points = DEFAULT_HISTORY_QUERY_MAX_POINTS
+            payload = self.store.get_history(
+                metrics=metrics,
+                from_epoch_ms=from_epoch_ms,
+                to_epoch_ms=to_epoch_ms,
+                max_points=max_points,
+            )
+        except (TypeError, ValueError) as exc:
+            self._send_json(
+                400,
+                {
+                    "error": "invalid_query",
+                    "message": str(exc),
+                },
+            )
+            return
+        self._send_json(200, payload)
+
+    @staticmethod
+    def _optional_integer(
+        params: dict[str, list[str]],
+        name: str,
+    ) -> int | None:
+        values = params.get(name)
+        if not values:
+            return None
+        if len(values) != 1 or values[0] == "":
+            raise ValueError(f"{name} 必须是单个整数")
+        try:
+            return int(values[0])
+        except ValueError as exc:
+            raise ValueError(f"{name} 必须是整数毫秒时间戳") from exc
 
     def log_message(self, fmt: str, *args: object) -> None:
         self.logger.debug("%s - %s", self.client_address[0], fmt % args)
