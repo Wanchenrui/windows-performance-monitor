@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+.venv/
+
+# PyInstaller 与发布产物
+build/
+dist/
+*.manifest
+
+# 本地运行文件
+*.log
+*.pid
+
+# IDE / OS
+.idea/
+.vscode/
+Thumbs.db
+Desktop.ini
+

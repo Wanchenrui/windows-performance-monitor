@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="dark">
+  <title>电脑性能实时监控</title>
+  <link rel="stylesheet" href="/dashboard.css">
+  <script src="/dashboard.js" defer></script>
+</head>
+<body>
+  <header class="page-head">
+    <div>
+      <h1>电脑性能实时监控</h1>
+      <p>本地采集 · 指标口径透明 · 无遥测上传</p>
+    </div>
+    <span id="app-version" class="version">v--</span>
+  </header>
+
+  <section id="health-banner" class="health starting" aria-live="polite">
+    <div>
+      <strong id="health-title">等待首次采样</strong>
+      <span id="health-detail">采集器正在建立 CPU 时间基线</span>
+    </div>
+    <div id="sample-meta" class="sample-meta">序号 #0</div>
+  </section>
+
+  <section class="grid" aria-label="系统指标">
+    <article class="card">
+      <div class="label">CPU</div>
+      <div class="gauge" id="g-cpu"></div>
+      <div class="sub" id="cpu-sub">整机归一化负载</div>
+    </article>
+    <article class="card">
+      <div class="label">内存</div>
+      <div class="gauge" id="g-mem"></div>
+      <div class="sub" id="mem-sub">-- / -- GiB</div>
+    </article>
+    <article class="card">
+      <div class="label" id="disk-label">系统盘</div>
+      <div class="gauge" id="g-disk"></div>
+      <div class="sub" id="disk-sub">剩余 -- GiB</div>
+    </article>
+  </section>
+
+  <section class="panel">
+    <div class="head">
+      <span>内存占用</span>
+      <span id="mem-bar-text">不可用</span>
+    </div>
+    <div class="bar" aria-hidden="true">
+      <div id="mem-bar"></div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="head chart-head">
+      <span id="chart-title">性能趋势 · 最近 60 分钟（真实时间）</span>
+      <span class="legend">
+        <span><span class="dot cpu-dot"></span>CPU</span>
+        <span><span class="dot mem-dot"></span>内存</span>
+      </span>
+    </div>
+    <svg
+      class="chart"
+      id="chart"
+      viewBox="0 0 600 200"
+      preserveAspectRatio="none"
+      role="img"
+      aria-label="CPU 与内存历史趋势"
+    ></svg>
+  </section>
+
+  <section id="error-panel" class="panel error-panel" hidden>
+    <div class="head">
+      <span>采集问题</span>
+      <span>无效指标不会显示为 0</span>
+    </div>
+    <ul id="error-list"></ul>
+  </section>
+
+  <section class="panel">
+    <div class="head process-head">
+      <span>进程排行 · CPU Top 5（整机归一化）</span>
+      <span id="proc-ts">等待进程 CPU 基线</span>
+    </div>
+    <div id="plist" class="process-list">
+      <div class="empty">采集中…</div>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <span>系统已运行 <b id="uptime">--</b></span>
+    <span id="ts">连接中…</span>
+  </footer>
+</body>
+</html>
+

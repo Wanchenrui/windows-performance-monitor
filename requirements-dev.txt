@@ -1,0 +1,15 @@
+-r requirements.txt
+
+# 0.2.0 测试与 Windows 打包工具链锁定
+altgraph==0.17.4
+colorama==0.4.6
+iniconfig==2.3.0
+packaging==26.0
+pefile==2023.2.7
+pluggy==1.6.0
+Pygments==2.20.0
+pyinstaller==6.16.0
+pyinstaller-hooks-contrib==2025.9
+pytest==8.3.2
+pywin32-ctypes==0.2.3
+setuptools==80.9.0
