@@ -209,35 +209,62 @@ try {
         throw "Agent 未生成长稳快照证据。"
     }
 
-    $Snapshots = [System.Collections.Generic.List[object]]::new()
     $PreviousSequence = -1L
-    foreach ($Line in Get-Content -LiteralPath $SnapshotOutput) {
-        if ([string]::IsNullOrWhiteSpace($Line)) {
-            continue
+    $SnapshotCount = 0
+    $FirstSequence = $null
+    $LastSequence = $null
+    $GcHeapValues = [System.Collections.Generic.List[double]]::new()
+    $SnapshotReader = [System.IO.File]::OpenText($SnapshotOutput)
+    try {
+        while ($null -ne ($Line = $SnapshotReader.ReadLine())) {
+            if ([string]::IsNullOrWhiteSpace($Line)) {
+                continue
+            }
+            $Snapshot = $Line | ConvertFrom-Json
+            if (
+                $Snapshot.contractVersion -ne "1.0" -or
+                $Snapshot.productVersion -ne "0.4.0"
+            ) {
+                throw "长稳输出的契约或产品版本不正确。"
+            }
+            if ([Int64]$Snapshot.sequence -le $PreviousSequence) {
+                throw "长稳输出的 sequence 未严格递增。"
+            }
+            $PreviousSequence = [Int64]$Snapshot.sequence
+            if ($null -eq $FirstSequence) {
+                $FirstSequence = $PreviousSequence
+            }
+            $LastSequence = $PreviousSequence
+            $SnapshotCount++
+
+            $SelfMetrics = $Snapshot.groups.self.data.metrics
+            $GcProperty = $SelfMetrics.PSObject.Properties[
+                "agent.gc.heap.bytes"
+            ]
+            if (
+                $null -eq $GcProperty -or
+                $null -eq $GcProperty.Value.value
+            ) {
+                throw "长稳快照缺少 Agent GC heap 指标。"
+            }
+            $GcHeapValues.Add(
+                [double]$GcProperty.Value.value / 1MB
+            )
         }
-        $Snapshot = $Line | ConvertFrom-Json
-        if (
-            $Snapshot.contractVersion -ne "1.0" -or
-            $Snapshot.productVersion -ne "0.4.0"
-        ) {
-            throw "长稳输出的契约或产品版本不正确。"
-        }
-        if ([Int64]$Snapshot.sequence -le $PreviousSequence) {
-            throw "长稳输出的 sequence 未严格递增。"
-        }
-        $PreviousSequence = [Int64]$Snapshot.sequence
-        $Snapshots.Add($Snapshot)
+    }
+    finally {
+        $SnapshotReader.Dispose()
     }
     $MaximumSnapshots = [Math]::Ceiling(
         $DurationSeconds / [double]$SnapshotPeriodSeconds
     ) + 3
     if (
-        $Snapshots.Count -lt 2 -or
-        $Snapshots.Count -gt $MaximumSnapshots
+        $SnapshotCount -lt 2 -or
+        $SnapshotCount -gt $MaximumSnapshots
     ) {
         throw (
             "长稳快照数量异常：{0}，允许范围 2..{1}。" -f
-            $Snapshots.Count,
+            $SnapshotCount,
             $MaximumSnapshots
         )
     }
@@ -274,18 +301,6 @@ try {
     ).Maximum
     $PrivateSlope = Get-LinearSlopePerHour -Samples $SteadyRows
 
-    $GcHeapValues = [System.Collections.Generic.List[double]]::new()
-    foreach ($Snapshot in $Snapshots) {
-        $SelfMetrics = $Snapshot.groups.self.data.metrics
-        $GcProperty = $SelfMetrics.PSObject.Properties[
-            "agent.gc.heap.bytes"
-        ]
-        if ($null -ne $GcProperty.Value.value) {
-            $GcHeapValues.Add(
-                [double]$GcProperty.Value.value / 1MB
-            )
-        }
-    }
     if ($GcHeapValues.Count -lt 2) {
         throw "Agent 自身 GC heap 样本不足。"
     }
@@ -335,11 +350,9 @@ try {
             )
         }
         snapshots = [ordered]@{
-            count = $Snapshots.Count
-            firstSequence = [Int64]$Snapshots[0].sequence
-            lastSequence = [Int64]$Snapshots[
-                $Snapshots.Count - 1
-            ].sequence
+            count = $SnapshotCount
+            firstSequence = [Int64]$FirstSequence
+            lastSequence = [Int64]$LastSequence
             maximumAllowed = $MaximumSnapshots
             passed = $true
         }
