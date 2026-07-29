@@ -101,7 +101,8 @@ U_p=100\%\times
 
 .NET Agent 的产品版本为 `0.4.0`，只读 Python oracle 保持 `0.3.0`；
 两者公开 `contractVersion` 均独立固定为 `1.0`。Schema、ID 目录、兼容
-规则、IPC framing 与 golden fixtures 位于 `contracts/v1/`。
+规则、IPC framing、验证证据 Schema 与 golden fixtures 位于
+`contracts/v1/`。
 
 ## 测试
 

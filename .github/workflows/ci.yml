@@ -118,6 +118,24 @@ jobs:
             -SnapshotPeriodSeconds 5 `
             -OutputPath .\artifacts\agent-soak-accelerated.json
 
+      - name: Validate Agent evidence schemas
+        shell: powershell
+        run: |
+          & .\.venv\Scripts\python.exe `
+            .\scripts\validate_evidence.py `
+            differential-evidence-v1.schema.json `
+            .\artifacts\agent-differential.json
+          if ($LASTEXITCODE -ne 0) {
+            throw "Differential evidence schema validation failed"
+          }
+          & .\.venv\Scripts\python.exe `
+            .\scripts\validate_evidence.py `
+            soak-evidence-v1.schema.json `
+            .\artifacts\agent-soak-accelerated.json
+          if ($LASTEXITCODE -ne 0) {
+            throw "Soak evidence schema validation failed"
+          }
+
       - name: Upload .NET Agent evidence
         uses: actions/upload-artifact@v4
         with:

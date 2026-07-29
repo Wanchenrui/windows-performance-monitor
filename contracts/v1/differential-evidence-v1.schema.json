@@ -1,0 +1,114 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.perfmonitor.local/v1/differential-evidence-v1.schema.json",
+  "title": "PerfMonitor Differential Evidence v1",
+  "type": "object",
+  "required": [
+    "contractVersion",
+    "pythonProductVersion",
+    "agentProductVersion",
+    "pairs",
+    "alignment",
+    "cpu",
+    "memory",
+    "semantics"
+  ],
+  "properties": {
+    "contractVersion": {"const": "1.0"},
+    "pythonProductVersion": {"type": "string", "minLength": 1},
+    "agentProductVersion": {"type": "string", "minLength": 1},
+    "pairs": {"type": "integer", "minimum": 5},
+    "alignment": {
+      "type": "object",
+      "required": ["maximumMilliseconds", "limitMilliseconds"],
+      "properties": {
+        "maximumMilliseconds": {"type": "number", "minimum": 0},
+        "limitMilliseconds": {"type": "number", "exclusiveMinimum": 0}
+      },
+      "additionalProperties": true
+    },
+    "cpu": {"$ref": "#/$defs/numericGate"},
+    "memory": {"$ref": "#/$defs/numericGate"},
+    "semantics": {
+      "type": "object",
+      "required": [
+        "passed",
+        "unitsAndSources",
+        "volumeCapacity",
+        "processIdentity",
+        "nullSemantics"
+      ],
+      "properties": {
+        "passed": {"const": true},
+        "unitsAndSources": {
+          "type": "object",
+          "required": ["comparisons", "mismatches"],
+          "properties": {
+            "comparisons": {"type": "integer", "minimum": 1},
+            "mismatches": {"type": "array", "maxItems": 0}
+          },
+          "additionalProperties": true
+        },
+        "volumeCapacity": {
+          "type": "object",
+          "required": ["matchedVolumes", "mismatches"],
+          "properties": {
+            "matchedVolumes": {"type": "integer", "minimum": 1},
+            "mismatches": {"type": "array", "maxItems": 0}
+          },
+          "additionalProperties": true
+        },
+        "processIdentity": {
+          "type": "object",
+          "required": ["commonExactIdentities", "invalidOrDuplicate"],
+          "properties": {
+            "commonExactIdentities": {"type": "integer", "minimum": 3},
+            "invalidOrDuplicate": {"type": "array", "maxItems": 0}
+          },
+          "additionalProperties": true
+        },
+        "nullSemantics": {
+          "type": "object",
+          "required": ["mismatches"],
+          "properties": {
+            "mismatches": {"type": "array", "maxItems": 0}
+          },
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "$defs": {
+    "numericGate": {
+      "type": "object",
+      "required": [
+        "pythonMeanPct",
+        "agentMeanPct",
+        "deviationPoints",
+        "tolerancePoints",
+        "passed",
+        "p95"
+      ],
+      "properties": {
+        "pythonMeanPct": {"type": "number", "minimum": 0, "maximum": 100},
+        "agentMeanPct": {"type": "number", "minimum": 0, "maximum": 100},
+        "deviationPoints": {"type": "number", "minimum": 0},
+        "tolerancePoints": {"type": "number", "exclusiveMinimum": 0},
+        "passed": {"const": true},
+        "p95": {
+          "type": "object",
+          "required": ["pythonPct", "agentPct", "deviationPoints"],
+          "properties": {
+            "pythonPct": {"type": "number", "minimum": 0, "maximum": 100},
+            "agentPct": {"type": "number", "minimum": 0, "maximum": 100},
+            "deviationPoints": {"type": "number", "minimum": 0}
+          },
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}
