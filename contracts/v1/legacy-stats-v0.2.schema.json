@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.perfmonitor.local/v1/legacy-stats-v0.2.schema.json",
+  "title": "Deprecated PerfMonitor Stats Adapter",
+  "type": "object",
+  "required": [
+    "apiVersion",
+    "appVersion",
+    "instanceId",
+    "sequence",
+    "overview",
+    "processes",
+    "sample",
+    "health",
+    "history",
+    "deprecated"
+  ],
+  "properties": {
+    "apiVersion": {"const": "0.2.1"},
+    "appVersion": {"type": "string", "minLength": 1},
+    "instanceId": {"type": "string", "pattern": "^[0-9a-f]{32}$"},
+    "sequence": {"type": "integer", "minimum": 0},
+    "overview": {"type": "object"},
+    "processes": {"type": "array"},
+    "sample": {"type": "object"},
+    "health": {"type": "object"},
+    "history": {"type": "array", "maxItems": 2000},
+    "deprecated": {"const": true}
+  },
+  "additionalProperties": true
+}

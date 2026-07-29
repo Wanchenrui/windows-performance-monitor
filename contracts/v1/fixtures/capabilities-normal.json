@@ -1,0 +1,79 @@
+{
+  "contractVersion": "1.0",
+  "productVersion": "0.3.0",
+  "instanceId": "11111111111111111111111111111111",
+  "groups": [
+    {
+      "groupId": "systemCpu",
+      "providerId": "windows.system-cpu.psutil.v1",
+      "defaultPeriodMs": 1000,
+      "requiredPrivilege": "user",
+      "costClass": "low"
+    },
+    {
+      "groupId": "memory",
+      "providerId": "windows.memory.global-status.v1",
+      "defaultPeriodMs": 1000,
+      "requiredPrivilege": "user",
+      "costClass": "low"
+    },
+    {
+      "groupId": "volumes",
+      "providerId": "windows.volume.psutil.v1",
+      "defaultPeriodMs": 1000,
+      "requiredPrivilege": "user",
+      "costClass": "low"
+    },
+    {
+      "groupId": "uptime",
+      "providerId": "windows.uptime.boot-time.v1",
+      "defaultPeriodMs": 1000,
+      "requiredPrivilege": "user",
+      "costClass": "low"
+    },
+    {
+      "groupId": "processes",
+      "providerId": "windows.process.win32.v1",
+      "defaultPeriodMs": 1000,
+      "requiredPrivilege": "user",
+      "costClass": "medium"
+    },
+    {
+      "groupId": "sampler",
+      "providerId": "perfmonitor.sampler.fixed-period.v1",
+      "defaultPeriodMs": 1000,
+      "requiredPrivilege": "user",
+      "costClass": "low"
+    }
+  ],
+  "history": {
+    "metricIds": [
+      "system.cpu.utilization.percent",
+      "system.memory.utilization.percent"
+    ],
+    "defaultMaxPoints": 2000,
+    "maxPoints": 5000,
+    "ramPointLimit": 86400,
+    "aggregations": [
+      "min",
+      "max",
+      "avg",
+      "last"
+    ]
+  },
+  "endpoints": {
+    "snapshot": "/api/v1/snapshot",
+    "history": "/api/v1/history",
+    "capabilities": "/api/v1/capabilities",
+    "health": "/api/v1/health"
+  },
+  "stableErrorCodes": [
+    "access_denied",
+    "process_exited",
+    "not_supported",
+    "timeout",
+    "invalid_data",
+    "resource_exhausted",
+    "provider_failure"
+  ]
+}

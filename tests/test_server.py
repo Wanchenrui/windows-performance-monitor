@@ -1,4 +1,4 @@
-import json
+﻿import json
 import threading
 from pathlib import Path
 from urllib.error import HTTPError
@@ -41,7 +41,11 @@ def test_health_endpoint_identifies_service_and_sets_security_headers():
         assert payload["service"] == "perf-monitor"
         assert payload["instanceId"] == store.instance_id
         assert payload["sequence"] == 0
-        assert payload["health"]["status"] == "starting"
+        assert payload["contractVersion"] == "1.0"
+        assert payload["summary"] == {
+            "availability": "unavailable",
+            "freshness": "warming_up",
+        }
     finally:
         server.shutdown()
         server.server_close()
@@ -53,7 +57,7 @@ def test_versioned_snapshot_history_and_capabilities_are_bounded():
     store = MetricStore(
         history_window_seconds=60,
         sample_interval_seconds=1,
-        instance_id="server-test",
+        instance_id="33333333333333333333333333333333",
     )
     for marker in range(1, 7):
         store.publish(_snapshot(marker * 1_000, marker))
@@ -64,24 +68,25 @@ def test_versioned_snapshot_history_and_capabilities_are_bounded():
         base_url = f"http://127.0.0.1:{server.server_address[1]}"
         with urlopen(f"{base_url}/api/v1/snapshot") as response:
             snapshot = json.loads(response.read().decode("utf-8"))
-        assert snapshot["instanceId"] == "server-test"
+        assert snapshot["instanceId"] == "33333333333333333333333333333333"
+        assert snapshot["contractVersion"] == "1.0"
         assert "history" not in snapshot
 
         history_url = (
             f"{base_url}/api/v1/history"
-            "?metrics=cpu&from=1000&to=6000&maxPoints=2"
+            "?metrics=system.cpu.utilization.percent&from=1000&to=6000&maxPoints=2"
         )
         with urlopen(history_url) as response:
             history = json.loads(response.read().decode("utf-8"))
         assert history["sourcePointCount"] == 6
         assert history["pointCount"] <= 2
-        assert history["metrics"] == ["cpu"]
-        assert set(history["points"][0]["stats"]["cpu"]) == {
-            "min",
-            "max",
-            "avg",
-            "last",
-        }
+        assert history["query"]["metricIds"] == [
+            "system.cpu.utilization.percent"
+        ]
+        cpu_stats = history["points"][0]["metrics"][
+            "system.cpu.utilization.percent"
+        ]
+        assert set(cpu_stats) == {"unit", "min", "max", "avg", "last"}
 
         with urlopen(f"{base_url}/api/v1/capabilities") as response:
             capabilities = json.loads(response.read().decode("utf-8"))
@@ -112,7 +117,7 @@ def test_history_endpoint_rejects_unbounded_or_invalid_queries():
         for query in (
             "maxPoints=5001",
             "maxPoints=not-a-number",
-            "metrics=gpu",
+            "metrics=system.gpu.utilization.percent",
             "from=2000&to=1000",
         ):
             try:

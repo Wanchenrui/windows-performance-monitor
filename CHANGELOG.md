@@ -1,4 +1,31 @@
-# 变更记录
+﻿# 变更记录
+
+## 0.3.0
+
+变更点：
+
+- 冻结与产品版本解耦的 `contractVersion=1.0`，建立 snapshot、history、
+  capabilities、health、error 和兼容 stats 的 JSON Schema。
+- 定义稳定 metric/provider/source ID、单位、质量三维模型和跨语言错误码；
+  Python/C# 异常类名不再进入新契约。
+- 增加 scheduled/started/completed UTC 与 per-provider 观测时间，进程身份契约
+  包含 PID 和 creation time。
+- 增加正常、partial、stale、permission denied 和 PID reuse/process churn
+  golden fixtures，Python 输出需通过 Schema。
+- 增加 `net10.0` Contracts DTO 和 .NET fixture 反序列化/未知字段兼容测试。
+- 采用 ADR-002～007，冻结进程权限、Provider 调度、SQLite、Named Pipe 和
+  Python 退役门禁。
+
+潜在风险：
+
+- `/api/v1/*` 从 0.2.1 的过渡结构切换到正式 contract v1；仓库内前端已
+  迁移，外部实验客户端应按 Schema 更新。
+- Python 仍是同步参考采集器，独立 Provider 调度要到 0.4.0 的 .NET Agent
+  实现，不能误认为 ADR 已经等同运行时代码。
+
+回退：
+
+- 可回退到 `v0.2.1`；本阶段没有 SQLite 或安装数据迁移。
 
 ## 0.2.1
 

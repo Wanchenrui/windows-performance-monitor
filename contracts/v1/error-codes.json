@@ -1,0 +1,12 @@
+{
+  "contractVersion": "1.0",
+  "errorCodes": [
+    "access_denied",
+    "process_exited",
+    "not_supported",
+    "timeout",
+    "invalid_data",
+    "resource_exhausted",
+    "provider_failure"
+  ]
+}

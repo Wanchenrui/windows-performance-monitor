@@ -1,9 +1,10 @@
-# 电脑性能监控
+﻿# 电脑性能监控
 
-当前版本为 `0.2.1`：一个完成基线封口的 Windows 10/11 本地性能监控
-参考实现。它仍不是商业成品，后续功能将在独立的 .NET Agent 架构中演进。
+当前版本为 `0.3.0`：已冻结语言无关 contract v1 的 Windows 10/11 本地
+性能监控参考实现。Python 采集器从本版本起作为指标口径 oracle，不再扩展
+GPU、温度、诊断或优化动作。
 
-## 0.2 的工程边界
+## 0.3 的工程边界
 
 - 系统与进程指标由 `psutil` 的 Windows 原生后端采集，不再周期性启动
   PowerShell/WMI 子进程。
@@ -16,7 +17,7 @@
 
 ## 首次运行
 
-要求：Windows 10/11、64 位 Python 3.12。
+运行要求：Windows 10/11、64 位 Python 3.12。契约跨语言测试另需 .NET 10 SDK。
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\setup.ps1
@@ -84,18 +85,18 @@ U_p=100\%\times
 
 ## 本地接口
 
-- `GET /api/v1/snapshot`：不含历史的原子实时快照、随机 `instanceId`、
-  采样序号、时间、数据年龄、调度抖动、累计缺口和采集错误。
-- `GET /api/v1/history?metrics=cpu,mem&from=...&to=...&maxPoints=2000`：
+- `GET /api/v1/snapshot`：contract v1 原子快照；每组包含 Provider、观测
+  时间、availability、freshness、coverage、稳定错误码和带单位指标。
+- `GET /api/v1/history?metrics=system.cpu.utilization.percent,...&from=...&to=...&maxPoints=2000`：
   有界历史查询。`from/to` 为 Unix 毫秒时间戳；`maxPoints` 允许
-  1～5,000。发生降采样时，每个时间桶保留 `min/max/avg/last`。
-- `GET /api/v1/capabilities`：接口、历史指标、RAM 点数和查询上限。
-- `GET /api/v1/health`：实例标识、版本和简要健康状态。
-- `GET /api/stats`：0.2 兼容适配器，返回 `Deprecation: true`，历史最多
-  2,000 点；新客户端不得继续依赖该接口。
-- `GET /api/health`：健康接口的兼容路径。
+  1～5,000。降采样时间桶保留 `min/max/avg/last`。
+- `GET /api/v1/capabilities`：Provider、指标、稳定错误码、端点和限制。
+- `GET /api/v1/health` 与 `GET /api/health`：contract v1 轻量健康响应。
+- `GET /api/stats`：旧 `apiVersion=0.2.1` 的 deprecated 有界适配器；新
+  客户端不得依赖。
 
-API 版本为 `0.2.1`。产品版本与正式契约版本将在 0.3.0 起解耦。
+产品版本为 `0.3.0`，公开 `contractVersion` 独立固定为 `1.0`。Schema、
+ID 目录、兼容规则、IPC framing 与 golden fixtures 位于 `contracts/v1/`。
 
 ## 测试
 
@@ -104,8 +105,14 @@ API 版本为 `0.2.1`。产品版本与正式契约版本将在 0.3.0 起解耦�
 ```
 
 测试覆盖进程 CPU 公式、指标单位与来源、历史时间/绝对点数双重裁剪、
-服务端降采样统计、`partial + stale`、并发快照一致性、实例伪造防护、
-固定周期缺口计算和本地 HTTP 安全响应头。
+服务端降采样、质量语义、实例防伪、JSON Schema、golden fixture 再生成、
+所有公开 JSON 响应和未知新增字段兼容性。
+
+.NET 10 客户端 DTO 必须反序列化全部 Python fixtures：
+
+```powershell
+dotnet test .\PerfMonitor.slnx --configuration Release
+```
 
 在目标 Windows 机器上执行 10 秒参考计数器对照：
 
@@ -139,13 +146,17 @@ commit/dirty 状态、依赖锁文件哈希、完整 Python 版本与架构、Py
 ## 模块边界
 
 ```text
-app.py                      启动、单实例、托盘、生命周期
-perf_monitor/collector.py   Windows 原生指标 Provider
-perf_monitor/sampling.py    固定周期调度
-perf_monitor/store.py       原子快照与 RAM 时间窗口
-perf_monitor/server.py      版本化本地 HTTP/静态资源
-static/                     无外部依赖的浏览器客户端
-tests/                      指标、调度、并发和接口测试
+app.py                              启动、单实例、托盘、生命周期
+perf_monitor/collector.py           Python 指标语义参考 Provider
+perf_monitor/contract_v1.py         旧采集结果到 contract v1 的适配器
+perf_monitor/errors.py              跨语言稳定错误码映射
+perf_monitor/sampling.py            固定周期与显式时间语义
+perf_monitor/store.py               原子快照与有界 RAM 历史
+perf_monitor/server.py              contract v1 HTTP/兼容适配器
+contracts/v1/                       Schema、ID 目录、IPC 与 fixtures
+src/PerfMonitor.Contracts/          net10.0 DTO
+static/                             contract v1 浏览器客户端
+tests/                              Python 与 .NET 契约门禁
 ```
 
 该拆分是原型迁移边界，不代表最终商业架构。后续原生代理、SQLite、IPC、
@@ -153,7 +164,7 @@ tests/                      指标、调度、并发和接口测试
 
 ## 回退与已知风险
 
-- `v0.2.0` 是已提交并打标签的可信化原型基线；0.2.1 可直接按该标签执行
-  源码级和产物级回退，不涉及数据迁移。
+- `v0.2.1` 是 Python 基线封口标签；0.3.0 可直接回退到该标签，不涉及
+  数据库或安装格式迁移。
 - 低于 1 秒的采样会增加进程枚举开销，只用于测试，不建议作为默认配置。
 - 传感器、GPU 和温度尚未实现；界面不会用 0 代替这些缺失能力。

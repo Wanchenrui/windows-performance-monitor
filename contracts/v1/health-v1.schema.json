@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.perfmonitor.local/v1/health-v1.schema.json",
+  "title": "PerfMonitor Health Contract v1",
+  "type": "object",
+  "required": [
+    "contractVersion",
+    "productVersion",
+    "service",
+    "instanceId",
+    "sequence",
+    "completedAtUtc",
+    "summary"
+  ],
+  "properties": {
+    "contractVersion": {"const": "1.0"},
+    "productVersion": {"type": "string", "minLength": 1},
+    "service": {"const": "perf-monitor"},
+    "instanceId": {"type": "string", "pattern": "^[0-9a-f]{32}$"},
+    "sequence": {"type": "integer", "minimum": 0},
+    "completedAtUtc": {
+      "anyOf": [
+        {"type": "string", "format": "date-time"},
+        {"type": "null"}
+      ]
+    },
+    "summary": {
+      "type": "object",
+      "required": ["availability", "freshness"],
+      "properties": {
+        "availability": {
+          "enum": [
+            "available",
+            "partial",
+            "unavailable",
+            "not_supported",
+            "permission_denied",
+            "timeout",
+            "error"
+          ]
+        },
+        "freshness": {"enum": ["warming_up", "fresh", "stale"]}
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}

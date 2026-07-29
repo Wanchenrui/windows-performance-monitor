@@ -1,0 +1,61 @@
+{
+  "contractVersion": "1.0",
+  "productVersion": "0.3.0",
+  "instanceId": "11111111111111111111111111111111",
+  "query": {
+    "metricIds": [
+      "system.cpu.utilization.percent",
+      "system.memory.utilization.percent"
+    ],
+    "fromEpochMs": 1775030399000,
+    "toEpochMs": 1775030400000,
+    "maxPoints": 2
+  },
+  "sourcePointCount": 2,
+  "pointCount": 2,
+  "downsampled": false,
+  "points": [
+    {
+      "startEpochMs": 1775030399000,
+      "endEpochMs": 1775030399000,
+      "sequence": 41,
+      "metrics": {
+        "system.cpu.utilization.percent": {
+          "unit": "percent",
+          "min": 20.0,
+          "max": 20.0,
+          "avg": 20.0,
+          "last": 20.0
+        },
+        "system.memory.utilization.percent": {
+          "unit": "percent",
+          "min": 60.0,
+          "max": 60.0,
+          "avg": 60.0,
+          "last": 60.0
+        }
+      }
+    },
+    {
+      "startEpochMs": 1775030400000,
+      "endEpochMs": 1775030400000,
+      "sequence": 42,
+      "metrics": {
+        "system.cpu.utilization.percent": {
+          "unit": "percent",
+          "min": 23.5,
+          "max": 23.5,
+          "avg": 23.5,
+          "last": 23.5
+        },
+        "system.memory.utilization.percent": {
+          "unit": "percent",
+          "min": 61.2,
+          "max": 61.2,
+          "avg": 61.2,
+          "last": 61.2
+        }
+      }
+    }
+  ]
+}

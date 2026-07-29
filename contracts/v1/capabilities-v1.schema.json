@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.perfmonitor.local/v1/capabilities-v1.schema.json",
+  "title": "PerfMonitor Capabilities Contract v1",
+  "type": "object",
+  "required": [
+    "contractVersion",
+    "productVersion",
+    "instanceId",
+    "groups",
+    "history",
+    "endpoints",
+    "stableErrorCodes"
+  ],
+  "properties": {
+    "contractVersion": {"const": "1.0"},
+    "productVersion": {"type": "string", "minLength": 1},
+    "instanceId": {"type": "string", "pattern": "^[0-9a-f]{32}$"},
+    "groups": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["groupId", "providerId", "defaultPeriodMs", "requiredPrivilege", "costClass"],
+        "properties": {
+          "groupId": {"type": "string", "minLength": 1},
+          "providerId": {"type": "string", "minLength": 1},
+          "defaultPeriodMs": {"type": "integer", "minimum": 1},
+          "requiredPrivilege": {"enum": ["user", "administrator", "system"]},
+          "costClass": {"enum": ["low", "medium", "high"]}
+        },
+        "additionalProperties": true
+      }
+    },
+    "history": {
+      "type": "object",
+      "required": ["metricIds", "defaultMaxPoints", "maxPoints", "ramPointLimit", "aggregations"],
+      "properties": {
+        "metricIds": {"type": "array", "items": {"type": "string"}},
+        "defaultMaxPoints": {"type": "integer", "minimum": 1},
+        "maxPoints": {"type": "integer", "minimum": 1, "maximum": 5000},
+        "ramPointLimit": {"type": "integer", "minimum": 1},
+        "aggregations": {
+          "type": "array",
+          "contains": {"const": "last"},
+          "items": {"enum": ["min", "max", "avg", "last"]}
+        }
+      },
+      "additionalProperties": true
+    },
+    "endpoints": {
+      "type": "object",
+      "required": ["snapshot", "history", "capabilities", "health"],
+      "additionalProperties": {"type": "string"}
+    },
+    "stableErrorCodes": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"type": "string"}
+    }
+  },
+  "additionalProperties": true
+}

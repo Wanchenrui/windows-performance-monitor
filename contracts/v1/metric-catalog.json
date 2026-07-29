@@ -1,0 +1,25 @@
+{
+  "contractVersion": "1.0",
+  "metrics": [
+    {"metricId": "system.cpu.utilization.percent", "unit": "percent", "valueType": "number", "sourceIds": ["windows.system-cpu-times.v1"]},
+    {"metricId": "system.cpu.logical_processor.count", "unit": "count", "valueType": "integer", "sourceIds": ["windows.system-cpu-times.v1"]},
+    {"metricId": "system.memory.utilization.percent", "unit": "percent", "valueType": "number", "sourceIds": ["windows.global-memory-status-ex.v1"]},
+    {"metricId": "system.memory.used.bytes", "unit": "byte", "valueType": "integer", "sourceIds": ["windows.global-memory-status-ex.v1"]},
+    {"metricId": "system.memory.available.bytes", "unit": "byte", "valueType": "integer", "sourceIds": ["windows.global-memory-status-ex.v1"]},
+    {"metricId": "system.memory.total.bytes", "unit": "byte", "valueType": "integer", "sourceIds": ["windows.global-memory-status-ex.v1"]},
+    {"metricId": "system.volume.utilization.percent", "unit": "percent", "valueType": "number", "sourceIds": ["windows.volume-api.v1"]},
+    {"metricId": "system.volume.used.bytes", "unit": "byte", "valueType": "integer", "sourceIds": ["windows.volume-api.v1"]},
+    {"metricId": "system.volume.free.bytes", "unit": "byte", "valueType": "integer", "sourceIds": ["windows.volume-api.v1"]},
+    {"metricId": "system.volume.total.bytes", "unit": "byte", "valueType": "integer", "sourceIds": ["windows.volume-api.v1"]},
+    {"metricId": "system.uptime.seconds", "unit": "second", "valueType": "integer", "sourceIds": ["windows.boot-time.v1"]},
+    {"metricId": "process.cpu.normalized.percent", "unit": "percent", "valueType": "number", "sourceIds": ["windows.get-process-times.v1"]},
+    {"metricId": "process.cpu.core_equivalent.percent", "unit": "percent", "valueType": "number", "sourceIds": ["windows.get-process-times.v1"]},
+    {"metricId": "process.memory.working_set.bytes", "unit": "byte", "valueType": "integer", "sourceIds": ["windows.k32-process-memory-info.v1"]},
+    {"metricId": "process.memory.private.bytes", "unit": "byte", "valueType": "integer", "sourceIds": ["windows.k32-process-memory-info.v1"]},
+    {"metricId": "sampler.interval.seconds", "unit": "second", "valueType": "number", "sourceIds": ["perfmonitor.monotonic-scheduler.v1"]},
+    {"metricId": "sampler.duration.milliseconds", "unit": "millisecond", "valueType": "number", "sourceIds": ["perfmonitor.monotonic-scheduler.v1"]},
+    {"metricId": "sampler.jitter.milliseconds", "unit": "millisecond", "valueType": "number", "sourceIds": ["perfmonitor.monotonic-scheduler.v1"]},
+    {"metricId": "sampler.missed_intervals.count", "unit": "count", "valueType": "integer", "sourceIds": ["perfmonitor.monotonic-scheduler.v1"]},
+    {"metricId": "sampler.skipped_intervals.count", "unit": "count", "valueType": "integer", "sourceIds": ["perfmonitor.monotonic-scheduler.v1"]}
+  ]
+}

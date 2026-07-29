@@ -36,8 +36,31 @@ jobs:
       - name: Run tests
         run: python -m pytest
 
+  contract-dotnet:
+    runs-on: windows-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up .NET 10 SDK
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: "10.0.302"
+          cache: true
+          cache-dependency-path: |
+            src/PerfMonitor.Contracts/packages.lock.json
+            tests/PerfMonitor.ContractTests/packages.lock.json
+
+      - name: Restore locked .NET dependencies
+        run: dotnet restore .\PerfMonitor.slnx --locked-mode
+
+      - name: Deserialize Python golden fixtures in .NET
+        run: dotnet test .\PerfMonitor.slnx --configuration Release --no-restore
+
   build-and-smoke:
-    needs: test
+    needs: [test, contract-dotnet]
     runs-on: windows-latest
     timeout-minutes: 25
 
