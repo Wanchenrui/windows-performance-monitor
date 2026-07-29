@@ -35,3 +35,45 @@ jobs:
 
       - name: Run tests
         run: python -m pytest
+
+  build-and-smoke:
+    needs: test
+    runs-on: windows-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: |
+            requirements.txt
+            requirements-dev.txt
+
+      - name: Create verified Python 3.12 environment
+        shell: powershell
+        run: .\scripts\setup.ps1
+
+      - name: Build Windows executable
+        shell: powershell
+        run: .\scripts\build.ps1
+
+      - name: Smoke-test executable lifecycle
+        shell: powershell
+        run: .\scripts\smoke.ps1
+
+      - name: Upload executable and build manifest
+        uses: actions/upload-artifact@v4
+        with:
+          name: perf-monitor-${{ github.sha }}
+          path: |
+            dist/perf-monitor.exe
+            dist/build-manifest.json
+          if-no-files-found: error
+          retention-days: 14
