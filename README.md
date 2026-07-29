@@ -150,9 +150,9 @@ CPU/内存均值绝对差默认不得超过 3/1 个百分点；P95 会记录为�
   -OutputPath .\artifacts\agent-soak-72h.json
 ```
 
-CI 另运行短时真实进程资源门禁，并用单元测试快速推进 259,200 个绝对期限。
-短时/虚拟结果不能替代 `release72HourGate.actualWallClockPassed=true` 的
-真实墙钟证据。
+CI 另运行短时真实进程资源门禁，并用单元测试快速推进 259,200 个绝对期限
+和 259,200 次快照替换。短时/虚拟结果不能替代
+`release72HourGate.actualWallClockPassed=true` 的真实墙钟证据。
 
 在目标 Windows 机器上执行 10 秒参考计数器对照：
 
