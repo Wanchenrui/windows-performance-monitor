@@ -12,6 +12,7 @@ public sealed class AgentOptionsTests
         var options = AgentOptions.Parse(
             [
                 "--once",
+                "--quiet",
                 "--warmup-seconds",
                 "2.5",
                 "--max-concurrency",
@@ -19,6 +20,7 @@ public sealed class AgentOptionsTests
             ]);
 
         Assert.IsTrue(options.Once);
+        Assert.IsTrue(options.Quiet);
         Assert.AreEqual(TimeSpan.FromSeconds(2.5), options.Warmup);
         Assert.AreEqual(2, options.MaxConcurrency);
     }

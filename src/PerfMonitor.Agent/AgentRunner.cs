@@ -31,7 +31,8 @@ public static class AgentRunner
                 assembler.Read(),
                 options.OutputPath,
                 append: false,
-                cancellationToken).ConfigureAwait(false);
+                quiet: options.Quiet,
+                cancellationToken: cancellationToken).ConfigureAwait(false);
             return 0;
         }
 
@@ -53,6 +54,7 @@ public static class AgentRunner
                     assembler.Read(),
                     options.OutputPath,
                     append,
+                    options.Quiet,
                     durationCancellation.Token).ConfigureAwait(false);
                 append = true;
                 await Task.Delay(
@@ -70,6 +72,7 @@ public static class AgentRunner
                     assembler.Read(),
                     options.OutputPath,
                     append,
+                    options.Quiet,
                     CancellationToken.None).ConfigureAwait(false);
             }
         }
@@ -81,12 +84,19 @@ public static class AgentRunner
         AgentSnapshot snapshot,
         string? outputPath,
         bool append,
+        bool quiet,
         CancellationToken cancellationToken)
     {
         ValidateCoreGroups(snapshot);
         var json = AgentJson.Serialize(snapshot);
-        await Console.Out.WriteLineAsync(json.AsMemory(), cancellationToken)
-            .ConfigureAwait(false);
+        if (!quiet)
+        {
+            // v0.4.0: 长稳模式禁止把快照同时复制到控制台。
+            await Console.Out.WriteLineAsync(
+                    json.AsMemory(),
+                    cancellationToken)
+                .ConfigureAwait(false);
+        }
         if (outputPath is null)
         {
             return;

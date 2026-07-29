@@ -26,18 +26,21 @@ public sealed class ProcessProvider : IMetricProvider
         var rows = new List<ProcessRow>(processes.Length);
         var current = new Dictionary<ProcessIdentity, ProcessBaseline>();
         var reasons = new Dictionary<string, int>(StringComparer.Ordinal);
+        var enumerated = 0;
 
         foreach (var process in processes)
         {
             using (process)
             {
+                enumerated++;
                 cancellationToken.ThrowIfCancellationRequested();
                 try
                 {
                     var pid = process.Id;
                     if (pid == 0)
                     {
-                        Increment(reasons, StableErrorCodes.NotSupported);
+                        // v0.4.0: Idle 是伪进程，不属于可查询进程覆盖率。
+                        enumerated--;
                         continue;
                     }
 
@@ -95,7 +98,6 @@ public sealed class ProcessProvider : IMetricProvider
             data.Add(ToJson(row));
         }
 
-        var enumerated = processes.Length;
         var readable = rows.Count;
         var skipped = Math.Max(0, enumerated - readable);
         var availability = readable == 0

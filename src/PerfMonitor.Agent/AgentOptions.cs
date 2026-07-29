@@ -2,6 +2,7 @@ namespace PerfMonitor.Agent;
 
 public sealed record AgentOptions(
     bool Once,
+    bool Quiet,
     TimeSpan? Duration,
     TimeSpan Warmup,
     TimeSpan OutputPeriod,
@@ -11,6 +12,7 @@ public sealed record AgentOptions(
     public static AgentOptions Parse(IReadOnlyList<string> arguments)
     {
         var once = false;
+        var quiet = false;
         TimeSpan? duration = null;
         var warmup = TimeSpan.FromSeconds(3);
         var outputPeriod = TimeSpan.FromSeconds(1);
@@ -24,6 +26,9 @@ public sealed record AgentOptions(
             {
                 case "--once":
                     once = true;
+                    break;
+                case "--quiet":
+                    quiet = true;
                     break;
                 case "--duration-seconds":
                     duration = TimeSpan.FromSeconds(
@@ -66,6 +71,7 @@ public sealed record AgentOptions(
 
         return new AgentOptions(
             once,
+            quiet,
             duration,
             warmup,
             outputPeriod,

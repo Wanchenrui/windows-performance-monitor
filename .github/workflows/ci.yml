@@ -38,7 +38,7 @@ jobs:
 
   contract-dotnet:
     runs-on: windows-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
 
     steps:
       - name: Checkout
@@ -51,10 +51,23 @@ jobs:
           cache: true
           cache-dependency-path: "**/packages.lock.json"
 
+      - name: Set up Python oracle
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: |
+            requirements.txt
+            requirements-dev.txt
+
+      - name: Create verified Python oracle environment
+        shell: powershell
+        run: .\scripts\setup.ps1
+
       - name: Restore locked .NET dependencies
         run: dotnet restore .\PerfMonitor.slnx --locked-mode
 
-      - name: Run contract, Agent, differential, and soak gates
+      - name: Run .NET contract, Agent, and virtual 72-hour gates
         run: dotnet test .\PerfMonitor.slnx --configuration Release --no-restore
 
       - name: Publish and smoke-test .NET Agent
@@ -65,7 +78,7 @@ jobs:
             --output .\artifacts\agent
           if ($LASTEXITCODE -ne 0) { throw ".NET Agent publish failed" }
           .\artifacts\agent\perf-monitor-agent.exe `
-            --once --warmup-seconds 3 `
+            --once --quiet --warmup-seconds 3 `
             --output .\artifacts\agent-snapshot.json
           if ($LASTEXITCODE -ne 0) { throw ".NET Agent smoke test failed" }
           $Snapshot = Get-Content `
@@ -86,6 +99,25 @@ jobs:
             }
           }
 
+      - name: Run Python versus .NET differential gate
+        shell: powershell
+        run: |
+          .\scripts\compare_agents.ps1 `
+            -AgentPath .\artifacts\agent\perf-monitor-agent.exe `
+            -Samples 15 `
+            -OutputPath .\artifacts\agent-differential.json
+
+      - name: Run accelerated live resource soak gate
+        shell: powershell
+        run: |
+          .\scripts\run_agent_soak.ps1 `
+            -AgentPath .\artifacts\agent\perf-monitor-agent.exe `
+            -DurationSeconds 45 `
+            -WarmupSeconds 3 `
+            -ProbeIntervalSeconds 5 `
+            -SnapshotPeriodSeconds 5 `
+            -OutputPath .\artifacts\agent-soak-accelerated.json
+
       - name: Upload .NET Agent evidence
         uses: actions/upload-artifact@v4
         with:
@@ -93,6 +125,8 @@ jobs:
           path: |
             artifacts/agent/**
             artifacts/agent-snapshot.json
+            artifacts/agent-differential.json
+            artifacts/agent-soak-accelerated.json
           if-no-files-found: error
           retention-days: 14
 
