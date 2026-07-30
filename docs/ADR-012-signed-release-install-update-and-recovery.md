@@ -3,7 +3,8 @@
 - 状态：Accepted
 - 目标版本：1.0.0
 - 日期：2026-07-30
-- 实现状态：设计冻结，门禁实现中
+- 实现状态：代码门禁与支持矩阵工作流已实现，真实 72 小时/四机矩阵/
+  生产签名证据待完成
 
 ## 结论
 
@@ -23,6 +24,7 @@ Feature；只有显式选择该 Feature 时才安装 LocalSystem 服务。
 \land \mathrm{SBOM}
 \land \mathrm{Authenticode}
 \land \mathrm{UpdateManifestSignature}
+\land \mathrm{SupportMatrix}
 \land \mathrm{Provenance}
 \]
 
@@ -63,21 +65,34 @@ TFM 中的 `windows10.0.17763.0` 只是 API 最低绑定，不代表对已经结
 
 发布顺序固定为：
 
-1. 发布所有 RID 固定的二进制；
+1. 发布所有 RID 固定的二进制，并生成明确不可发布的签名前 build
+   manifest；
 2. 对 Agent、Desktop、Provider Worker、Broker 和支持工具执行
    Authenticode SHA-256 签名；
 3. 验证签名、证书 EKU、发布者、指纹和生产/测试模式；
-4. 生成包含已签名文件 SHA-256 的 build manifest；
-5. 构建 MSI；
-6. 对 MSI 执行 Authenticode SHA-256 签名并再次验证；
-7. 生成 CycloneDX SBOM 和发布包摘要；
-8. 生成 update manifest，并用同一发布者证书创建 detached CMS 签名；
-9. 在 GitHub 发布作业中为最终 MSI、update manifest 和 SBOM 建立
+4. 构建 MSI；
+5. 对 MSI 执行 Authenticode SHA-256 签名并再次验证；
+6. 运行安装、恢复、资源、隐私和 Broker 门禁；
+7. 校验由指定 GitHub workflow 对同一 commit 生成并证明的四目标支持
+   矩阵 evidence；
+8. 生成 CycloneDX SBOM、漏洞报告和包含所有已签名文件 SHA-256 的
+   final release manifest；
+9. 生成 update manifest，并用同一发布者证书创建 detached CMS
+   SHA-256 签名；
+10. 在 GitHub 发布作业中为最终 MSI、update manifest、SBOM 和 final
+   release manifest 建立
    artifact attestation。
 
 生产模式要求 RFC 3161 时间戳、Code Signing EKU、非自签链以及配置的
 发布者主体/指纹。PFX、密码和私钥不得写入仓库、日志、manifest 或 artifact。
 测试模式生成短期自签证书，只用于证明签名和篡改检测代码可执行。
+
+支持矩阵 evidence 必须精确包含 Windows 11 24H2 build 26100、Windows
+11 25H2 build 26200、Windows Server 2022 build 20348 Desktop Experience
+和 Windows Server 2025 build 26100 Desktop Experience。矩阵 workflow
+在安装前校验主机，四台机器使用同一个 MSI；聚合结果单独 attested。
+production 通过 run ID 下载它，并固定 signer workflow 与 source commit。
+文档中的“支持”不能代替该机器证据。
 
 ## 更新清单
 
@@ -123,6 +138,10 @@ migration 事务失败时数据库保持旧 schema，backup 保留。新版本�
 当前 MSI、安装上一份已签名 MSI，并且只在管理员确认会丢弃升级后数据时，
 用哈希和 schema 均匹配的 backup 恢复。
 
+Support 恢复还必须持有与 Agent 相同的 `.agent.lock` 排他锁，校验 manifest
+中的源文件名与目标库一致，并在同卷验证临时副本后原子替换。Agent 未停止、
+WAL/SHM 仍存在、目标错配或最终复验失败时一律拒绝。
+
 v1.0 不新增用户数据库 schema，当前版本仍为 schema 2，因此回退到
 v0.7.2 不需要数据变换。门禁仍对 schema 1 -> 2 backup、失败回滚、WAL
 异常终止恢复和“新 schema 拒绝旧二进制写入”进行测试，为后续 migration
@@ -139,13 +158,17 @@ v0.7.2 不需要数据变换。门禁仍对 schema 1 -> 2 backup、失败回滚�
 | retained private growth | 32 MiB |
 | GC heap growth | 16 MiB |
 | mean CPU, one logical core equivalent | 20% |
-| handles | 512 |
+| handles peak | 768 |
+| retained handle growth | 64 |
 | threads | 64 |
 
-这些是软件门禁，不是硬件物理极限。短 CI gate 与真实 72 小时 gate 使用同一
-计算公式；72 小时证据必须按真实墙钟通过，不能由虚拟时间代替。Provider
-超时和 Broker 请求不占用同一调度槽，新增签名/更新/诊断代码不进入采样
-热路径。
+这些是软件门禁，不是硬件物理极限。句柄峰值在含 384 个系统进程的本地
+目标机上实测为 567；其中 Agent 无 Worker 为 486、启用 Worker/IPC 后稳态
+约 499～530。峰值因此按实测值加 25% 余量后向上取 256 边界为 768，同时
+新增首尾 20% 中位数差不超过 64 的增长门禁，避免放宽峰值后掩盖句柄泄漏。
+短 CI gate 与真实 72 小时 gate 使用同一计算公式；72 小时证据必须按真实
+墙钟通过，不能由虚拟时间代替。Provider 超时和 Broker 请求不占用同一
+调度槽，新增签名/更新/诊断代码不进入采样热路径。
 
 ## 隐私与诊断
 

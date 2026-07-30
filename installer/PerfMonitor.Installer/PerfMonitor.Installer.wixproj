@@ -1,0 +1,53 @@
+<Project Sdk="WixToolset.Sdk/7.0.0">
+  <PropertyGroup>
+    <OutputName>PerfMonitor-$(Version)-win-x64</OutputName>
+    <InstallerPlatform>x64</InstallerPlatform>
+    <Cultures>en-US</Cultures>
+    <DefaultCompressionLevel>high</DefaultCompressionLevel>
+    <PayloadRoot Condition="'$(PayloadRoot)' == ''">$(MSBuildThisFileDirectory)..\..\dist</PayloadRoot>
+    <PerfMonitorPublisher Condition="'$(PerfMonitorPublisher)' == ''">$(Company)</PerfMonitorPublisher>
+    <DefineConstants>
+      ProductVersion=$(Version);
+      ProductManufacturer=$(PerfMonitorPublisher)
+    </DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference
+        Include="WixToolset.Netfx.wixext"
+        Version="7.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <BindPath Include="$(PayloadRoot)\agent">
+      <BindName>Agent</BindName>
+    </BindPath>
+    <BindPath Include="$(PayloadRoot)\desktop">
+      <BindName>Desktop</BindName>
+    </BindPath>
+    <BindPath Include="$(PayloadRoot)\support">
+      <BindName>Support</BindName>
+    </BindPath>
+    <BindPath Include="$(PayloadRoot)\broker">
+      <BindName>Broker</BindName>
+    </BindPath>
+  </ItemGroup>
+
+  <Target Name="ValidateReleaseInputs" BeforeTargets="Build">
+    <Error
+        Condition="'$(AcceptEula)' != 'wix7'"
+        Text="WiX 7 requires explicit EULA acceptance. Review the WiX 7 OSMF/EULA and pass -p:AcceptEula=wix7 only after acceptance." />
+    <Error
+        Condition="!Exists('$(PayloadRoot)\agent\perf-monitor-agent.exe')"
+        Text="Agent payload is missing. Run scripts\build.ps1 first." />
+    <Error
+        Condition="!Exists('$(PayloadRoot)\desktop\perf-monitor-desktop.exe')"
+        Text="Desktop payload is missing. Run scripts\build.ps1 first." />
+    <Error
+        Condition="!Exists('$(PayloadRoot)\support\perf-monitor-support.exe')"
+        Text="Support payload is missing. Run scripts\build.ps1 first." />
+    <Error
+        Condition="!Exists('$(PayloadRoot)\broker\perf-monitor-broker.exe')"
+        Text="Broker payload is missing. Run scripts\build.ps1 first." />
+  </Target>
+</Project>

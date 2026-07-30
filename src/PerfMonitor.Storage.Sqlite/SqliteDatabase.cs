@@ -4,7 +4,7 @@ namespace PerfMonitor.Storage.Sqlite;
 
 internal sealed class SqliteDatabase
 {
-    private const int CurrentSchemaVersion = 2;
+    public const int CurrentSchemaVersion = 2;
     private static readonly Lazy<bool> ProviderInitialization = new(
         static () =>
         {
@@ -48,15 +48,74 @@ internal sealed class SqliteDatabase
             Directory.CreateDirectory(directory);
         }
 
+        // v1.0: compatibility and recovery preparation must happen
+        // before the first writable connection. PRAGMA journal_mode=WAL
+        // itself mutates the database, so opening writable first would
+        // violate the old-binary/new-schema no-write guarantee.
+        int? preflightSchemaVersion = null;
+        if (File.Exists(_options.DatabasePath))
+        {
+            var preflight = await SqliteRecoveryManager.VerifyAsync(
+                _options.DatabasePath,
+                cancellationToken).ConfigureAwait(false);
+            if (!preflight.IntegrityPassed)
+            {
+                throw new InvalidDataException(
+                    "sqlite_integrity_check_failed");
+            }
+
+            preflightSchemaVersion = preflight.SchemaVersion;
+            if (preflight.SchemaVersion > CurrentSchemaVersion)
+            {
+                throw new InvalidDataException(
+                    "sqlite_schema_version_too_new");
+            }
+
+            if (preflight.SchemaVersion < CurrentSchemaVersion)
+            {
+                _ = await SqliteRecoveryManager
+                    .CreateMigrationBackupAsync(
+                        _options.DatabasePath,
+                        CurrentSchemaVersion,
+                        cancellationToken).ConfigureAwait(false);
+            }
+        }
+
         await using var connection = CreateReadWriteConnection();
         await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
+        // v1.0: do not enable WAL or issue any other persistent PRAGMA
+        // until the schema seen through the writable handle matches the
+        // read-only preflight. This closes the preflight/open race without
+        // weakening the single-writer timing model.
+        await VerifyIntegrityAsync(connection, cancellationToken)
+            .ConfigureAwait(false);
+        var sourceSchemaVersion = await ReadSchemaVersionAsync(
+            connection,
+            cancellationToken).ConfigureAwait(false);
+        if (
+            preflightSchemaVersion is not null &&
+            sourceSchemaVersion != preflightSchemaVersion.Value
+        )
+        {
+            throw new InvalidDataException(
+                "sqlite_schema_changed_during_initialization");
+        }
+
         await ConfigureConnectionAsync(
             connection,
             writable: true,
             cancellationToken).ConfigureAwait(false);
-        await VerifyIntegrityAsync(connection, cancellationToken)
-            .ConfigureAwait(false);
         await ApplyMigrationsAsync(connection, cancellationToken)
+            .ConfigureAwait(false);
+        var migratedSchemaVersion = await ReadSchemaVersionAsync(
+            connection,
+            cancellationToken).ConfigureAwait(false);
+        if (migratedSchemaVersion != CurrentSchemaVersion)
+        {
+            throw new InvalidDataException(
+                "sqlite_migration_version_invalid");
+        }
+        await VerifyIntegrityAsync(connection, cancellationToken)
             .ConfigureAwait(false);
 
         await using var checkpoint = connection.CreateCommand();
@@ -119,14 +178,9 @@ internal sealed class SqliteDatabase
         SqliteConnection connection,
         CancellationToken cancellationToken)
     {
-        await using var versionCommand = connection.CreateCommand();
-        versionCommand.CommandText = "PRAGMA user_version;";
-        var versionObject = await versionCommand
-            .ExecuteScalarAsync(cancellationToken)
-            .ConfigureAwait(false);
-        var version = Convert.ToInt32(
-            versionObject,
-            System.Globalization.CultureInfo.InvariantCulture);
+        var version = await ReadSchemaVersionAsync(
+            connection,
+            cancellationToken).ConfigureAwait(false);
         if (version > CurrentSchemaVersion)
         {
             throw new InvalidDataException(
@@ -152,6 +206,20 @@ internal sealed class SqliteDatabase
                 connection,
                 cancellationToken).ConfigureAwait(false);
         }
+    }
+
+    private static async Task<int> ReadSchemaVersionAsync(
+        SqliteConnection connection,
+        CancellationToken cancellationToken)
+    {
+        await using var versionCommand = connection.CreateCommand();
+        versionCommand.CommandText = "PRAGMA user_version;";
+        var versionObject = await versionCommand
+            .ExecuteScalarAsync(cancellationToken)
+            .ConfigureAwait(false);
+        return Convert.ToInt32(
+            versionObject,
+            System.Globalization.CultureInfo.InvariantCulture);
     }
 
     private static async Task ApplyVersion1Async(

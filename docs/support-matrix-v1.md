@@ -11,7 +11,28 @@
 
 “支持”表示整个已签名安装、运行、升级和卸载链路，而不是只表示某个
 `.dll` 可以加载。Server Core 没有 Desktop UI，因此不列入 v1.0 Desktop
-支持矩阵。
+支持矩阵；MSI 同时读取 `InstallationType`，Server 目标只有值为
+`Server`（Desktop Experience）时才允许安装，`Server Core` 会在
+LaunchCondition 阶段阻止。
+
+## 发布证据
+
+`.github/workflows/support-matrix.yml` 只从受保护的 `main` 或
+`v1.0.0` 运行，并要求四个专用 self-hosted runner：
+
+| 目标 | Runner label | 强制主机身份 |
+|---|---|---|
+| Windows 11 24H2 | `perfmonitor-win11-24h2-x64` | build 26100、`Client`、24H2、x64 |
+| Windows 11 25H2 | `perfmonitor-win11-25h2-x64` | build 26200、`Client`、25H2、x64 |
+| Server 2022 Desktop | `perfmonitor-server2022-desktop-x64` | build 20348、`Server`、x64 |
+| Server 2025 Desktop | `perfmonitor-server2025-desktop-x64` | build 26100、`Server`、x64 |
+
+主机身份在调用 `msiexec` 前验证。四机必须消费同一个 MSI，并各自通过
+安装、升级、降级阻止、repair、Broker 服务/ACL、卸载保留、回装和受控
+回滚。聚合 JSON 必须符合
+`contracts/v1/support-matrix-evidence-v1.schema.json` 并由
+`actions/attest@v4` 建立来源证明。production 发布按 run ID 校验相同
+commit 与 signer workflow，少一机即 fail closed。
 
 ## 明确不支持
 

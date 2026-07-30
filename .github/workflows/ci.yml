@@ -26,6 +26,7 @@ jobs:
           cache-dependency-path: |
             requirements.txt
             requirements-dev.txt
+            requirements-audit.txt
 
       - name: Install locked dependencies
         run: python -m pip install --disable-pip-version-check -r requirements-dev.txt
@@ -156,6 +157,10 @@ jobs:
             --configuration Release --no-restore `
             --output .\artifacts\broker
           if ($LASTEXITCODE -ne 0) { throw ".NET Broker publish failed" }
+          dotnet publish .\src\PerfMonitor.Support\PerfMonitor.Support.csproj `
+            --configuration Release --no-restore `
+            --output .\artifacts\support
+          if ($LASTEXITCODE -ne 0) { throw ".NET Support publish failed" }
           if (
             Test-Path `
               -LiteralPath .\artifacts\agent\perf-monitor-broker.exe
@@ -210,6 +215,7 @@ jobs:
             artifacts/agent/**
             artifacts/desktop/**
             artifacts/broker/**
+            artifacts/support/**
             artifacts/agent-snapshot.json
             artifacts/agent-differential.json
             artifacts/agent-soak-accelerated.json
@@ -219,7 +225,7 @@ jobs:
   build-and-smoke:
     needs: [test, contract-dotnet]
     runs-on: windows-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
 
     steps:
       - name: Checkout
@@ -242,6 +248,7 @@ jobs:
           cache-dependency-path: |
             requirements.txt
             requirements-dev.txt
+            requirements-audit.txt
 
       - name: Create verified Python 3.12 environment
         shell: powershell
@@ -255,13 +262,54 @@ jobs:
         shell: powershell
         run: .\scripts\smoke.ps1
 
+      - name: Force WAL crash and verify recovery
+        shell: powershell
+        run: |
+          .\scripts\test_crash_recovery.ps1 `
+            -AgentPath .\dist\agent\perf-monitor-agent.exe `
+            -SupportPath .\dist\support\perf-monitor-support.exe |
+            Set-Content `
+              -LiteralPath .\artifacts\crash-recovery.json `
+              -Encoding utf8
+
       - name: Smoke-test isolated Broker dry-run lifecycle
         shell: powershell
         run: |
           .\scripts\smoke_broker.ps1 `
             -BrokerPath .\dist\broker\perf-monitor-broker.exe
 
-      - name: Upload .NET product and build manifest
+      - name: Scan NuGet and Python dependencies
+        shell: powershell
+        run: |
+          .\scripts\test_vulnerabilities.ps1 `
+            -OutputDirectory .\artifacts\vulnerability `
+            -BootstrapAuditTool
+
+      - name: Generate CycloneDX SBOM
+        shell: powershell
+        run: |
+          .\scripts\new_sbom.ps1 `
+            -OutputPath .\artifacts\PerfMonitor-sbom.cdx.json
+
+      - name: Validate v1 evidence contracts
+        shell: powershell
+        run: |
+          & .\.venv\Scripts\python.exe `
+            .\scripts\validate_evidence.py `
+            crash-recovery-evidence-v1.schema.json `
+            .\artifacts\crash-recovery.json
+          if ($LASTEXITCODE -ne 0) {
+            throw "Crash recovery evidence validation failed."
+          }
+          & .\.venv\Scripts\python.exe `
+            .\scripts\validate_evidence.py `
+            vulnerability-gate-v1.schema.json `
+            .\artifacts\vulnerability\vulnerability-gate.json
+          if ($LASTEXITCODE -ne 0) {
+            throw "Vulnerability evidence validation failed."
+          }
+
+      - name: Upload .NET product and v1 release evidence
         uses: actions/upload-artifact@v4
         with:
           name: perf-monitor-${{ github.sha }}
@@ -269,6 +317,10 @@ jobs:
             dist/agent/**
             dist/desktop/**
             dist/broker/**
+            dist/support/**
             dist/build-manifest.json
+            artifacts/crash-recovery.json
+            artifacts/vulnerability/**
+            artifacts/PerfMonitor-sbom.cdx.json
           if-no-files-found: error
           retention-days: 14

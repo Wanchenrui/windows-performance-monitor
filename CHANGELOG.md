@@ -1,5 +1,62 @@
 ﻿# 变更记录
 
+## 1.0.0
+
+变更点：
+
+- 新增单一 `win-x64`、per-machine WiX 7 MSI：Core 必选，包含非提权
+  Agent、Desktop、隔离 Provider Worker 和 Support/Recovery 工具；Broker
+  为默认不安装的可选 Feature，显式选择后才创建 LocalSystem 自动服务与
+  受保护 ProgramData 目录。
+- 新增生产/测试签名模式。Agent、Provider Worker、Desktop、Broker、
+  Support 与 MSI 使用 Authenticode SHA-256；生产证书必须具备 Code
+  Signing EKU、非自签链、固定主体/指纹和 HTTPS RFC 3161 时间戳。测试
+  自签证据永远不具备 production eligibility。
+- 新增 detached CMS 签名的 update manifest，并把产品版本、Git commit、
+  支持矩阵、MSI/SBOM 哈希与固定证书身份绑定；字节篡改、证书错配和测试/
+  生产模式错配均拒绝。
+- 新增 CycloneDX 1.6 SBOM、NuGet direct/transitive 与 Python
+  `pip-audit` 漏洞门禁、带到期时间和审查信息的显式豁免格式、最终 release
+  manifest，以及 GitHub OIDC artifact attestation。
+- Python oracle、测试和独立 `pip-audit` 环境的 Windows x64/CPython 3.12
+  direct/transitive wheel 全部固定 SHA-256；安装强制
+  `--require-hashes --only-binary=:all:`。
+- 新增 SQLite migration 前 online backup、backup 哈希/schema/完整性验证、
+  受控恢复和更高 schema 启动前拒写；真实 Agent 在 WAL 写入期间被强制
+  终止后，必须完整恢复并保持已提交序列。
+- 新增 Agent 文件锁单实例边界、Support 数据库校验/备份/恢复、结构化
+  allowlist 诊断导出与敏感模式 fail-closed 扫描。
+- migration 对任何现有旧 schema 都先备份并在提交后复验；受控恢复绑定
+  源文件名、要求 Agent 排他锁/干净 sidecar，并以同目录临时副本原子替换。
+- 新增 MSI 表契约和安装、升级、直接降级阻止、卸载数据保留、重装与受控
+  回滚/repair 测试；Server Core 被 LaunchCondition 明确阻止。Broker
+  另增加真实 Pipe 畸形 framing、截断 JSON、身份/命令
+  注入、并发重放、幂等冲突和断连渗透测试。
+- 冻结 Windows 11 24H2/25H2 与 Windows Server 2022/2025 Desktop
+  Experience x64 支持矩阵，以及 CPU、内存、GC、句柄和线程资源预算。
+- 新增四台专用 self-hosted runner 的支持矩阵工作流：安装前验证真实
+  build/架构/Desktop Experience，四机消费同一 MSI，聚合证据由 GitHub
+  attestation 绑定 workflow 与 commit；production 必须按 run ID 取回并
+  复验，不能用手工 JSON 绕过。
+
+潜在风险：
+
+- WiX 7 使用 OSMF EULA v1.1，MSI 构建必须由已审阅许可的操作者在每次
+  本地/CI 调用中显式传入 `wix7`；仓库不默认接受。
+- GitHub Windows runner 只能证明一个 Server x64 环境，不能替代所有
+  Windows 11/Server 目标的独立实机安装证据。
+- 正式生产候选还依赖外部受信代码签名证书、时间戳服务、真实 72 小时墙钟
+  证据及精确 GitHub run/attestation；任一缺失时只能称为 test candidate。
+- 卸载默认保留用户历史和 Broker 审计，避免事故证据丢失；这意味着彻底
+  删除数据必须是独立、明确的用户/管理员操作。
+
+回退：
+
+- 保存脱敏诊断证据并验证上一份 MSI 的签名/哈希；停止 Agent 与 Broker，
+  卸载 1.0 后安装上一份候选。数据库保持原位。只有存在 schema migration、
+  backup 哈希与 schema 均匹配且管理员确认接受丢失升级后数据时，才执行
+  Support 工具的受控 restore。
+
 ## 0.7.2
 
 变更点：

@@ -7,6 +7,39 @@ namespace PerfMonitor.AgentTests;
 public sealed class AgentOptionsTests
 {
     [TestMethod]
+    public void AgentInstanceLeaseIsExclusiveAndRecoverable()
+    {
+        var dataDirectory = Path.Combine(
+            Path.GetTempPath(),
+            "perf-monitor-agent-lease",
+            Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(dataDirectory);
+        try
+        {
+            using (var first = AgentInstanceLease.Acquire(
+                dataDirectory))
+            {
+                var exception = Assert.Throws<IOException>(
+                    () => AgentInstanceLease.Acquire(
+                        dataDirectory));
+                Assert.AreEqual(
+                    "agent_already_running",
+                    exception.Message);
+            }
+
+            using var recovered = AgentInstanceLease.Acquire(
+                dataDirectory);
+        }
+        finally
+        {
+            if (Directory.Exists(dataDirectory))
+            {
+                Directory.Delete(dataDirectory, recursive: true);
+            }
+        }
+    }
+
+    [TestMethod]
     public void DefaultsToFiveBoundedProviderSlots()
     {
         var options = AgentOptions.Parse([]);

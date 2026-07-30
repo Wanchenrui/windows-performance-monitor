@@ -1,5 +1,6 @@
 import json
 from pathlib import Path
+import xml.etree.ElementTree as ET
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -15,8 +16,13 @@ def _project_source(name):
 
 
 def test_v072_version_and_broker_are_packaged_separately():
-    build_props = (ROOT / "Directory.Build.props").read_text(
-        encoding="utf-8"
+    properties = ET.parse(
+        ROOT / "Directory.Build.props"
+    ).getroot()
+    version = properties.find("./PropertyGroup/Version")
+    assert version is not None
+    product_version = tuple(
+        int(part) for part in version.text.split(".")
     )
     build = (ROOT / "scripts/build.ps1").read_text(
         encoding="utf-8-sig"
@@ -25,7 +31,7 @@ def test_v072_version_and_broker_are_packaged_separately():
         encoding="utf-8"
     )
 
-    assert "<Version>0.7.2</Version>" in build_props
+    assert product_version >= (0, 7, 2)
     assert "PerfMonitor.Broker.csproj" in build
     assert "perf-monitor-broker.exe" in build
     assert "smoke_broker.ps1" in workflow

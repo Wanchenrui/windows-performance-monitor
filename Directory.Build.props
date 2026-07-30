@@ -3,7 +3,15 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <LangVersion>14.0</LangVersion>
-    <Version>0.7.2</Version>
+    <Version>1.0.0</Version>
+    <Product>PerfMonitor</Product>
+    <!--
+      Production builds must override this with the exact pinned
+      Authenticode certificate subject. scripts/build.ps1 enforces it.
+    -->
+    <Company>PerfMonitor Publisher Not Configured</Company>
+    <Authors>PerfMonitor Project</Authors>
+    <Copyright>Copyright © PerfMonitor Project</Copyright>
     <Deterministic>true</Deterministic>
     <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
     <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>

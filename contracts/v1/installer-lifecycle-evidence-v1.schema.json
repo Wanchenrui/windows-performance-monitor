@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.perfmonitor.local/v1/installer-lifecycle-evidence-v1.schema.json",
+  "title": "PerfMonitor MSI lifecycle evidence v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "startedAtUtc",
+    "completedAtUtc",
+    "currentMsiSha256",
+    "previousMsiSha256",
+    "signatureMode",
+    "signerSubject",
+    "signerCertificateSha256",
+    "passed",
+    "coreDefaultBrokerAbsent",
+    "agentDesktopSqliteLifecyclePassed",
+    "upgradePassed",
+    "directDowngradeBlocked",
+    "brokerServiceLocalSystemAuto",
+    "brokerProgramDataAclPassed",
+    "uninstallPreservedData",
+    "reinstallPassed",
+    "repairPassed",
+    "controlledRollbackPassed"
+  ],
+  "properties": {
+    "schemaVersion": {"const": "1.0"},
+    "startedAtUtc": {"type": "string", "format": "date-time"},
+    "completedAtUtc": {"type": "string", "format": "date-time"},
+    "currentMsiSha256": {
+      "type": "string",
+      "pattern": "^[0-9A-F]{64}$"
+    },
+    "previousMsiSha256": {
+      "type": "string",
+      "pattern": "^[0-9A-F]{64}$"
+    },
+    "signatureMode": {
+      "enum": ["test", "production"]
+    },
+    "signerSubject": {"type": "string", "minLength": 1},
+    "signerCertificateSha256": {
+      "type": "string",
+      "pattern": "^[0-9A-F]{64}$"
+    },
+    "passed": {"const": true},
+    "coreDefaultBrokerAbsent": {"const": true},
+    "agentDesktopSqliteLifecyclePassed": {"const": true},
+    "upgradePassed": {"const": true},
+    "directDowngradeBlocked": {"const": true},
+    "brokerServiceLocalSystemAuto": {"const": true},
+    "brokerProgramDataAclPassed": {"const": true},
+    "uninstallPreservedData": {"const": true},
+    "reinstallPassed": {"const": true},
+    "repairPassed": {"const": true},
+    "controlledRollbackPassed": {"const": true}
+  }
+}

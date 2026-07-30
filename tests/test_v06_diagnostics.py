@@ -1,16 +1,22 @@
 from pathlib import Path
+import xml.etree.ElementTree as ET
 
 
 ROOT = Path(__file__).resolve().parents[1]
 
 
 def test_diagnostics_module_remains_declared_after_v06():
-    build_props = (ROOT / "Directory.Build.props").read_text(
-        encoding="utf-8"
+    properties = ET.parse(
+        ROOT / "Directory.Build.props"
+    ).getroot()
+    version = properties.find("./PropertyGroup/Version")
+    assert version is not None
+    product_version = tuple(
+        int(part) for part in version.text.split(".")
     )
     solution = (ROOT / "PerfMonitor.slnx").read_text(encoding="utf-8")
 
-    assert "<Version>0.7.2</Version>" in build_props
+    assert product_version >= (0, 6, 0)
     assert "PerfMonitor.Diagnostics.csproj" in solution
 
 

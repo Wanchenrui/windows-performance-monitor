@@ -1,14 +1,19 @@
 # 电脑性能监控
 
-当前开发版本为 `0.7.2`。产品运行路径为按用户运行的
+当前开发候选版本为 `1.0.0`。产品运行路径为按用户运行的
 `.NET 10 PerfMonitor.Agent`、独立 WPF Desktop、受保护 Named Pipe IPC
 和 SQLite 历史库，并包含只读确定性诊断、稳定 Windows 指标及隔离硬件
-Worker；可选 LocalSystem Broker 只承载显式启用的白名单特权动作。Python
-0.3 源码继续
+Worker；可选 LocalSystem Broker 只承载显式启用的白名单特权动作。v1.0
+另冻结 MSI 安装、Authenticode、签名更新清单、数据库恢复、SBOM、漏洞
+门禁、来源证明、资源预算与隐私诊断边界。Python 0.3 源码继续
 保留为指标口径 oracle、golden
 fixture 生成器和差分基线，但不再作为默认或发布版高频 Agent。
 
-## v0.7.2 架构边界
+`1.0.0` 源码版本不等于生产发布已获准：真实 72 小时墙钟证据、完整支持
+矩阵、GitHub 精确 run/attestation 以及受信任生产证书必须全部通过，才能
+把候选标记为 production。临时自签证书生成的产物始终是 test candidate。
+
+## v1.0 架构边界
 
 ```text
 stable Windows Providers
@@ -249,6 +254,9 @@ v0.7.1 另覆盖 Worker 协议边界、BOM/超大/损坏帧、非物理读数、
 v0.7.2 另覆盖闭合 action Schema/协议、真实 Pipe SID/PID/映像解析、
 双重策略、PID 复用与 owner 重验、四类 dry-run、持久化幂等/崩溃恢复、
 审计损坏降级和真实发布 Broker dry-run 握手。
+v1.0 另覆盖 SQLite/WAL 强制异常退出、migration 前备份与受控恢复、更高
+schema 拒写、Agent 单实例、诊断包 allowlist/敏感模式拒绝、真实 Broker
+Pipe 畸形/重放/并发渗透、安装表契约及完整安装生命周期。
 
 Python/.NET 同窗差分：
 
@@ -286,16 +294,63 @@ dist/agent/provider-worker/THIRD-PARTY-NOTICES.md
 dist/desktop/perf-monitor-desktop.exe
 dist/broker/perf-monitor-broker.exe
 dist/broker/THIRD-PARTY-NOTICES.md
+dist/support/perf-monitor-support.exe
 dist/build-manifest.json
 ```
 
-manifest 记录全部 Agent/Worker/Desktop/Broker 文件的 SHA-256 与大小、
-Git commit/dirty 状态、所有 Python/.NET 锁文件哈希、.NET SDK、Python
-oracle 版本和构建环境。当前产物为 .NET 10 framework-dependent
-`win-x64`；1.0 的安装包、代码签名、SBOM 和来源证明另按发布门禁实现。
+该 build manifest 是签名前构建清单，记录全部
+Agent/Worker/Desktop/Broker/Support 文件的 SHA-256 与大小、
+Git commit/dirty 状态、所有 Python/.NET 锁文件哈希、.NET SDK、
+Python oracle 版本和构建环境；它固定标记
+`signatureMode=unsigned`、`releaseEligible=false`。签名后的最终文件、
+MSI、SBOM、门禁证据和签名者由
+`dist/release/release-manifest-v1.json` 重新绑定。当前产物为 .NET 10
+framework-dependent `win-x64`。
+
+Python oracle/测试环境同样只允许 Windows x64 CPython 3.12：
+`requirements*.txt` 固定每个 direct/transitive wheel 的版本与 SHA-256，
+`setup.ps1` 使用 `--require-hashes --only-binary=:all:`，不接受未审阅 sdist
+或同版本下的其他 wheel。
 
 `scripts/smoke.ps1` 会启动真实 Agent、SQLite 和 Desktop，关闭 Desktop 后
 确认 Agent 序列继续增长，再等待 Agent 正常退出并校验数据库。
+
+## v1.0 发布门禁
+
+手动 GitHub 工作流 `.github/workflows/release.yml` 提供两个严格分离的
+模式：
+
+- `test`：为单次运行创建短期自签证书，验证 EXE/MSI/CMS 签名、篡改检测、
+  安装/升级/降级/卸载和来源证明机制；产物不可作为正式发布。
+- `production`：只允许从 `main` 或 `v1.0.0` 运行，要求仓库 Secrets 中的
+  真实 PFX、密码、证书主体、SHA-256 指纹和 HTTPS RFC 3161 时间戳 URL；
+  自签、主体/指纹不匹配、缺时间戳、dirty source 或非 HTTPS 更新地址均
+  fail closed。
+
+正式模式还要求先由 `.github/workflows/support-matrix.yml` 在四个专用
+self-hosted x64 runner 上，对同一个 test-signed MSI 执行完整生命周期。
+聚合证据由 GitHub OIDC attestation 绑定 workflow 与 commit；正式发布
+必须提供该 run ID，并重新校验 run 状态、commit、workflow identity、
+attestation 和四个目标的真实 build/`InstallationType`。少一个目标或把
+Server Core 冒充 Desktop Experience 都不能得到
+`candidateEligible=true`。
+
+两个模式都要求操作者先独立审阅 WiX 7 OSMF/EULA，并在本次
+`workflow_dispatch` 中显式输入对应 EULA ID；仓库不会保存或替操作者作出
+许可接受。通过后会生成：
+
+```text
+dist/installer/PerfMonitor-1.0.0-win-x64.msi
+dist/release/PerfMonitor-sbom.cdx.json
+dist/release/update-manifest-v1.json
+dist/release/update-manifest-v1.json.p7s
+dist/release/release-manifest-v1.json
+artifacts/vulnerability/*
+```
+
+最终 MSI、SBOM、更新清单及发布清单由 GitHub OIDC
+`actions/attest@v4` 建立来源证明。完整的输入、Secrets、证据解释和回滚步骤
+见 `docs/release-runbook-v1.md`。
 
 ## 模块边界
 
@@ -315,14 +370,21 @@ src/PerfMonitor.Actions/            白名单 DTO 策略、幂等协调与审计
 src/PerfMonitor.Broker.Protocol/    闭合 Broker 协议与 256 KiB framing
 src/PerfMonitor.Broker.Client/      Agent 专用 Broker client
 src/PerfMonitor.Broker/             LocalSystem 服务、身份解析、审计与 OS executor
+src/PerfMonitor.Support/            SQLite 校验、备份/受控恢复与脱敏诊断导出
 perf_monitor/                       只读 Python 指标 oracle
 contracts/v1/                       Schema、目录、IPC 文档与 fixtures
 scripts/compare_agents.ps1          Python/.NET 同窗差分
 scripts/run_agent_soak.ps1          实际资源与 72 小时发布门禁
+installer/PerfMonitor.Installer/    per-machine x64 MSI 与可选 Broker Feature
 ```
 
 ## 回退与已知风险
 
+- v1.0 不改变 v0.7.2 的用户历史 SQLite schema。受控回退时先导出诊断、
+  停止 Agent/Broker、卸载 v1.0，再安装上一份已验证签名的 MSI；默认保留
+  LocalAppData 历史和 ProgramData 审计。若未来 migration 已写入新 schema，
+  只有管理员明确接受丢弃升级后写入时，才可恢复已验证的 pre-migration
+  backup。
 - v0.7.2 不改变用户历史 SQLite schema。回退时先停用/卸载 Broker，再回退
   Agent/Desktop 到冻结的 v0.7.1 候选，并保留 Broker 审计库。回退到
   v0.5.0 前必须恢复 v0.6 migration 前的数据库备份或使用独立数据目录，

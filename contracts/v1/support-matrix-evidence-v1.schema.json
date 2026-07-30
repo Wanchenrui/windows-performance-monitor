@@ -1,0 +1,341 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.perfmonitor.local/v1/support-matrix-evidence-v1.schema.json",
+  "title": "PerfMonitor Windows support matrix evidence v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "productVersion",
+    "gitCommit",
+    "runtimeIdentifier",
+    "generatedAtUtc",
+    "sourceMsiSha256",
+    "previousMsiSha256",
+    "signatureMode",
+    "signerSubject",
+    "signerCertificateSha256",
+    "sourceWorkflow",
+    "targets",
+    "passed"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0"
+    },
+    "productVersion": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "gitCommit": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "runtimeIdentifier": {
+      "const": "win-x64"
+    },
+    "generatedAtUtc": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "sourceMsiSha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "previousMsiSha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "signatureMode": {
+      "enum": [
+        "test",
+        "production"
+      ]
+    },
+    "signerSubject": {
+      "type": "string",
+      "minLength": 1
+    },
+    "signerCertificateSha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "sourceWorkflow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "repository",
+        "runId",
+        "runAttempt",
+        "workflowFile"
+      ],
+      "properties": {
+        "repository": {
+          "type": "string",
+          "pattern": "^[^/\\s]+/[^/\\s]+$"
+        },
+        "runId": {
+          "type": "string",
+          "pattern": "^[1-9][0-9]*$"
+        },
+        "runAttempt": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "workflowFile": {
+          "const": ".github/workflows/support-matrix.yml"
+        }
+      }
+    },
+    "targets": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "prefixItems": [
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/target"
+            },
+            {
+              "properties": {
+                "targetId": {
+                  "const": "windows-11-24h2"
+                },
+                "host": {
+                  "properties": {
+                    "displayVersion": {
+                      "const": "24H2"
+                    },
+                    "currentBuildNumber": {
+                      "const": "26100"
+                    },
+                    "installationType": {
+                      "const": "Client"
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/target"
+            },
+            {
+              "properties": {
+                "targetId": {
+                  "const": "windows-11-25h2"
+                },
+                "host": {
+                  "properties": {
+                    "displayVersion": {
+                      "const": "25H2"
+                    },
+                    "currentBuildNumber": {
+                      "const": "26200"
+                    },
+                    "installationType": {
+                      "const": "Client"
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/target"
+            },
+            {
+              "properties": {
+                "targetId": {
+                  "const": "windows-server-2022-desktop"
+                },
+                "host": {
+                  "properties": {
+                    "currentBuildNumber": {
+                      "const": "20348"
+                    },
+                    "installationType": {
+                      "const": "Server"
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/target"
+            },
+            {
+              "properties": {
+                "targetId": {
+                  "const": "windows-server-2025-desktop"
+                },
+                "host": {
+                  "properties": {
+                    "currentBuildNumber": {
+                      "const": "26100"
+                    },
+                    "installationType": {
+                      "const": "Server"
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "items": false
+    },
+    "passed": {
+      "const": true
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9A-F]{64}$"
+    },
+    "fileDigest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sha256",
+        "sizeBytes"
+      ],
+      "properties": {
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "sizeBytes": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "host": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "productName",
+        "displayVersion",
+        "currentBuildNumber",
+        "ubr",
+        "installationType",
+        "editionId",
+        "osArchitecture"
+      ],
+      "properties": {
+        "productName": {
+          "type": "string",
+          "minLength": 1
+        },
+        "displayVersion": {
+          "type": "string",
+          "minLength": 1
+        },
+        "currentBuildNumber": {
+          "type": "string",
+          "pattern": "^[0-9]+$"
+        },
+        "ubr": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "installationType": {
+          "enum": [
+            "Client",
+            "Server"
+          ]
+        },
+        "editionId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "osArchitecture": {
+          "const": "X64"
+        }
+      }
+    },
+    "lifecycleEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sha256",
+        "sizeBytes",
+        "startedAtUtc",
+        "completedAtUtc",
+        "currentMsiSha256",
+        "previousMsiSha256",
+        "passed"
+      ],
+      "properties": {
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "sizeBytes": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "startedAtUtc": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "completedAtUtc": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "currentMsiSha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "previousMsiSha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "passed": {
+          "const": true
+        }
+      }
+    },
+    "target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "targetId",
+        "testedAtUtc",
+        "host",
+        "entryEvidence",
+        "lifecycleEvidence",
+        "passed"
+      ],
+      "properties": {
+        "targetId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "testedAtUtc": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "host": {
+          "$ref": "#/$defs/host"
+        },
+        "entryEvidence": {
+          "$ref": "#/$defs/fileDigest"
+        },
+        "lifecycleEvidence": {
+          "$ref": "#/$defs/lifecycleEvidence"
+        },
+        "passed": {
+          "const": true
+        }
+      }
+    }
+  }
+}

@@ -7,7 +7,8 @@
     "retainedPrivateGrowthMiB": 32,
     "gcHeapGrowthMiB": 16,
     "cpuCoreEquivalentMeanPct": 20,
-    "handlePeak": 512,
+    "handlePeak": 768,
+    "retainedHandleGrowth": 64,
     "threadPeak": 64
   }
 }

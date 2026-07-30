@@ -38,6 +38,15 @@ public static class ServiceProgram
         {
             return 0;
         }
+        catch (IOException exception) when (
+            exception.Message == "agent_already_running")
+        {
+            // v1.0: single-instance contention is an expected lifecycle
+            // state, not an implementation-type-dependent failure string.
+            await Console.Error.WriteLineAsync(exception.Message)
+                .ConfigureAwait(false);
+            return 3;
+        }
         catch (Exception exception)
         {
             await Console.Error.WriteLineAsync(

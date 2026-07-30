@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows10.0.17763.0</TargetFramework>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.8.1" />
+    <PackageReference Include="MSTest.TestAdapter" Version="4.3.3" />
+    <PackageReference Include="MSTest.TestFramework" Version="4.3.3" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../src/PerfMonitor.Storage.Sqlite/PerfMonitor.Storage.Sqlite.csproj" />
+    <ProjectReference Include="../../src/PerfMonitor.Support/PerfMonitor.Support.csproj" />
+  </ItemGroup>
+</Project>

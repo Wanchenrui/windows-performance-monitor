@@ -16,6 +16,7 @@
         "gcHeapGrowthMiB",
         "cpuCoreEquivalentMeanPct",
         "handlePeak",
+        "retainedHandleGrowth",
         "threadPeak"
       ],
       "properties": {
@@ -43,6 +44,10 @@
         "handlePeak": {
           "type": "integer",
           "minimum": 1
+        },
+        "retainedHandleGrowth": {
+          "type": "integer",
+          "minimum": 0
         },
         "threadPeak": {
           "type": "integer",

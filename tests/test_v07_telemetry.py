@@ -1,13 +1,19 @@
 import json
 from pathlib import Path
+import xml.etree.ElementTree as ET
 
 
 ROOT = Path(__file__).resolve().parents[1]
 
 
 def test_v07_product_and_stable_provider_groups_are_declared():
-    build_props = (ROOT / "Directory.Build.props").read_text(
-        encoding="utf-8"
+    properties = ET.parse(
+        ROOT / "Directory.Build.props"
+    ).getroot()
+    version = properties.find("./PropertyGroup/Version")
+    assert version is not None
+    product_version = tuple(
+        int(part) for part in version.text.split(".")
     )
     catalog = json.loads(
         (ROOT / "contracts/v1/provider-catalog.json").read_text(
@@ -15,7 +21,7 @@ def test_v07_product_and_stable_provider_groups_are_declared():
         )
     )
 
-    assert "<Version>0.7.2</Version>" in build_props
+    assert product_version >= (0, 7, 0)
     providers = {
         (entry["groupId"], entry["providerId"])
         for entry in catalog["providers"]

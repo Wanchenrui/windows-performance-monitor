@@ -17,10 +17,7 @@ TRACE = (
 
 
 def test_evidence_schemas_are_valid_draft_2020_12():
-    for path in (
-        CONTRACTS / "differential-evidence-v1.schema.json",
-        CONTRACTS / "soak-evidence-v1.schema.json",
-    ):
+    for path in sorted(CONTRACTS.glob("*.schema.json")):
         schema = json.loads(path.read_text(encoding="utf-8"))
         Draft202012Validator.check_schema(schema)
 

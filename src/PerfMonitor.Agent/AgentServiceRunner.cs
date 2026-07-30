@@ -21,6 +21,8 @@ public static class AgentServiceRunner
                 cancellationToken).ConfigureAwait(false);
         }
 
+        using var instanceLease = AgentInstanceLease.Acquire(
+            options.DataDirectory);
         var providers = AgentProviderFactory.CreateDefault();
         var assembler = new SnapshotAssembler(
             providers.Select(provider => provider.Descriptor));

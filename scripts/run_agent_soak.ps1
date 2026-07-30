@@ -17,23 +17,38 @@ param(
     [ValidateRange(1, 3600)]
     [int]$SnapshotPeriodSeconds = 300,
 
-    [ValidateRange(1, 4096)]
-    [double]$MaxWorkingSetMiB = 384,
+    [ValidateRange(-1, 4096)]
+    [double]$MaxWorkingSetMiB = -1,
 
-    [ValidateRange(1, 4096)]
-    [double]$MaxPrivateMemoryMiB = 384,
+    [ValidateRange(-1, 4096)]
+    [double]$MaxPrivateMemoryMiB = -1,
 
-    [ValidateRange(0, 1024)]
-    [double]$MaxRetainedGrowthMiB = 64,
+    [ValidateRange(-1, 1024)]
+    [double]$MaxRetainedGrowthMiB = -1,
 
-    [ValidateRange(0, 1024)]
-    [double]$MaxGcHeapGrowthMiB = 32,
+    [ValidateRange(-1, 1024)]
+    [double]$MaxGcHeapGrowthMiB = -1,
+
+    [ValidateRange(-1, 100)]
+    [double]$MaxCpuCoreEquivalentPct = -1,
+
+    [ValidateRange(-1, 65536)]
+    [int]$MaxHandleCount = -1,
+
+    [ValidateRange(-1, 65536)]
+    [int]$MaxRetainedHandleGrowth = -1,
+
+    [ValidateRange(-1, 4096)]
+    [int]$MaxThreadCount = -1,
+
+    [string]$BudgetPath = "",
 
     [string]$OutputPath = ""
 )
 
 $ErrorActionPreference = "Stop"
 $ProjectRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
+. (Join-Path $PSScriptRoot "release_common.ps1")
 $BuildProperties = [xml](
     Get-Content -LiteralPath (
         Join-Path $ProjectRoot "Directory.Build.props"
@@ -46,7 +61,61 @@ if ($null -eq $VersionNode) {
     throw "Directory.Build.props 缺少产品版本。"
 }
 $ExpectedAgentVersion = $VersionNode.InnerText.Trim()
+$BudgetPath = if ($BudgetPath) {
+    (Resolve-Path -LiteralPath $BudgetPath).Path
+}
+else {
+    Join-Path $ProjectRoot "release\resource-budgets-v1.json"
+}
+$Budget = Get-Content -LiteralPath $BudgetPath -Raw |
+    ConvertFrom-Json
+if ($Budget.schemaVersion -ne "1.0" -or $null -eq $Budget.agent) {
+    throw "资源预算文件无效。"
+}
+if ($MaxWorkingSetMiB -lt 0) {
+    $MaxWorkingSetMiB = [double]$Budget.agent.workingSetPeakMiB
+}
+if ($MaxPrivateMemoryMiB -lt 0) {
+    $MaxPrivateMemoryMiB = [double]$Budget.agent.privateMemoryPeakMiB
+}
+if ($MaxRetainedGrowthMiB -lt 0) {
+    $MaxRetainedGrowthMiB = [double](
+        $Budget.agent.retainedPrivateGrowthMiB
+    )
+}
+if ($MaxGcHeapGrowthMiB -lt 0) {
+    $MaxGcHeapGrowthMiB = [double]$Budget.agent.gcHeapGrowthMiB
+}
+if ($MaxCpuCoreEquivalentPct -lt 0) {
+    $MaxCpuCoreEquivalentPct = [double](
+        $Budget.agent.cpuCoreEquivalentMeanPct
+    )
+}
+if ($MaxHandleCount -lt 0) {
+    $MaxHandleCount = [int]$Budget.agent.handlePeak
+}
+if ($MaxRetainedHandleGrowth -lt 0) {
+    $MaxRetainedHandleGrowth = [int](
+        $Budget.agent.retainedHandleGrowth
+    )
+}
+if ($MaxThreadCount -lt 0) {
+    $MaxThreadCount = [int]$Budget.agent.threadPeak
+}
+if (
+    $MaxWorkingSetMiB -le 0 -or
+    $MaxPrivateMemoryMiB -le 0 -or
+    $MaxRetainedGrowthMiB -lt 0 -or
+    $MaxGcHeapGrowthMiB -lt 0 -or
+    $MaxCpuCoreEquivalentPct -le 0 -or
+    $MaxHandleCount -le 0 -or
+    $MaxRetainedHandleGrowth -lt 0 -or
+    $MaxThreadCount -le 0
+) {
+    throw "资源预算必须是有效的正门限。"
+}
 $AgentPath = (Resolve-Path -LiteralPath $AgentPath).Path
+$AgentSha256 = Get-PerfMonitorSha256 -Path $AgentPath
 if ($DotnetHost) {
     $DotnetHost = (Resolve-Path -LiteralPath $DotnetHost).Path
 }
@@ -184,6 +253,7 @@ try {
         if ($Now -gt $HardDeadline) {
             throw "Agent 超过预期结束时间 30 秒仍未退出。"
         }
+        $AgentProcess.Refresh()
         $Rows.Add(
             [pscustomobject]@{
                 elapsedSeconds = ($Now - $StartedAt).TotalSeconds
@@ -196,6 +266,8 @@ try {
                 totalProcessorSeconds = (
                     $AgentProcess.TotalProcessorTime.TotalSeconds
                 )
+                handleCount = $AgentProcess.HandleCount
+                threadCount = $AgentProcess.Threads.Count
             }
         )
     }
@@ -311,6 +383,20 @@ try {
         $SteadyRows |
             Measure-Object -Property privateMemoryMiB -Maximum
     ).Maximum
+    $PeakHandleCount = [int](
+        $SteadyRows |
+            Measure-Object -Property handleCount -Maximum
+    ).Maximum
+    $HeadHandleMedian = Get-Median `
+        -Values ([double[]]$Head.handleCount)
+    $TailHandleMedian = Get-Median `
+        -Values ([double[]]$Tail.handleCount)
+    $RetainedHandleGrowth =
+        $TailHandleMedian - $HeadHandleMedian
+    $PeakThreadCount = [int](
+        $SteadyRows |
+            Measure-Object -Property threadCount -Maximum
+    ).Maximum
     $PrivateSlope = Get-LinearSlopePerHour -Samples $SteadyRows
 
     if ($GcHeapValues.Count -lt 2) {
@@ -335,16 +421,33 @@ try {
         }
     }
 
-    $MemoryPassed = (
+    $ResourcesPassed = (
         $PeakWorkingSet -le $MaxWorkingSetMiB -and
         $PeakPrivateMemory -le $MaxPrivateMemoryMiB -and
         $RetainedGrowth -le $MaxRetainedGrowthMiB -and
-        $GcHeapGrowth -le $MaxGcHeapGrowthMiB
+        $GcHeapGrowth -le $MaxGcHeapGrowthMiB -and
+        $CpuCoreEquivalentMean -le $MaxCpuCoreEquivalentPct -and
+        $PeakHandleCount -le $MaxHandleCount -and
+        $RetainedHandleGrowth -le
+            $MaxRetainedHandleGrowth -and
+        $PeakThreadCount -le $MaxThreadCount
     )
     $IsRelease72HourRun = $DurationSeconds -ge 72 * 60 * 60
+    $ReleaseWallClockPassed = (
+        $IsRelease72HourRun -and
+        $ElapsedSeconds -ge 72 * 60 * 60
+    )
+    $OverallPassed = (
+        $ResourcesPassed -and
+        (
+            -not $IsRelease72HourRun -or
+            $ReleaseWallClockPassed
+        )
+    )
     $Result = [ordered]@{
         contractVersion = "1.0"
         productVersion = $ExpectedAgentVersion
+        agentSha256 = $AgentSha256
         profile = if ($IsRelease72HourRun) {
             "release-72h"
         }
@@ -358,7 +461,8 @@ try {
         release72HourGate = [ordered]@{
             requiredDurationSeconds = 72 * 60 * 60
             actualWallClockPassed = (
-                $IsRelease72HourRun -and $MemoryPassed
+                $ReleaseWallClockPassed -and
+                $ResourcesPassed
             )
         }
         snapshots = [ordered]@{
@@ -408,9 +512,28 @@ try {
                 $CpuCoreEquivalentMean,
                 3
             )
-            passed = $MemoryPassed
+            cpuCoreEquivalentLimitPct = $MaxCpuCoreEquivalentPct
+            handlePeak = $PeakHandleCount
+            handleLimit = $MaxHandleCount
+            handleHeadMedian = [Math]::Round(
+                $HeadHandleMedian,
+                3
+            )
+            handleTailMedian = [Math]::Round(
+                $TailHandleMedian,
+                3
+            )
+            retainedHandleGrowth = [Math]::Round(
+                $RetainedHandleGrowth,
+                3
+            )
+            retainedHandleGrowthLimit =
+                $MaxRetainedHandleGrowth
+            threadPeak = $PeakThreadCount
+            threadLimit = $MaxThreadCount
+            passed = $ResourcesPassed
         }
-        passed = $MemoryPassed
+        passed = $OverallPassed
     }
     $ResultJson = $Result | ConvertTo-Json -Depth 6
     if ($OutputPath) {
@@ -438,7 +561,7 @@ try {
     }
     $ResultJson
 
-    if (-not $MemoryPassed) {
+    if (-not $OverallPassed) {
         throw "Agent 长稳资源预算或增长门禁失败。"
     }
 }
