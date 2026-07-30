@@ -48,6 +48,82 @@
       },
       "additionalProperties": true
     },
+    "diagnostics": {
+      "type": "object",
+      "required": ["defaultMaxEvents", "maxEvents", "actionsSupported", "rules"],
+      "properties": {
+        "defaultMaxEvents": {"type": "integer", "minimum": 1, "maximum": 2000},
+        "maxEvents": {"type": "integer", "minimum": 1, "maximum": 2000},
+        "actionsSupported": {"type": "boolean"},
+        "rules": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["ruleId", "ruleVersion", "severity", "activateWhen", "recoverWhen"],
+            "properties": {
+              "ruleId": {"type": "string", "minLength": 1},
+              "ruleVersion": {"type": "string", "minLength": 1},
+              "severity": {"enum": ["info", "warning", "critical"]},
+              "activateWhen": {"type": "string", "minLength": 1},
+              "recoverWhen": {"type": "string", "minLength": 1}
+            },
+            "additionalProperties": true
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+    "actions": {
+      "type": "object",
+      "required": [
+        "brokerProtocolVersion",
+        "brokerConfigured",
+        "brokerAvailable",
+        "dryRunOnly",
+        "actions"
+      ],
+      "properties": {
+        "brokerProtocolVersion": {
+          "const": "1.0"
+        },
+        "brokerConfigured": {
+          "type": "boolean"
+        },
+        "brokerAvailable": {
+          "type": "boolean"
+        },
+        "dryRunOnly": {
+          "type": "boolean"
+        },
+        "actions": {
+          "type": "array",
+          "maxItems": 4,
+          "uniqueItems": true,
+          "items": {
+            "type": "object",
+            "required": [
+              "actionType",
+              "dryRunSupported"
+            ],
+            "properties": {
+              "actionType": {
+                "enum": [
+                  "set_process_priority",
+                  "terminate_process",
+                  "start_approved_diagnostic",
+                  "apply_approved_power_profile"
+                ]
+              },
+              "dryRunSupported": {
+                "const": true
+              }
+            },
+            "additionalProperties": true
+          }
+        }
+      },
+      "additionalProperties": true
+    },
     "endpoints": {
       "type": "object",
       "required": ["snapshot", "history", "capabilities", "health"],

@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "dependencies": {
+    "net10.0": {
+      "perfmonitor.contracts": {
+        "type": "Project"
+      },
+      "perfmonitor.core": {
+        "type": "Project",
+        "dependencies": {
+          "PerfMonitor.Contracts": "[0.7.2, )"
+        }
+      }
+    }
+  }
+}
