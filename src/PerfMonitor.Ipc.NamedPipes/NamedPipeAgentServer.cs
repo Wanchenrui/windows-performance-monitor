@@ -231,6 +231,17 @@ public sealed class NamedPipeAgentServer : IAsyncDisposable
                             clientStopping.Token).ConfigureAwait(false);
                         break;
 
+                    case "getHealth":
+                        await WritePayloadAsync(
+                            pipe,
+                            writeGate,
+                            "health",
+                            request.RequestId,
+                            _service.ReadHealth(),
+                            negotiation.MaxMessageSize,
+                            clientStopping.Token).ConfigureAwait(false);
+                        break;
+
                     case "queryHistory":
                         await HandleHistoryAsync(
                             pipe,

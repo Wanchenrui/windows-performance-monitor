@@ -104,6 +104,11 @@ public sealed class IpcAndStorageTests
                 var snapshot = await firstClient.GetSnapshotAsync(
                     CancellationToken.None);
                 Assert.AreEqual(firstService.InstanceId, snapshot.InstanceId);
+                var health = await firstClient.GetHealthAsync(
+                    CancellationToken.None);
+                Assert.AreEqual(ServiceIds.PerfMonitor, health.Service);
+                Assert.AreEqual(firstService.InstanceId, health.InstanceId);
+                Assert.AreEqual(1L, health.Sequence);
             }
 
             await using var secondClient =
@@ -479,6 +484,21 @@ public sealed class IpcAndStorageTests
         public string InstanceId { get; }
 
         public AgentSnapshot ReadLatestSnapshot() => _snapshot;
+
+        public HealthContract ReadHealth() => new()
+        {
+            ContractVersion = ContractVersions.V1,
+            ProductVersion = ProductVersions.Agent,
+            Service = ServiceIds.PerfMonitor,
+            InstanceId = InstanceId,
+            Sequence = _snapshot.Sequence,
+            CompletedAtUtc = _snapshot.CompletedAtUtc,
+            Summary = new SummaryContract
+            {
+                Availability = _snapshot.Summary.Availability,
+                Freshness = _snapshot.Summary.Freshness,
+            },
+        };
 
         public CapabilitiesContract ReadCapabilities() =>
             _capabilities;

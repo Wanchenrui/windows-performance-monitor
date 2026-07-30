@@ -70,6 +70,7 @@ v1 支持：
 
 - `getSnapshot`
 - `getCapabilities`
+- `getHealth`
 - `queryHistory`
 - `subscribe`
 - `unsubscribe`

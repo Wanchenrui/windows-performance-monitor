@@ -31,6 +31,25 @@ internal sealed class AgentQueryService : IAgentIpcService
 
     public AgentSnapshot ReadLatestSnapshot() => _assembler.Read();
 
+    public HealthContract ReadHealth()
+    {
+        var snapshot = _assembler.Read();
+        return new HealthContract
+        {
+            ContractVersion = ContractVersions.V1,
+            ProductVersion = ProductVersions.Agent,
+            Service = ServiceIds.PerfMonitor,
+            InstanceId = snapshot.InstanceId,
+            Sequence = snapshot.Sequence,
+            CompletedAtUtc = snapshot.CompletedAtUtc,
+            Summary = new SummaryContract
+            {
+                Availability = snapshot.Summary.Availability,
+                Freshness = snapshot.Summary.Freshness,
+            },
+        };
+    }
+
     public CapabilitiesContract ReadCapabilities() => _capabilities;
 
     public async ValueTask<HistoryContract> QueryHistoryAsync(

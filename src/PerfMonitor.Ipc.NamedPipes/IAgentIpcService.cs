@@ -9,6 +9,8 @@ public interface IAgentIpcService
 
     AgentSnapshot ReadLatestSnapshot();
 
+    HealthContract ReadHealth();
+
     CapabilitiesContract ReadCapabilities();
 
     ValueTask<HistoryContract> QueryHistoryAsync(

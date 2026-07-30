@@ -39,6 +39,7 @@ hello 必须在 5 秒内完成。客户端声明的 `maxMessageSize` 必须在 1
 - `getSnapshot`
 - `queryHistory`
 - `getCapabilities`
+- `getHealth`
 - `subscribe`
 - `unsubscribe`
 

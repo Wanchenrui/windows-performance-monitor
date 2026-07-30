@@ -144,6 +144,17 @@ public sealed class NamedPipeAgentClient : IAsyncDisposable
             "capabilities",
             cancellationToken);
 
+    public Task<HealthContract> GetHealthAsync(
+        CancellationToken cancellationToken) =>
+        RequestAsync<HealthContract>(
+            new IpcRequestMessage
+            {
+                Type = "getHealth",
+                RequestId = Guid.NewGuid().ToString("N"),
+            },
+            "health",
+            cancellationToken);
+
     public Task<HistoryContract> QueryHistoryAsync(
         HistoryQueryContract query,
         CancellationToken cancellationToken) =>

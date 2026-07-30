@@ -10,6 +10,11 @@ public static class ProductVersions
     public const string Agent = "0.5.0";
 }
 
+public static class ServiceIds
+{
+    public const string PerfMonitor = "perf-monitor";
+}
+
 public static class GroupIds
 {
     public const string SystemCpu = "systemCpu";
