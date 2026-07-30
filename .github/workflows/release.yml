@@ -529,6 +529,10 @@ jobs:
               ".\release\evidence\" +
               "v0.4-agent-soak-72h.json"
             )
+            $ManifestArguments.BaselineCandidatePath = (
+              ".\release\evidence\" +
+              "v0.4-agent-baseline-candidate.json"
+            )
             $ManifestArguments.SupportMatrixEvidencePath = (
               $env:SUPPORT_MATRIX_EVIDENCE
             )
@@ -587,6 +591,20 @@ jobs:
             }
           )
           if ($env:RELEASE_MODE -eq "production") {
+            $EvidenceContracts += [pscustomobject]@{
+              Schema = "soak-evidence-v1.schema.json"
+              Path = (
+                ".\release\evidence\" +
+                "v0.4-agent-soak-72h.json"
+              )
+            }
+            $EvidenceContracts += [pscustomobject]@{
+              Schema = "baseline-candidate-v1.schema.json"
+              Path = (
+                ".\release\evidence\" +
+                "v0.4-agent-baseline-candidate.json"
+              )
+            }
             $EvidenceContracts += [pscustomobject]@{
               Schema = "support-matrix-evidence-v1.schema.json"
               Path = $env:SUPPORT_MATRIX_EVIDENCE

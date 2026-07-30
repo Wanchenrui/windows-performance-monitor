@@ -192,6 +192,52 @@ def test_initial_vulnerability_waiver_file_is_empty_and_valid():
     assert document["waivers"] == []
 
 
+def test_frozen_v04_baseline_candidate_is_schema_valid_and_pinned():
+    schema = json.loads(
+        (
+            ROOT
+            / "contracts"
+            / "v1"
+            / "baseline-candidate-v1.schema.json"
+        ).read_text(encoding="utf-8")
+    )
+    candidate = json.loads(
+        (
+            ROOT
+            / "release"
+            / "evidence"
+            / "v0.4-agent-baseline-candidate.json"
+        ).read_text(encoding="utf-8")
+    )
+    jsonschema.Draft202012Validator(
+        schema,
+        format_checker=jsonschema.FormatChecker(),
+    ).validate(candidate)
+
+    assert candidate["source"]["repository"] == (
+        "Wanchenrui/windows-performance-monitor"
+    )
+    assert candidate["source"]["headCommit"] == (
+        "b876ea7b6d5bfbd61ccb95d0fbbefdd072657246"
+    )
+    assert candidate["source"]["workflowRunId"] == 30505621980
+    assert candidate["artifact"]["id"] == 8745229479
+    assert candidate["artifact"]["sha256"] == (
+        "ED35437B1E69E6D5602E26B04FB978618C431574C6CC7230820984DEA2212F2D"
+    )
+    assert candidate["agent"]["sha256"] == (
+        "A83E7DFC6F38F8965E4618176A5724D0122022D71FF84008BA328A7D7C03A914"
+    )
+
+    soak_schema = json.loads(
+        (
+            ROOT / "contracts" / "v1" / "soak-evidence-v1.schema.json"
+        ).read_text(encoding="utf-8")
+    )
+    release_profile = soak_schema["allOf"][1]["then"]
+    assert "agentSha256" in release_profile["required"]
+
+
 def test_release_scripts_are_fail_closed_and_include_final_files():
     vulnerability_script = (
         ROOT / "scripts" / "test_vulnerabilities.ps1"
@@ -244,6 +290,12 @@ def test_release_scripts_are_fail_closed_and_include_final_files():
         "production_release_requires_baseline_72h_evidence"
         in release_manifest_script
     )
+    assert "BaselineCandidatePath" in release_manifest_script
+    assert "release_baseline_binding_incomplete" in (
+        release_manifest_script
+    )
+    assert "test_soak_evidence.ps1" in release_manifest_script
+    assert "$null -ne $BaselineCandidate" in release_manifest_script
     assert (
         "production_release_requires_support_matrix_evidence"
         in release_manifest_script
@@ -270,6 +322,30 @@ def test_release_scripts_are_fail_closed_and_include_final_files():
         "update_manifest_digest_algorithm_invalid"
         in update_validation_script
     )
+    soak_validation_script = (
+        ROOT / "scripts" / "test_soak_evidence.ps1"
+    ).read_text(encoding="utf-8-sig")
+    assert "soak_resource_limit_mismatch" in soak_validation_script
+    assert "soak_resource_budget_recalculation_failed" in (
+        soak_validation_script
+    )
+    assert "soak_candidate_not_in_current_history" in (
+        soak_validation_script
+    )
+
+    release_schema = json.loads(
+        (
+            ROOT
+            / "contracts"
+            / "v1"
+            / "release-manifest-v1.schema.json"
+        ).read_text(encoding="utf-8")
+    )
+    assert "baseline72HourCandidate" in release_schema["required"]
+    production_properties = release_schema["allOf"][0]["then"][
+        "properties"
+    ]
+    assert "baseline72HourCandidate" in production_properties
 
 
 def test_support_matrix_is_attested_and_production_bound():

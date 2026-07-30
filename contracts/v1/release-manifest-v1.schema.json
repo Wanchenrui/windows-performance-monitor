@@ -17,6 +17,7 @@
     "vulnerabilityGate",
     "gates",
     "baseline72Hour",
+    "baseline72HourCandidate",
     "supportMatrix",
     "updateManifest",
     "files",
@@ -141,6 +142,16 @@
       }
     },
     "baseline72Hour": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/fileDigest"
+        }
+      ]
+    },
+    "baseline72HourCandidate": {
       "oneOf": [
         {
           "type": "null"
@@ -286,6 +297,9 @@
         "properties": {
           "gitDirty": {"const": false},
           "baseline72Hour": {"$ref": "#/$defs/fileDigest"},
+          "baseline72HourCandidate": {
+            "$ref": "#/$defs/fileDigest"
+          },
           "supportMatrix": {"$ref": "#/$defs/fileDigest"},
           "candidateEligible": {"const": true}
         }

@@ -156,6 +156,7 @@
         "required": ["profile"]
       },
       "then": {
+        "required": ["agentSha256"],
         "properties": {
           "requestedDurationSeconds": {"minimum": 259200},
           "actualElapsedSeconds": {"minimum": 259200},

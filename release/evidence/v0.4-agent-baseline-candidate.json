@@ -1,0 +1,31 @@
+{
+  "schemaVersion": "1.0",
+  "baselineId": "v0.4.0-agent-parity",
+  "productVersion": "0.4.0",
+  "runtimeIdentifier": "win-x64",
+  "source": {
+    "repository": "Wanchenrui/windows-performance-monitor",
+    "headBranch": "codex/v0.4.0-agent-parity",
+    "headCommit": "b876ea7b6d5bfbd61ccb95d0fbbefdd072657246",
+    "workflowRunId": 30505621980,
+    "workflowMergeCommit": "949da390618817f9037bb2f5c857b54708fbffab",
+    "workflowFile": ".github/workflows/ci.yml"
+  },
+  "artifact": {
+    "id": 8745229479,
+    "name": "perf-monitor-agent-949da390618817f9037bb2f5c857b54708fbffab",
+    "sha256": "ED35437B1E69E6D5602E26B04FB978618C431574C6CC7230820984DEA2212F2D",
+    "sizeBytes": 6475440,
+    "createdAtUtc": "2026-07-30T01:29:02Z"
+  },
+  "agent": {
+    "path": "agent/perf-monitor-agent.dll",
+    "sha256": "A83E7DFC6F38F8965E4618176A5724D0122022D71FF84008BA328A7D7C03A914",
+    "entryPointPath": "agent/perf-monitor-agent.exe",
+    "entryPointSha256": "A79B3C0669DCC6A373A8AC99781C638BFC0FAB8C9EEE6D3DB6458234A0EC9DF4"
+  },
+  "validator": {
+    "path": "scripts/run_agent_soak.ps1",
+    "sha256": "96C69A8D5FA38481C2780125C347ECC1F46509CA9638AC0CA1295E0A1D6EC1F9"
+  }
+}

@@ -40,6 +40,10 @@
   build/架构/Desktop Experience，四机消费同一 MSI，聚合证据由 GitHub
   attestation 绑定 workflow 与 commit；production 必须按 run ID 取回并
   复验，不能用手工 JSON 绕过。
+- 真实 72 小时基线新增冻结候选描述：固定 v0.4 源 head、CI run、artifact
+  digest、Agent 与验证器 SHA-256。生产发布会重新按版本化预算计算资源
+  结果，并要求证据中的 Agent hash、产品版本和真实 UTC 跨度同时匹配，
+  不再仅信任可替换的 `passed` 布尔值。
 
 潜在风险：
 

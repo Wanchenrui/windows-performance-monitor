@@ -33,6 +33,8 @@ param(
 
     [string]$Baseline72HourEvidencePath = "",
 
+    [string]$BaselineCandidatePath = "",
+
     [string]$SupportMatrixEvidencePath = "",
 
     [Parameter(Mandatory = $true)]
@@ -80,6 +82,11 @@ $OutputPath = [System.IO.Path]::GetFullPath($OutputPath)
 if ($Baseline72HourEvidencePath) {
     $Baseline72HourEvidencePath = (
         Resolve-Path -LiteralPath $Baseline72HourEvidencePath
+    ).Path
+}
+if ($BaselineCandidatePath) {
+    $BaselineCandidatePath = (
+        Resolve-Path -LiteralPath $BaselineCandidatePath
     ).Path
 }
 if ($SupportMatrixEvidencePath) {
@@ -424,25 +431,36 @@ if (
 ) {
     throw "release_resource_evidence_failed"
 }
+& (Join-Path $PSScriptRoot "test_soak_evidence.ps1") `
+    -EvidencePath $ResourceEvidencePath `
+    -ExpectedAgentSha256 $AgentHash `
+    -ExpectedProductVersion (
+        [string]$CrashRecovery.productVersion
+    ) |
+    Out-Null
 $Baseline72Hour = $null
-if ($Baseline72HourEvidencePath) {
+$BaselineCandidate = $null
+if (
+    $Baseline72HourEvidencePath -or
+    $BaselineCandidatePath
+) {
+    if (
+        -not $Baseline72HourEvidencePath -or
+        -not $BaselineCandidatePath
+    ) {
+        throw "release_baseline_binding_incomplete"
+    }
     $Baseline72Hour = Read-JsonDocument `
         -Path $Baseline72HourEvidencePath `
         -ErrorCode "release_baseline_72h_evidence_invalid"
-    if (
-        $Baseline72Hour.contractVersion -cne "1.0" -or
-        $Baseline72Hour.profile -cne "release-72h" -or
-        [int]$Baseline72Hour.requestedDurationSeconds -lt
-            72 * 60 * 60 -or
-        [double]$Baseline72Hour.actualElapsedSeconds -lt
-            72 * 60 * 60 -or
-        -not $Baseline72Hour.passed -or
-        -not (
-            $Baseline72Hour.release72HourGate.actualWallClockPassed
-        )
-    ) {
-        throw "release_baseline_72h_evidence_failed"
-    }
+    $BaselineCandidate = Read-JsonDocument `
+        -Path $BaselineCandidatePath `
+        -ErrorCode "release_baseline_candidate_invalid"
+    & (Join-Path $PSScriptRoot "test_soak_evidence.ps1") `
+        -EvidencePath $Baseline72HourEvidencePath `
+        -BaselineCandidatePath $BaselineCandidatePath `
+        -RequireRelease72Hour |
+        Out-Null
 }
 elseif ($SignatureMode -eq "production") {
     throw "production_release_requires_baseline_72h_evidence"
@@ -678,6 +696,11 @@ if ($Baseline72HourEvidencePath) {
             -Path $Baseline72HourEvidencePath `
             -Kind "evidence")
     )
+    $Files.Add(
+        (New-FileDigest `
+            -Path $BaselineCandidatePath `
+            -Kind "evidence")
+    )
 }
 if ($SupportMatrixEvidencePath) {
     $Files.Add(
@@ -738,6 +761,12 @@ $Manifest = [ordered]@{
     else {
         $null
     }
+    baseline72HourCandidate = if ($BaselineCandidatePath) {
+        New-FileDigest -Path $BaselineCandidatePath
+    }
+    else {
+        $null
+    }
     supportMatrix = if ($SupportMatrixEvidencePath) {
         New-FileDigest -Path $SupportMatrixEvidencePath
     }
@@ -767,6 +796,7 @@ $Manifest = [ordered]@{
         $SignatureMode -eq "production" -and
         -not $GitDirty -and
         $null -ne $Baseline72Hour -and
+        $null -ne $BaselineCandidate -and
         $null -ne $SupportMatrix
     )
     provenanceAttestationRequired = $true

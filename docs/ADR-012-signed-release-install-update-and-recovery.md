@@ -170,6 +170,12 @@ v0.7.2 不需要数据变换。门禁仍对 schema 1 -> 2 backup、失败回滚�
 墙钟通过，不能由虚拟时间代替。Provider 超时和 Broker 请求不占用同一
 调度槽，新增签名/更新/诊断代码不进入采样热路径。
 
+生产发布不能只检查 72 小时证据的布尔结果。仓库内冻结的 baseline
+candidate 描述同时固定 v0.4 产品版本、源 head、CI run/artifact digest、
+Agent DLL/入口 SHA-256 和验证器 SHA-256。发布门禁重新计算资源阈值，
+要求 UTC 起止跨度和单调计时都达到 72 小时，并验证 baseline head 是当前
+发布 commit 的祖先；候选或证据任一缺失、错配都 fail closed。
+
 ## 隐私与诊断
 
 产品默认只在本机保存监控、历史和诊断数据，不自动上传。默认诊断包采用
