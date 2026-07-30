@@ -8,6 +8,7 @@
 - `history-v1.schema.json`：有界历史查询和时间桶统计。
 - `capabilities-v1.schema.json`：Provider、指标、限制和端点发现。
 - `health-v1.schema.json`：轻量实例与健康探测。
+- `diagnostics-v1.schema.json`：只读、确定性的诊断事件查询。
 - `error-v1.schema.json`：HTTP 错误。
 - `legacy-stats-v0.2.schema.json`：deprecated `/api/stats` 适配器。
 

@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows10.0.17763.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.8.1" />
+    <PackageReference Include="MSTest.TestAdapter" Version="4.3.3" />
+    <PackageReference Include="MSTest.TestFramework" Version="4.3.3" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../src/PerfMonitor.Agent/PerfMonitor.Agent.csproj" />
+    <ProjectReference Include="../../src/PerfMonitor.Collectors.Windows/PerfMonitor.Collectors.Windows.csproj" />
+    <ProjectReference Include="../../src/PerfMonitor.Core/PerfMonitor.Core.csproj" />
+    <ProjectReference Include="../../src/PerfMonitor.Desktop/PerfMonitor.Desktop.csproj" />
+    <ProjectReference Include="../../src/PerfMonitor.Diagnostics/PerfMonitor.Diagnostics.csproj" />
+    <ProjectReference Include="../../src/PerfMonitor.Ipc.NamedPipes/PerfMonitor.Ipc.NamedPipes.csproj" />
+    <ProjectReference Include="../../src/PerfMonitor.Storage.Sqlite/PerfMonitor.Storage.Sqlite.csproj" />
+  </ItemGroup>
+</Project>
