@@ -4,9 +4,6 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="System.IO.Pipes.AccessControl" Version="5.0.0" />
-  </ItemGroup>
-  <ItemGroup>
     <ProjectReference Include="../PerfMonitor.Contracts/PerfMonitor.Contracts.csproj" />
     <ProjectReference Include="../PerfMonitor.Core/PerfMonitor.Core.csproj" />
   </ItemGroup>

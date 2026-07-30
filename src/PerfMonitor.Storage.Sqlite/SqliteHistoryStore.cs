@@ -107,6 +107,38 @@ public sealed class SqliteHistoryStore :
         return true;
     }
 
+    public async Task WaitForIdleAsync(
+        TimeSpan timeout,
+        CancellationToken cancellationToken = default)
+    {
+        if (timeout <= TimeSpan.Zero ||
+            timeout > TimeSpan.FromMinutes(1))
+        {
+            throw new ArgumentOutOfRangeException(nameof(timeout));
+        }
+
+        var acceptedTarget = Interlocked.Read(ref _acceptedSamples);
+        using var timeoutCancellation =
+            CancellationTokenSource.CreateLinkedTokenSource(
+                cancellationToken);
+        timeoutCancellation.CancelAfter(timeout);
+        while (Interlocked.Read(ref _persistedSamples) <
+            acceptedTarget)
+        {
+            if ((SqliteHistoryState)Volatile.Read(ref _state) !=
+                SqliteHistoryState.Healthy)
+            {
+                throw new StorageUnavailableException(
+                    Volatile.Read(ref _lastErrorCode) ??
+                    "sqlite_history_unavailable");
+            }
+
+            await Task.Delay(
+                TimeSpan.FromMilliseconds(10),
+                timeoutCancellation.Token).ConfigureAwait(false);
+        }
+    }
+
     public async ValueTask<HistoryContract> QueryAsync(
         HistoryQueryContract query,
         string responseInstanceId,

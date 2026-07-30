@@ -25,7 +25,7 @@ internal sealed class SqliteDatabase
             DataSource = options.DatabasePath,
             Mode = SqliteOpenMode.ReadWriteCreate,
             Cache = SqliteCacheMode.Private,
-            Pooling = true,
+            Pooling = false,
             DefaultTimeout = checked((int)Math.Ceiling(
                 options.BusyTimeout.TotalSeconds)),
         }.ToString();
@@ -34,7 +34,7 @@ internal sealed class SqliteDatabase
             DataSource = options.DatabasePath,
             Mode = SqliteOpenMode.ReadOnly,
             Cache = SqliteCacheMode.Private,
-            Pooling = true,
+            Pooling = false,
             DefaultTimeout = checked((int)Math.Ceiling(
                 options.BusyTimeout.TotalSeconds)),
         }.ToString();

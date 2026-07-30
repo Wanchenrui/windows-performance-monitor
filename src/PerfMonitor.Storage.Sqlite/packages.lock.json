@@ -53,7 +53,7 @@
       "perfmonitor.core": {
         "type": "Project",
         "dependencies": {
-          "PerfMonitor.Contracts": "[0.4.0, )"
+          "PerfMonitor.Contracts": "[0.5.0, )"
         }
       }
     }

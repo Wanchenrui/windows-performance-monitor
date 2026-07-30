@@ -7,7 +7,7 @@ public static class ContractVersions
 
 public static class ProductVersions
 {
-    public const string Agent = "0.4.0";
+    public const string Agent = "0.5.0";
 }
 
 public static class GroupIds
