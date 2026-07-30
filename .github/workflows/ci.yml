@@ -73,6 +73,16 @@ jobs:
       - name: Publish and smoke-test .NET Agent
         shell: powershell
         run: |
+          [xml]$BuildProperties = Get-Content `
+            -LiteralPath .\Directory.Build.props `
+            -Raw
+          $VersionNode = $BuildProperties.SelectSingleNode(
+            "/Project/PropertyGroup/Version"
+          )
+          if ($null -eq $VersionNode) {
+            throw "Directory.Build.props is missing Version"
+          }
+          $ExpectedProductVersion = $VersionNode.InnerText.Trim()
           dotnet publish .\src\PerfMonitor.Agent\PerfMonitor.Agent.csproj `
             --configuration Release --no-restore `
             --output .\artifacts\agent
@@ -88,7 +98,7 @@ jobs:
           if ($Snapshot.contractVersion -ne "1.0") {
             throw "Unexpected contract version"
           }
-          if ($Snapshot.productVersion -ne "0.5.0") {
+          if ($Snapshot.productVersion -ne $ExpectedProductVersion) {
             throw "Unexpected product version"
           }
           foreach ($Group in @(
