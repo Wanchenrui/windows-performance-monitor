@@ -1,18 +1,22 @@
 # 电脑性能监控
 
-当前版本为 `0.5.0`。产品运行路径已经切换为按用户运行的
+当前版本为 `0.6.0`。产品运行路径为按用户运行的
 `.NET 10 PerfMonitor.Agent`、独立 WPF Desktop、受保护 Named Pipe IPC
-和 SQLite 历史库。Python 0.3 源码继续保留为指标口径 oracle、golden
+和 SQLite 历史库，并新增只读、确定性的诊断事件。Python 0.3 源码继续
+保留为指标口径 oracle、golden
 fixture 生成器和差分基线，但不再作为默认或发布版高频 Agent。
 
-## v0.5 架构边界
+## v0.6 架构边界
 
 ```text
 Windows Providers
   -> absolute-deadline scheduler
   -> immutable latest snapshot
      -> latest-wins Named Pipe subscription -> Desktop
-     -> bounded queue -> single SQLite writer
+     -> bounded queue -> deterministic diagnostics
+                         -> bounded RAM events
+                         -> existing single SQLite writer
+     -> bounded queue -> existing single SQLite writer
 ```
 
 - `PerfMonitor.Agent` 默认以当前用户、非管理员权限运行。Provider 使用独立
@@ -24,7 +28,32 @@ Windows Providers
   LocalSystem，并显式拒绝 Network SID。
 - SQLite 位于 `%LOCALAPPDATA%\PerfMonitor\data\history-v1.db`。采样线程
   只做非阻塞 `TryWrite`；队列满或存储失败时增加丢弃计数，实时快照继续。
-- GPU、网络、温度、告警、自动优化和特权 Broker 不属于 v0.5。
+- 诊断规则使用快照中的逻辑时间，单线程确定性执行；同一组历史快照按固定
+  顺序重放会产生相同事件 ID 与事件序列。
+- v0.6 只有诊断和告警，不提供优化动作、命令执行或特权 Broker。GPU、
+  网络、温度和动作 Broker 属于后续版本。
+
+## 确定性诊断
+
+首批规则覆盖高 CPU、内存压力、系统盘空间低、配置进程 CPU 尖峰、采样
+缺口、Provider 长时间不可用和 Agent 自身资源异常。默认阈值是可修改、
+可审计的产品策略，不代表所有硬件的物理极限。
+
+每个事件包含 `ruleId/ruleVersion/severity/state`、激活/恢复滞环、
+debounce、cooldown、有界证据窗、`firstSeen/lastSeen` 和 confidence。
+仅在完整 debounce 条件成立后产生 `active` 或 `resolved` 转换；阈值间
+区域保持当前状态，不把抖动误判为反复转换。
+
+| 数据 | 层级 | 默认位置/上限 |
+|---|---|---|
+| 规则策略 | 持久化配置 | `diagnostic-policy-v1.json` |
+| debounce/cooldown/活动状态 | RAM | 每规则/主体一个有限状态机 |
+| 最近事件 | RAM | 最多 2,000 条 |
+| 历史事件 | SQLite schema v2 | 最多查询 2,000 条、366 天 |
+
+策略文件损坏或不可写时只把诊断策略降级为 RAM 默认值并输出稳定警告码，
+不停止 Provider、IPC 或实时快照。配置进程规则默认 watchlist 为空，策略
+只保存进程名，不接受路径、命令行或脚本文本。
 
 ## 构建与运行
 
@@ -72,6 +101,7 @@ v1 支持：
 - `getCapabilities`
 - `getHealth`
 - `queryHistory`
+- `queryDiagnostics`
 - `subscribe`
 - `unsubscribe`
 
@@ -85,6 +115,10 @@ v1 支持：
 SQLite 使用单写者、批量事务、WAL、`synchronous=NORMAL`、1 秒
 `busy_timeout`，读写连接分离。启动时执行 `integrity_check(1)`、被动 WAL
 checkpoint 和显式 schema migration。
+
+schema v2 复用同一个 writer channel 写诊断事件，不创建第二个 SQLite
+writer。v1 预留事件表会保存在 `diagnostic_events_v1` 归档表中；迁移不
+静默删除旧数据库。
 
 默认保留策略：
 
@@ -139,6 +173,8 @@ dotnet test .\PerfMonitor.slnx --configuration Release --no-restore
 测试覆盖契约 Schema、golden fixtures、Provider 调度和故障隔离、
 259,200 周期虚拟长稳、IPC framing/ACL/版本协商、Desktop 断线保留与
 Agent 重启识别、SQLite 有界查询/尖峰保留和存储失败降级。
+v0.6 另覆盖七类规则、滞环/debounce/cooldown、SQLite 事件去重、IPC
+诊断查询，以及从 raw snapshot 历史重放得到字节等价事件。
 
 Python/.NET 同窗差分：
 
@@ -193,6 +229,7 @@ src/PerfMonitor.Ipc.NamedPipes/     安全 framing、ACL、Server/Client 与订�
 src/PerfMonitor.Storage.Sqlite/     migration、单写者、retention 与 rollup
 src/PerfMonitor.Agent/              产品 Agent 生命周期与查询适配
 src/PerfMonitor.Desktop/            独立 WPF 客户端、重连与最新状态保留
+src/PerfMonitor.Diagnostics/        确定性规则、策略、状态机与历史重放
 perf_monitor/                       只读 Python 指标 oracle
 contracts/v1/                       Schema、目录、IPC 文档与 fixtures
 scripts/compare_agents.ps1          Python/.NET 同窗差分
@@ -201,10 +238,12 @@ scripts/run_agent_soak.ps1          实际资源与 72 小时发布门禁
 
 ## 回退与已知风险
 
-- v0.5 二进制可回退到 `v0.4.0`；v0.4 不读取 SQLite schema v1。回退不得
+- v0.6 二进制可回退到 `v0.5.0`；v0.5 会忽略 schema v2 新增列，但回退
+  前应备份数据库，且不得写入或删除 `diagnostic_events_v1` 归档表。
+  更早的 v0.4 不读取 SQLite。任何回退不得
   删除 `%LOCALAPPDATA%\PerfMonitor\data`，以便重新升级后恢复历史。
 - migration 或写入失败会降级历史能力，但不会停止实时采样。状态目前通过
-  稳定错误码暴露，完整诊断事件在 v0.6 实现。
+  稳定错误码暴露；v0.6 的 RAM 诊断仍可查询，但该期间事件可能无法持久化。
 - Named Pipe DACL 的结构在 CI 中验证；跨用户实机矩阵仍需在 1.0 安装/
   升级验证环境复测。
 - 厂商 GPU/温度 SDK 可能阻塞或崩溃，v0.7 前不会放入 Agent 核心。

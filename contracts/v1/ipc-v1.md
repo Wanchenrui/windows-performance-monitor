@@ -38,6 +38,7 @@ hello 必须在 5 秒内完成。客户端声明的 `maxMessageSize` 必须在 1
 
 - `getSnapshot`
 - `queryHistory`
+- `queryDiagnostics`
 - `getCapabilities`
 - `getHealth`
 - `subscribe`
@@ -64,6 +65,24 @@ hello 必须在 5 秒内完成。客户端声明的 `maxMessageSize` 必须在 1
 每连接一个，服务端先返回 `subscribed`，再用相同 request ID 发送
 `snapshotUpdate`。订阅缓冲区容量为 1，慢客户端只收到最新快照。
 
+诊断查询同样使用 10 秒 deadline，必须提供范围和绝对条数上限：
+
+```json
+{
+  "type": "queryDiagnostics",
+  "requestId": "client-generated-id",
+  "ruleIds": ["system.high_cpu"],
+  "states": ["active", "resolved"],
+  "fromEpochMs": 1785312000000,
+  "toEpochMs": 1785398400000,
+  "maxEvents": 200
+}
+```
+
+范围最多 366 天，规则最多 16 个，`maxEvents` 为 1～2,000。空的
+`ruleIds/states` 表示不过滤。响应只包含诊断事件；v0.6 没有 action、
+command、PowerShell、script、registry 或任意执行请求。
+
 错误响应：
 
 ```json
@@ -88,7 +107,8 @@ IPC 稳定错误包括 `contract_version_unsupported`、`invalid_request`、
   失败，而不是降级到不受信任对象；
 - Desktop 不直接连接 Broker；
 - IPC 不接受命令行、PowerShell 或脚本文本；
-- 长度、JSON 深度、数组大小、历史时间范围和 `maxPoints` 都在进入业务层
+- 长度、JSON 深度、数组大小、历史/诊断时间范围、`maxPoints` 和
+  `maxEvents` 都在进入业务层
   前验证；
 - `instanceId + sequence` 用于识别 Agent 重启，不能作为授权令牌。
 

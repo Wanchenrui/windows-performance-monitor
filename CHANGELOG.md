@@ -1,5 +1,37 @@
 ﻿# 变更记录
 
+## 0.6.0
+
+变更点：
+
+- 新增确定性诊断模块，首批实现高 CPU、内存压力、系统盘空间低、配置
+  进程 CPU 尖峰、采样缺口、Provider 长时间不可用和 Agent 自身资源异常。
+- 每个事件固定携带规则/版本、严重度、状态、滞环、激活/恢复 debounce、
+  cooldown、有界证据窗、首次/末次时间和 confidence；转换 ID 由确定性
+  输入计算，同一 raw snapshot 历史重放产生字节等价事件。
+- 诊断使用单线程有界队列和快照逻辑时间，不读取 evaluator 墙钟；队列满、
+  策略损坏或事件 sink 失败均不能反压 Provider 调度。
+- 策略持久化为独立 JSON，运行状态只存 RAM；配置进程 watchlist 默认
+  为空，只允许进程名，不接受路径、命令行或脚本。
+- SQLite 升级到 schema v2，事件复用既有单 writer channel，使用确定性
+  事件 ID 去重，并提供 366 天、2,000 条上限的查询；v1 预留表保留为归档。
+- Named Pipe 增加 `queryDiagnostics`，Desktop 可读取当前活动告警；
+  capabilities 明确 `actionsSupported=false`，v0.6 不提供任何优化动作。
+
+潜在风险：
+
+- 默认阈值是产品策略，不是所有硬件的物理极限；部署前应按工作负载校准，
+  并在修改规则语义时同步提升 `ruleVersion`。
+- raw snapshot 只保留 48 小时，超过该窗口只能审阅已持久化事件，不能从
+  原始快照重新计算全部细节。
+- SQLite 不可用时最近事件仍在有界 RAM 中，但重启后无法恢复未落盘事件。
+
+回退：
+
+- 可回退到 `v0.5.0`，但必须保留并建议先备份
+  `%LOCALAPPDATA%\PerfMonitor\data\history-v1.db`。v0.5 不消费诊断
+  schema v2，重新升级后恢复读取；不得以删除数据库作为 migration 回退。
+
 ## 0.5.0
 
 变更点：
