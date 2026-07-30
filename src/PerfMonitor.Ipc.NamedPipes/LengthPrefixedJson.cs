@@ -52,8 +52,11 @@ public static class LengthPrefixedJson
 
             try
             {
+                // JsonDocument may retain ReadOnlyMemory for its lifetime.
+                // Detach from the pooled buffer before returning it below.
+                var ownedPayload = payloadMemory.ToArray();
                 return JsonDocument.Parse(
-                    payloadMemory.Span,
+                    ownedPayload,
                     new JsonDocumentOptions
                     {
                         AllowTrailingCommas = false,
