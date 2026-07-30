@@ -1,8 +1,16 @@
 <Solution>
   <Folder Name="/src/">
+    <Project Path="src/PerfMonitor.Agent/PerfMonitor.Agent.csproj" />
+    <Project Path="src/PerfMonitor.Collectors.Windows/PerfMonitor.Collectors.Windows.csproj" />
     <Project Path="src/PerfMonitor.Contracts/PerfMonitor.Contracts.csproj" />
+    <Project Path="src/PerfMonitor.Core/PerfMonitor.Core.csproj" />
+    <Project Path="src/PerfMonitor.Desktop/PerfMonitor.Desktop.csproj" />
+    <Project Path="src/PerfMonitor.Diagnostics/PerfMonitor.Diagnostics.csproj" />
+    <Project Path="src/PerfMonitor.Ipc.NamedPipes/PerfMonitor.Ipc.NamedPipes.csproj" />
+    <Project Path="src/PerfMonitor.Storage.Sqlite/PerfMonitor.Storage.Sqlite.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/PerfMonitor.AgentTests/PerfMonitor.AgentTests.csproj" />
     <Project Path="tests/PerfMonitor.ContractTests/PerfMonitor.ContractTests.csproj" />
   </Folder>
 </Solution>
