@@ -60,6 +60,13 @@
           "PerfMonitor.Contracts": "[0.6.0, )"
         }
       },
+      "perfmonitor.diagnostics": {
+        "type": "Project",
+        "dependencies": {
+          "PerfMonitor.Contracts": "[0.6.0, )",
+          "PerfMonitor.Core": "[0.6.0, )"
+        }
+      },
       "perfmonitor.ipc.namedpipes": {
         "type": "Project",
         "dependencies": {

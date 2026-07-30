@@ -251,6 +251,15 @@ public sealed class NamedPipeAgentServer : IAsyncDisposable
                             clientStopping.Token).ConfigureAwait(false);
                         break;
 
+                    case "queryDiagnostics":
+                        await HandleDiagnosticsAsync(
+                            pipe,
+                            writeGate,
+                            request,
+                            negotiation.MaxMessageSize,
+                            clientStopping.Token).ConfigureAwait(false);
+                        break;
+
                     case "subscribe":
                         if (subscription is not null)
                         {
@@ -494,6 +503,101 @@ public sealed class NamedPipeAgentServer : IAsyncDisposable
                 "history",
                 request.RequestId,
                 history,
+                maxMessageSize,
+                cancellationToken).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) when (
+            requestCancellation.IsCancellationRequested &&
+            !cancellationToken.IsCancellationRequested)
+        {
+            await WriteErrorAsync(
+                pipe,
+                writeGate,
+                request.RequestId,
+                IpcErrorCodes.RequestTimedOut,
+                maxMessageSize,
+                cancellationToken).ConfigureAwait(false);
+        }
+        catch (Exception exception) when (
+            exception is ArgumentException or
+            OverflowException)
+        {
+            await WriteErrorAsync(
+                pipe,
+                writeGate,
+                request.RequestId,
+                IpcErrorCodes.InvalidRequest,
+                maxMessageSize,
+                cancellationToken).ConfigureAwait(false);
+        }
+        catch (IpcServiceUnavailableException)
+        {
+            await WriteErrorAsync(
+                pipe,
+                writeGate,
+                request.RequestId,
+                IpcErrorCodes.ServiceUnavailable,
+                maxMessageSize,
+                cancellationToken).ConfigureAwait(false);
+        }
+        catch (Exception exception) when (
+            exception is not OutOfMemoryException and
+            not StackOverflowException)
+        {
+            await WriteErrorAsync(
+                pipe,
+                writeGate,
+                request.RequestId,
+                IpcErrorCodes.ServiceUnavailable,
+                maxMessageSize,
+                cancellationToken).ConfigureAwait(false);
+        }
+    }
+
+    private async Task HandleDiagnosticsAsync(
+        Stream pipe,
+        SemaphoreSlim writeGate,
+        IpcRequestMessage request,
+        int maxMessageSize,
+        CancellationToken cancellationToken)
+    {
+        if (request.RuleIds is null ||
+            request.States is null ||
+            request.MaxEvents is null)
+        {
+            await WriteErrorAsync(
+                pipe,
+                writeGate,
+                request.RequestId,
+                IpcErrorCodes.InvalidRequest,
+                maxMessageSize,
+                cancellationToken).ConfigureAwait(false);
+            return;
+        }
+
+        using var requestCancellation =
+            CancellationTokenSource.CreateLinkedTokenSource(
+                cancellationToken);
+        requestCancellation.CancelAfter(IpcProtocol.RequestTimeout);
+        try
+        {
+            var diagnostics =
+                await _service.QueryDiagnosticsAsync(
+                    new DiagnosticQueryContract
+                    {
+                        RuleIds = request.RuleIds,
+                        States = request.States,
+                        FromEpochMs = request.FromEpochMs,
+                        ToEpochMs = request.ToEpochMs,
+                        MaxEvents = request.MaxEvents.Value,
+                    },
+                    requestCancellation.Token).ConfigureAwait(false);
+            await WritePayloadAsync(
+                pipe,
+                writeGate,
+                "diagnostics",
+                request.RequestId,
+                diagnostics,
                 maxMessageSize,
                 cancellationToken).ConfigureAwait(false);
         }

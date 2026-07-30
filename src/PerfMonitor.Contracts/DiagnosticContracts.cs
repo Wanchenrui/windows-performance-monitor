@@ -151,3 +151,99 @@ public sealed record DiagnosticsCapabilityContract
         init;
     }
 }
+
+public static class DiagnosticQueryValidation
+{
+    private static readonly HashSet<string> KnownRuleIds =
+        new(DiagnosticRuleIds.All, StringComparer.Ordinal);
+    private static readonly HashSet<string> KnownStates =
+        new(DiagnosticStates.All, StringComparer.Ordinal);
+
+    public static ValidatedDiagnosticQuery Validate(
+        DiagnosticQueryContract query)
+    {
+        if (query.FromEpochMs is null ||
+            query.ToEpochMs is null ||
+            query.FromEpochMs > query.ToEpochMs)
+        {
+            throw new ArgumentException(
+                "diagnostic_range_invalid",
+                nameof(query));
+        }
+
+        var range = checked(
+            query.ToEpochMs.Value -
+            query.FromEpochMs.Value + 1);
+        if (range >
+            DiagnosticPolicyLimits.MaxQueryRange.TotalMilliseconds)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(query),
+                "diagnostic_range_too_large");
+        }
+
+        if (query.MaxEvents <= 0 ||
+            query.MaxEvents > DiagnosticPolicyLimits.MaxEvents)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(query),
+                "diagnostic_max_events_invalid");
+        }
+
+        ValidateFilter(
+            query.RuleIds,
+            KnownRuleIds,
+            DiagnosticPolicyLimits.MaxRuleIds,
+            "diagnostic_rule_ids_invalid");
+        ValidateFilter(
+            query.States,
+            KnownStates,
+            DiagnosticStates.All.Count,
+            "diagnostic_states_invalid");
+        return new ValidatedDiagnosticQuery(
+            query.FromEpochMs.Value,
+            query.ToEpochMs.Value,
+            query.MaxEvents,
+            new HashSet<string>(
+                query.RuleIds,
+                StringComparer.Ordinal),
+            new HashSet<string>(
+                query.States,
+                StringComparer.Ordinal));
+    }
+
+    private static void ValidateFilter(
+        IReadOnlyList<string> values,
+        IReadOnlySet<string> known,
+        int maxCount,
+        string errorCode)
+    {
+        if (values.Count > maxCount ||
+            values.Distinct(StringComparer.Ordinal).Count() !=
+                values.Count ||
+            values.Any(value => !known.Contains(value)))
+        {
+            throw new ArgumentException(errorCode);
+        }
+    }
+}
+
+public sealed record ValidatedDiagnosticQuery(
+    long FromEpochMs,
+    long ToEpochMs,
+    int MaxEvents,
+    IReadOnlySet<string> RuleIds,
+    IReadOnlySet<string> States)
+{
+    public bool Matches(DiagnosticEventContract diagnosticEvent)
+    {
+        var time = diagnosticEvent.LastSeenUtc
+            .ToUnixTimeMilliseconds();
+        return time >= FromEpochMs &&
+            time <= ToEpochMs &&
+            (RuleIds.Count == 0 ||
+                RuleIds.Contains(diagnosticEvent.RuleId)) &&
+            (States.Count == 0 ||
+                States.Contains(diagnosticEvent.State));
+    }
+}

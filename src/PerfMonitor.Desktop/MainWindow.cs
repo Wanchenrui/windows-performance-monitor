@@ -44,6 +44,10 @@ public sealed class MainWindow : Window
         "历史：尚未查询",
         13,
         SecondaryTextBrush);
+    private readonly TextBlock _diagnosticsText = TextBlock(
+        "诊断：尚未查询",
+        13,
+        SecondaryTextBrush);
     private Task? _sessionTask;
 
     public MainWindow(PipeEndpoint endpoint)
@@ -154,7 +158,16 @@ public sealed class MainWindow : Window
         var footerStack = new StackPanel();
         footerStack.Children.Add(_updatedText);
         footerStack.Children.Add(_historyText);
+        footerStack.Children.Add(_diagnosticsText);
         footer.Children.Add(footerStack);
+        var buttonStack = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+        };
+        var diagnosticsButton = ActionButton("查询诊断");
+        diagnosticsButton.Margin = new Thickness(0, 0, 10, 0);
+        diagnosticsButton.Click += OnDiagnosticsClick;
+        buttonStack.Children.Add(diagnosticsButton);
         var historyButton = new Button
         {
             Content = "查询最近 24 小时",
@@ -166,8 +179,9 @@ public sealed class MainWindow : Window
             Cursor = System.Windows.Input.Cursors.Hand,
         };
         historyButton.Click += OnHistoryClick;
-        Grid.SetColumn(historyButton, 1);
-        footer.Children.Add(historyButton);
+        buttonStack.Children.Add(historyButton);
+        Grid.SetColumn(buttonStack, 1);
+        footer.Children.Add(buttonStack);
         Grid.SetRow(footer, 2);
         root.Children.Add(footer);
         return root;
@@ -283,6 +297,60 @@ public sealed class MainWindow : Window
         }
     }
 
+    private async void OnDiagnosticsClick(
+        object sender,
+        RoutedEventArgs eventArgs)
+    {
+        _diagnosticsText.Text = "诊断：查询中…";
+        try
+        {
+            await using var client =
+                await NamedPipeAgentClient.ConnectAsync(
+                    _endpoint,
+                    TimeSpan.FromSeconds(3),
+                    _stopping.Token);
+            var now = DateTimeOffset.UtcNow;
+            var diagnostics =
+                await client.QueryDiagnosticsAsync(
+                    new DiagnosticQueryContract
+                    {
+                        FromEpochMs = now.AddHours(-24)
+                            .ToUnixTimeMilliseconds(),
+                        ToEpochMs = now.ToUnixTimeMilliseconds(),
+                        MaxEvents = 200,
+                    },
+                    _stopping.Token);
+            var active = diagnostics.Events
+                .GroupBy(
+                    static item =>
+                        (item.RuleId, item.SubjectId))
+                .Select(static group => group
+                    .OrderByDescending(
+                        static item => item.LastSeenUtc)
+                    .First())
+                .Where(static item =>
+                    item.State == DiagnosticStates.Active)
+                .OrderByDescending(
+                    static item => item.LastSeenUtc)
+                .ToArray();
+            _diagnosticsText.Text = active.Length == 0
+                ? "诊断：无活动告警"
+                : $"诊断：{active.Length} 个活动告警 · 最近 {active[0].RuleId}";
+        }
+        catch (OperationCanceledException) when (
+            _stopping.IsCancellationRequested)
+        {
+        }
+        catch (Exception exception) when (
+            exception is IOException or
+            TimeoutException or
+            IpcProtocolException or
+            IpcRemoteException)
+        {
+            _diagnosticsText.Text = "诊断：暂不可用";
+        }
+    }
+
     private static Border MetricCard(
         string title,
         TextBlock value,
@@ -316,6 +384,18 @@ public sealed class MainWindow : Window
         Foreground = PrimaryTextBrush,
         Margin = new Thickness(0, 26, 0, 18),
     };
+
+    private static Button ActionButton(string content) =>
+        new()
+        {
+            Content = content,
+            Padding = new Thickness(18, 10, 18, 10),
+            Background = AccentBrush,
+            Foreground = WindowBrush,
+            BorderThickness = new Thickness(0),
+            FontWeight = FontWeights.SemiBold,
+            Cursor = System.Windows.Input.Cursors.Hand,
+        };
 
     private static TextBlock TextBlock(
         string text,

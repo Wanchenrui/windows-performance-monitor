@@ -173,6 +173,7 @@
         "dependencies": {
           "PerfMonitor.Collectors.Windows": "[0.6.0, )",
           "PerfMonitor.Core": "[0.6.0, )",
+          "PerfMonitor.Diagnostics": "[0.6.0, )",
           "PerfMonitor.Ipc.NamedPipes": "[0.6.0, )",
           "PerfMonitor.Storage.Sqlite": "[0.6.0, )"
         }
@@ -198,6 +199,13 @@
         "type": "Project",
         "dependencies": {
           "PerfMonitor.Contracts": "[0.6.0, )"
+        }
+      },
+      "perfmonitor.diagnostics": {
+        "type": "Project",
+        "dependencies": {
+          "PerfMonitor.Contracts": "[0.6.0, )",
+          "PerfMonitor.Core": "[0.6.0, )"
         }
       },
       "perfmonitor.ipc.namedpipes": {

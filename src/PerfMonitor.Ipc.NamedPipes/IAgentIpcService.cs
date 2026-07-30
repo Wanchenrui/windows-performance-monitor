@@ -16,4 +16,8 @@ public interface IAgentIpcService
     ValueTask<HistoryContract> QueryHistoryAsync(
         HistoryQueryContract query,
         CancellationToken cancellationToken);
+
+    ValueTask<DiagnosticsContract> QueryDiagnosticsAsync(
+        DiagnosticQueryContract query,
+        CancellationToken cancellationToken);
 }

@@ -9,19 +9,27 @@ internal sealed class AgentQueryService : IAgentIpcService
 {
     private readonly SnapshotAssembler _assembler;
     private readonly IHistoryReader _history;
+    private readonly IDiagnosticEventReader _persistedDiagnostics;
+    private readonly IDiagnosticEventReader _recentDiagnostics;
     private readonly CapabilitiesContract _capabilities;
 
     public AgentQueryService(
         SnapshotAssembler assembler,
         IHistoryReader history,
+        IDiagnosticEventReader persistedDiagnostics,
+        IDiagnosticEventReader recentDiagnostics,
+        DiagnosticsCapabilityContract diagnosticsCapabilities,
         IEnumerable<ProviderDescriptor> descriptors,
         PipeEndpoint endpoint,
         TimeSpan snapshotPeriod)
     {
         _assembler = assembler;
         _history = history;
+        _persistedDiagnostics = persistedDiagnostics;
+        _recentDiagnostics = recentDiagnostics;
         _capabilities = BuildCapabilities(
             assembler.InstanceId,
+            diagnosticsCapabilities,
             descriptors,
             endpoint,
             snapshotPeriod);
@@ -70,8 +78,61 @@ internal sealed class AgentQueryService : IAgentIpcService
         }
     }
 
+    public async ValueTask<DiagnosticsContract> QueryDiagnosticsAsync(
+        DiagnosticQueryContract query,
+        CancellationToken cancellationToken)
+    {
+        var recent = await _recentDiagnostics.QueryDiagnosticsAsync(
+            query,
+            InstanceId,
+            cancellationToken).ConfigureAwait(false);
+        DiagnosticsContract? persisted = null;
+        try
+        {
+            persisted =
+                await _persistedDiagnostics.QueryDiagnosticsAsync(
+                    query,
+                    InstanceId,
+                    cancellationToken).ConfigureAwait(false);
+        }
+        catch (StorageUnavailableException)
+        {
+            // v0.6.0: RAM diagnostics remain queryable when SQLite
+            // is unavailable. No action endpoint is exposed.
+        }
+
+        var candidates = recent.Events
+            .Concat(persisted?.Events ?? [])
+            .GroupBy(
+                static item => item.EventId,
+                StringComparer.Ordinal)
+            .Select(static group => group.First())
+            .OrderByDescending(static item => item.LastSeenUtc)
+            .ThenByDescending(
+                static item => item.EventId,
+                StringComparer.Ordinal)
+            .ToArray();
+        var selected = candidates
+            .Take(query.MaxEvents)
+            .Reverse()
+            .ToArray();
+        return new DiagnosticsContract
+        {
+            ContractVersion = ContractVersions.V1,
+            ProductVersion = ProductVersions.Agent,
+            InstanceId = InstanceId,
+            Query = query,
+            EventCount = selected.Length,
+            Truncated = recent.Truncated ||
+                persisted?.Truncated == true ||
+                candidates.Length > selected.Length,
+            Events = selected,
+        };
+    }
+
     private static CapabilitiesContract BuildCapabilities(
         string instanceId,
+        DiagnosticsCapabilityContract diagnosticsCapabilities,
         IEnumerable<ProviderDescriptor> descriptors,
         PipeEndpoint endpoint,
         TimeSpan snapshotPeriod)
@@ -122,11 +183,13 @@ internal sealed class AgentQueryService : IAgentIpcService
                 RamPointLimit = HistoryPolicy.RamPointLimit,
                 Aggregations = HistoryPolicy.Aggregations,
             },
+            Diagnostics = diagnosticsCapabilities,
             Endpoints = new Dictionary<string, string>(
                 StringComparer.Ordinal)
             {
                 ["snapshot"] = $"{baseEndpoint}/snapshot",
                 ["history"] = $"{baseEndpoint}/history",
+                ["diagnostics"] = $"{baseEndpoint}/diagnostics",
                 ["capabilities"] = $"{baseEndpoint}/capabilities",
                 ["health"] = $"{baseEndpoint}/health",
                 ["subscribe"] = $"{baseEndpoint}/subscribe",

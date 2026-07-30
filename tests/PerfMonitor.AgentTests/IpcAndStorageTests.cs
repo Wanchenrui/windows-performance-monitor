@@ -109,6 +109,19 @@ public sealed class IpcAndStorageTests
                 Assert.AreEqual(ServiceIds.PerfMonitor, health.Service);
                 Assert.AreEqual(firstService.InstanceId, health.InstanceId);
                 Assert.AreEqual(1L, health.Sequence);
+                var now = DateTimeOffset.UtcNow;
+                var diagnostics =
+                    await firstClient.QueryDiagnosticsAsync(
+                        new DiagnosticQueryContract
+                        {
+                            FromEpochMs = now.AddMinutes(-1)
+                                .ToUnixTimeMilliseconds(),
+                            ToEpochMs = now.AddMinutes(1)
+                                .ToUnixTimeMilliseconds(),
+                            MaxEvents = 10,
+                        },
+                        CancellationToken.None);
+                Assert.AreEqual(0, diagnostics.EventCount);
             }
 
             await using var secondClient =
@@ -469,10 +482,19 @@ public sealed class IpcAndStorageTests
                     RamPointLimit = HistoryPolicy.RamPointLimit,
                     Aggregations = HistoryPolicy.Aggregations,
                 },
+                Diagnostics = new DiagnosticsCapabilityContract
+                {
+                    DefaultMaxEvents =
+                        DiagnosticPolicyLimits.DefaultMaxEvents,
+                    MaxEvents = DiagnosticPolicyLimits.MaxEvents,
+                    ActionsSupported = false,
+                    Rules = [],
+                },
                 Endpoints = new Dictionary<string, string>
                 {
                     ["snapshot"] = "pipe:test/snapshot",
                     ["history"] = "pipe:test/history",
+                    ["diagnostics"] = "pipe:test/diagnostics",
                     ["capabilities"] = "pipe:test/capabilities",
                     ["health"] = "pipe:test/health",
                 },
@@ -516,6 +538,20 @@ public sealed class IpcAndStorageTests
                 PointCount = 0,
                 Downsampled = false,
                 Points = [],
+            });
+
+        public ValueTask<DiagnosticsContract> QueryDiagnosticsAsync(
+            DiagnosticQueryContract query,
+            CancellationToken cancellationToken) =>
+            ValueTask.FromResult(new DiagnosticsContract
+            {
+                ContractVersion = ContractVersions.V1,
+                ProductVersion = ProductVersions.Agent,
+                InstanceId = InstanceId,
+                Query = query,
+                EventCount = 0,
+                Truncated = false,
+                Events = [],
             });
     }
 }

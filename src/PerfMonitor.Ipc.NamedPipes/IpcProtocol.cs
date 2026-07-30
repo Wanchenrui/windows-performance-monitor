@@ -25,6 +25,9 @@ public sealed record IpcRequestMessage
     public long? FromEpochMs { get; init; }
     public long? ToEpochMs { get; init; }
     public int? MaxPoints { get; init; }
+    public IReadOnlyList<string>? RuleIds { get; init; }
+    public IReadOnlyList<string>? States { get; init; }
+    public int? MaxEvents { get; init; }
     public string? SubscriptionId { get; init; }
 }
 

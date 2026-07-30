@@ -4,7 +4,7 @@ namespace PerfMonitor.Storage.Sqlite;
 
 internal sealed class SqliteDatabase
 {
-    private const int CurrentSchemaVersion = 1;
+    private const int CurrentSchemaVersion = 2;
     private static readonly Lazy<bool> ProviderInitialization = new(
         static () =>
         {
@@ -138,6 +138,26 @@ internal sealed class SqliteDatabase
             return;
         }
 
+        if (version < 1)
+        {
+            await ApplyVersion1Async(
+                connection,
+                cancellationToken).ConfigureAwait(false);
+            version = 1;
+        }
+
+        if (version < 2)
+        {
+            await ApplyVersion2Async(
+                connection,
+                cancellationToken).ConfigureAwait(false);
+        }
+    }
+
+    private static async Task ApplyVersion1Async(
+        SqliteConnection connection,
+        CancellationToken cancellationToken)
+    {
         using var transaction = connection.BeginTransaction();
         await using var command = connection.CreateCommand();
         command.Transaction = transaction;
@@ -218,6 +238,50 @@ internal sealed class SqliteDatabase
                 strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
             );
             PRAGMA user_version=1;
+            """;
+        _ = await command.ExecuteNonQueryAsync(cancellationToken)
+            .ConfigureAwait(false);
+        transaction.Commit();
+    }
+
+    private static async Task ApplyVersion2Async(
+        SqliteConnection connection,
+        CancellationToken cancellationToken)
+    {
+        using var transaction = connection.BeginTransaction();
+        await using var command = connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandText = """
+            ALTER TABLE diagnostic_events
+                RENAME TO diagnostic_events_v1;
+
+            CREATE TABLE diagnostic_events (
+                event_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                occurred_at_ms INTEGER NOT NULL,
+                diagnostic_id TEXT NOT NULL UNIQUE,
+                severity TEXT NOT NULL,
+                payload_json TEXT NOT NULL,
+                rule_id TEXT NOT NULL,
+                rule_version TEXT NOT NULL,
+                state TEXT NOT NULL,
+                first_seen_ms INTEGER NOT NULL,
+                last_seen_ms INTEGER NOT NULL
+            );
+            CREATE INDEX ix_diagnostic_events_time
+                ON diagnostic_events(last_seen_ms);
+            CREATE INDEX ix_diagnostic_events_rule_time
+                ON diagnostic_events(rule_id, last_seen_ms);
+            CREATE INDEX ix_diagnostic_events_state_time
+                ON diagnostic_events(state, last_seen_ms);
+
+            INSERT OR IGNORE INTO schema_migrations(
+                version,
+                applied_at_utc
+            ) VALUES (
+                2,
+                strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
+            );
+            PRAGMA user_version=2;
             """;
         _ = await command.ExecuteNonQueryAsync(cancellationToken)
             .ConfigureAwait(false);

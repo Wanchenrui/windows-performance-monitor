@@ -3,6 +3,7 @@ using System.Text.Json.Nodes;
 using PerfMonitor.Contracts;
 using PerfMonitor.Core;
 using PerfMonitor.Diagnostics;
+using PerfMonitor.Storage.Sqlite;
 
 namespace PerfMonitor.AgentTests;
 
@@ -130,6 +131,72 @@ public sealed class DiagnosticsTests
             "response-instance",
             result.InstanceId);
         Assert.AreEqual(2, engine.Health.EvaluatedSnapshots);
+    }
+
+    [TestMethod]
+    [Timeout(20000)]
+    public async Task DiagnosticEventsUseExistingSingleSqliteWriter()
+    {
+        var directory = Path.Combine(
+            Path.GetTempPath(),
+            $"perf-monitor-diagnostic-store-{Guid.NewGuid():N}");
+        var databasePath = Path.Combine(directory, "history.db");
+        try
+        {
+            await using var store = new SqliteHistoryStore(
+                new SqliteHistoryOptions
+                {
+                    DatabasePath = databasePath,
+                });
+            await store.StartAsync(CancellationToken.None);
+            var origin = DateTimeOffset.Parse(
+                "2026-01-01T00:00:00Z",
+                System.Globalization.CultureInfo.InvariantCulture);
+            var diagnosticEvent = DiagnosticReplay.Replay(
+                [CpuSnapshot(1, origin, 95)],
+                OnlyHighCpu(
+                    activateDebounceSeconds: 0,
+                    recoverDebounceSeconds: 0,
+                    cooldownSeconds: 0)).Single();
+
+            Assert.IsTrue(
+                store.TryPublishDiagnostic(diagnosticEvent));
+            Assert.IsTrue(
+                store.TryPublishDiagnostic(diagnosticEvent));
+            await store.WaitForDiagnosticsIdleAsync(
+                TimeSpan.FromSeconds(10));
+            var result = await store.QueryDiagnosticsAsync(
+                new DiagnosticQueryContract
+                {
+                    RuleIds = [DiagnosticRuleIds.HighCpu],
+                    States = [DiagnosticStates.Active],
+                    FromEpochMs = origin.AddMinutes(-1)
+                        .ToUnixTimeMilliseconds(),
+                    ToEpochMs = origin.AddMinutes(1)
+                        .ToUnixTimeMilliseconds(),
+                    MaxEvents = 10,
+                },
+                "response-instance",
+                CancellationToken.None);
+
+            Assert.AreEqual(1, result.EventCount);
+            Assert.AreEqual(
+                diagnosticEvent.EventId,
+                result.Events.Single().EventId);
+            Assert.AreEqual(
+                2L,
+                store.Health.PersistedDiagnosticEvents);
+            Assert.AreEqual(
+                SqliteHistoryState.Healthy,
+                store.Health.State);
+        }
+        finally
+        {
+            if (Directory.Exists(directory))
+            {
+                Directory.Delete(directory, recursive: true);
+            }
+        }
     }
 
     private static DiagnosticPolicy OnlyHighCpu(

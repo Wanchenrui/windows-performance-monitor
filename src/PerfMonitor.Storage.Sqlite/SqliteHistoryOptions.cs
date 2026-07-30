@@ -64,5 +64,8 @@ public sealed record SqliteHistoryHealth(
     long AcceptedSamples,
     long PersistedSamples,
     long DroppedPersistenceSamples,
+    long AcceptedDiagnosticEvents,
+    long PersistedDiagnosticEvents,
+    long DroppedDiagnosticEvents,
     long WriteFailures,
     string? LastErrorCode);

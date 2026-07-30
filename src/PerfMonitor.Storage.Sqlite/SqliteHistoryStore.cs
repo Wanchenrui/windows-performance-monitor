@@ -21,6 +21,8 @@ public sealed class StorageUnavailableException : Exception
 public sealed class SqliteHistoryStore :
     ISnapshotConsumer,
     IHistoryReader,
+    IDiagnosticEventSink,
+    IDiagnosticEventReader,
     IAsyncDisposable
 {
     private static readonly JsonSerializerOptions SnapshotJsonOptions = new()
@@ -33,7 +35,7 @@ public sealed class SqliteHistoryStore :
 
     private readonly SqliteHistoryOptions _options;
     private readonly SqliteDatabase _database;
-    private readonly Channel<AgentSnapshot> _channel;
+    private readonly Channel<StorageWorkItem> _channel;
     private readonly CancellationTokenSource _stopping = new();
     private Task? _writerTask;
     private int _started;
@@ -41,6 +43,9 @@ public sealed class SqliteHistoryStore :
     private long _acceptedSamples;
     private long _persistedSamples;
     private long _droppedSamples;
+    private long _acceptedDiagnosticEvents;
+    private long _persistedDiagnosticEvents;
+    private long _droppedDiagnosticEvents;
     private long _writeFailures;
     private string? _lastErrorCode;
     private DateTimeOffset _nextRetentionUtc = DateTimeOffset.MinValue;
@@ -49,7 +54,7 @@ public sealed class SqliteHistoryStore :
     {
         _options = options.Validate();
         _database = new SqliteDatabase(_options);
-        _channel = Channel.CreateBounded<AgentSnapshot>(
+        _channel = Channel.CreateBounded<StorageWorkItem>(
             new BoundedChannelOptions(_options.QueueCapacity)
             {
                 SingleReader = true,
@@ -64,6 +69,9 @@ public sealed class SqliteHistoryStore :
         Interlocked.Read(ref _acceptedSamples),
         Interlocked.Read(ref _persistedSamples),
         Interlocked.Read(ref _droppedSamples),
+        Interlocked.Read(ref _acceptedDiagnosticEvents),
+        Interlocked.Read(ref _persistedDiagnosticEvents),
+        Interlocked.Read(ref _droppedDiagnosticEvents),
         Interlocked.Read(ref _writeFailures),
         Volatile.Read(ref _lastErrorCode));
 
@@ -97,13 +105,30 @@ public sealed class SqliteHistoryStore :
     {
         if ((SqliteHistoryState)Volatile.Read(ref _state) !=
                 SqliteHistoryState.Healthy ||
-            !_channel.Writer.TryWrite(snapshot))
+            !_channel.Writer.TryWrite(
+                StorageWorkItem.ForSnapshot(snapshot)))
         {
             Interlocked.Increment(ref _droppedSamples);
             return false;
         }
 
         Interlocked.Increment(ref _acceptedSamples);
+        return true;
+    }
+
+    public bool TryPublishDiagnostic(
+        DiagnosticEventContract diagnosticEvent)
+    {
+        if ((SqliteHistoryState)Volatile.Read(ref _state) !=
+                SqliteHistoryState.Healthy ||
+            !_channel.Writer.TryWrite(
+                StorageWorkItem.ForDiagnostic(diagnosticEvent)))
+        {
+            Interlocked.Increment(ref _droppedDiagnosticEvents);
+            return false;
+        }
+
+        Interlocked.Increment(ref _acceptedDiagnosticEvents);
         return true;
     }
 
@@ -176,6 +201,79 @@ public sealed class SqliteHistoryStore :
         }
     }
 
+    public async ValueTask<DiagnosticsContract> QueryDiagnosticsAsync(
+        DiagnosticQueryContract query,
+        string responseInstanceId,
+        CancellationToken cancellationToken)
+    {
+        var state = (SqliteHistoryState)Volatile.Read(ref _state);
+        if (state is SqliteHistoryState.Created or
+            SqliteHistoryState.Stopped ||
+            !File.Exists(_options.DatabasePath))
+        {
+            throw new StorageUnavailableException(
+                "sqlite_diagnostics_unavailable");
+        }
+
+        try
+        {
+            await using var connection =
+                _database.CreateReadOnlyConnection();
+            await connection.OpenAsync(cancellationToken)
+                .ConfigureAwait(false);
+            await _database.ConfigureConnectionAsync(
+                connection,
+                writable: false,
+                cancellationToken).ConfigureAwait(false);
+            return await SqliteDiagnosticQuery.ExecuteAsync(
+                connection,
+                query,
+                responseInstanceId,
+                cancellationToken).ConfigureAwait(false);
+        }
+        catch (Exception exception) when (
+            exception is SqliteException or
+            JsonException or
+            InvalidDataException)
+        {
+            throw new StorageUnavailableException(
+                "sqlite_diagnostics_query_failure");
+        }
+    }
+
+    public async Task WaitForDiagnosticsIdleAsync(
+        TimeSpan timeout,
+        CancellationToken cancellationToken = default)
+    {
+        if (timeout <= TimeSpan.Zero ||
+            timeout > TimeSpan.FromMinutes(1))
+        {
+            throw new ArgumentOutOfRangeException(nameof(timeout));
+        }
+
+        var acceptedTarget =
+            Interlocked.Read(ref _acceptedDiagnosticEvents);
+        using var timeoutCancellation =
+            CancellationTokenSource.CreateLinkedTokenSource(
+                cancellationToken);
+        timeoutCancellation.CancelAfter(timeout);
+        while (Interlocked.Read(ref _persistedDiagnosticEvents) <
+            acceptedTarget)
+        {
+            if ((SqliteHistoryState)Volatile.Read(ref _state) !=
+                SqliteHistoryState.Healthy)
+            {
+                throw new StorageUnavailableException(
+                    Volatile.Read(ref _lastErrorCode) ??
+                    "sqlite_diagnostics_unavailable");
+            }
+
+            await Task.Delay(
+                TimeSpan.FromMilliseconds(10),
+                timeoutCancellation.Token).ConfigureAwait(false);
+        }
+    }
+
     public async ValueTask DisposeAsync()
     {
         _channel.Writer.TryComplete();
@@ -208,16 +306,16 @@ public sealed class SqliteHistoryStore :
                 writable: true,
                 cancellationToken).ConfigureAwait(false);
 
-            var batch = new List<AgentSnapshot>(_options.BatchSize);
+            var batch = new List<StorageWorkItem>(_options.BatchSize);
             while (await _channel.Reader
                 .WaitToReadAsync(cancellationToken)
                 .ConfigureAwait(false))
             {
                 batch.Clear();
                 while (batch.Count < _options.BatchSize &&
-                    _channel.Reader.TryRead(out var snapshot))
+                    _channel.Reader.TryRead(out var item))
                 {
-                    batch.Add(snapshot);
+                    batch.Add(item);
                 }
 
                 if (batch.Count == 0)
@@ -225,11 +323,16 @@ public sealed class SqliteHistoryStore :
                     continue;
                 }
 
-                await WriteBatchAsync(
+                var persisted = await WriteBatchAsync(
                     connection,
                     batch,
                     cancellationToken).ConfigureAwait(false);
-                Interlocked.Add(ref _persistedSamples, batch.Count);
+                Interlocked.Add(
+                    ref _persistedSamples,
+                    persisted.Snapshots);
+                Interlocked.Add(
+                    ref _persistedDiagnosticEvents,
+                    persisted.DiagnosticEvents);
 
                 var now = DateTimeOffset.UtcNow;
                 if (now >= _nextRetentionUtc)
@@ -254,24 +357,49 @@ public sealed class SqliteHistoryStore :
         {
             Interlocked.Increment(ref _writeFailures);
             Degrade("sqlite_write_failure");
-            while (_channel.Reader.TryRead(out _))
+            while (_channel.Reader.TryRead(out var dropped))
             {
-                Interlocked.Increment(ref _droppedSamples);
+                if (dropped.DiagnosticEvent is null)
+                {
+                    Interlocked.Increment(ref _droppedSamples);
+                }
+                else
+                {
+                    Interlocked.Increment(
+                        ref _droppedDiagnosticEvents);
+                }
             }
         }
     }
 
-    private static async Task WriteBatchAsync(
+    private static async Task<PersistedBatch> WriteBatchAsync(
         SqliteConnection connection,
-        IReadOnlyList<AgentSnapshot> snapshots,
+        IReadOnlyList<StorageWorkItem> items,
         CancellationToken cancellationToken)
     {
         using var transaction = connection.BeginTransaction();
-        foreach (var snapshot in snapshots)
+        var persistedSnapshots = 0;
+        var persistedDiagnostics = 0;
+        foreach (var item in items)
         {
+            if (item.DiagnosticEvent is { } diagnosticEvent)
+            {
+                await InsertDiagnosticEventAsync(
+                    connection,
+                    transaction,
+                    diagnosticEvent,
+                    cancellationToken).ConfigureAwait(false);
+                persistedDiagnostics++;
+                continue;
+            }
+
+            var snapshot = item.Snapshot ??
+                throw new InvalidDataException(
+                    "sqlite_work_item_invalid");
             if (snapshot.Sequence <= 0 ||
                 snapshot.CompletedAtUtc is null)
             {
+                persistedSnapshots++;
                 continue;
             }
 
@@ -315,9 +443,78 @@ public sealed class SqliteHistoryStore :
                     bucketSeconds: 3_600,
                     cancellationToken).ConfigureAwait(false);
             }
+
+            persistedSnapshots++;
         }
 
         transaction.Commit();
+        return new PersistedBatch(
+            persistedSnapshots,
+            persistedDiagnostics);
+    }
+
+    private static async Task InsertDiagnosticEventAsync(
+        SqliteConnection connection,
+        SqliteTransaction transaction,
+        DiagnosticEventContract diagnosticEvent,
+        CancellationToken cancellationToken)
+    {
+        await using var command = connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandText = """
+            INSERT OR IGNORE INTO diagnostic_events(
+                occurred_at_ms,
+                diagnostic_id,
+                severity,
+                payload_json,
+                rule_id,
+                rule_version,
+                state,
+                first_seen_ms,
+                last_seen_ms
+            ) VALUES (
+                $occurred_at_ms,
+                $diagnostic_id,
+                $severity,
+                $payload_json,
+                $rule_id,
+                $rule_version,
+                $state,
+                $first_seen_ms,
+                $last_seen_ms
+            );
+            """;
+        command.Parameters.AddWithValue(
+            "$occurred_at_ms",
+            diagnosticEvent.LastSeenUtc.ToUnixTimeMilliseconds());
+        command.Parameters.AddWithValue(
+            "$diagnostic_id",
+            diagnosticEvent.EventId);
+        command.Parameters.AddWithValue(
+            "$severity",
+            diagnosticEvent.Severity);
+        command.Parameters.AddWithValue(
+            "$payload_json",
+            JsonSerializer.Serialize(
+                diagnosticEvent,
+                SnapshotJsonOptions));
+        command.Parameters.AddWithValue(
+            "$rule_id",
+            diagnosticEvent.RuleId);
+        command.Parameters.AddWithValue(
+            "$rule_version",
+            diagnosticEvent.RuleVersion);
+        command.Parameters.AddWithValue(
+            "$state",
+            diagnosticEvent.State);
+        command.Parameters.AddWithValue(
+            "$first_seen_ms",
+            diagnosticEvent.FirstSeenUtc.ToUnixTimeMilliseconds());
+        command.Parameters.AddWithValue(
+            "$last_seen_ms",
+            diagnosticEvent.LastSeenUtc.ToUnixTimeMilliseconds());
+        _ = await command.ExecuteNonQueryAsync(cancellationToken)
+            .ConfigureAwait(false);
     }
 
     private static async Task InsertSnapshotAsync(
@@ -503,6 +700,8 @@ public sealed class SqliteHistoryStore :
             DELETE FROM metric_rollups
             WHERE bucket_seconds = 3600
               AND bucket_start_ms < $hour_cutoff;
+            DELETE FROM diagnostic_events
+            WHERE last_seen_ms < $hour_cutoff;
             """;
         command.Parameters.AddWithValue("$raw_cutoff", rawCutoff);
         command.Parameters.AddWithValue("$minute_cutoff", minuteCutoff);
@@ -519,4 +718,21 @@ public sealed class SqliteHistoryStore :
             ref _state,
             (int)SqliteHistoryState.DegradedReadOnly);
     }
+
+    private sealed record StorageWorkItem(
+        AgentSnapshot? Snapshot,
+        DiagnosticEventContract? DiagnosticEvent)
+    {
+        public static StorageWorkItem ForSnapshot(
+            AgentSnapshot snapshot) =>
+            new(snapshot, null);
+
+        public static StorageWorkItem ForDiagnostic(
+            DiagnosticEventContract diagnosticEvent) =>
+            new(null, diagnosticEvent);
+    }
+
+    private sealed record PersistedBatch(
+        int Snapshots,
+        int DiagnosticEvents);
 }

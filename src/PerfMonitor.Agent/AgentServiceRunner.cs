@@ -1,6 +1,7 @@
 using PerfMonitor.Collectors.Windows;
 using PerfMonitor.Contracts;
 using PerfMonitor.Core;
+using PerfMonitor.Diagnostics;
 using PerfMonitor.Ipc.NamedPipes;
 using PerfMonitor.Storage.Sqlite;
 
@@ -26,15 +27,30 @@ public static class AgentServiceRunner
         var databasePath = Path.Combine(
             options.DataDirectory,
             "history-v1.db");
+        var diagnosticPolicy = DiagnosticPolicyFile.LoadOrCreate(
+            options.DiagnosticPolicyPath,
+            out var diagnosticPolicyWarning);
+        if (diagnosticPolicyWarning is not null)
+        {
+            await Console.Error.WriteLineAsync(
+                diagnosticPolicyWarning).ConfigureAwait(false);
+        }
+
         await using var storage = new SqliteHistoryStore(
             new SqliteHistoryOptions
             {
                 DatabasePath = databasePath,
             });
+        await using var diagnostics = new DiagnosticEngine(
+            diagnosticPolicy,
+            [storage]);
         await using var subscriptions = new SnapshotSubscriptionHub();
         var queryService = new AgentQueryService(
             assembler,
             storage,
+            storage,
+            diagnostics,
+            diagnosticPolicy.ToCapabilities(),
             providers.Select(provider => provider.Descriptor),
             endpoint,
             options.Sampling.OutputPeriod);
@@ -49,8 +65,9 @@ public static class AgentServiceRunner
             assembler,
             options.Sampling.MaxConcurrency);
         var fanout = new SnapshotFanout(
-            [storage, subscriptions]);
+            [storage, diagnostics, subscriptions]);
 
+        diagnostics.Start();
         scheduler.Start();
         server?.Start();
 

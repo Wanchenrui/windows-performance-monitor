@@ -171,6 +171,23 @@ public sealed class NamedPipeAgentClient : IAsyncDisposable
             "history",
             cancellationToken);
 
+    public Task<DiagnosticsContract> QueryDiagnosticsAsync(
+        DiagnosticQueryContract query,
+        CancellationToken cancellationToken) =>
+        RequestAsync<DiagnosticsContract>(
+            new IpcRequestMessage
+            {
+                Type = "queryDiagnostics",
+                RequestId = Guid.NewGuid().ToString("N"),
+                RuleIds = query.RuleIds,
+                States = query.States,
+                FromEpochMs = query.FromEpochMs,
+                ToEpochMs = query.ToEpochMs,
+                MaxEvents = query.MaxEvents,
+            },
+            "diagnostics",
+            cancellationToken);
+
     public async IAsyncEnumerable<AgentSnapshot> SubscribeAsync(
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
