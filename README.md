@@ -340,7 +340,9 @@ Server Core 冒充 Desktop Experience 都不能得到
 真实 72 小时基线同样不能只提供一个 `passed=true` JSON。生产门禁把
 证据与 `release/evidence/v0.4-agent-baseline-candidate.json` 中冻结的
 源 head、CI artifact digest 和 Agent SHA-256 绑定，并重新按
-`release/resource-budgets-v1.json` 计算所有资源阈值。
+`release/resource-budgets-v1.json` 计算所有资源阈值。冻结候选还固定
+探针和快照周期，production 会据此校验最低样本覆盖量，不能用两个稀疏
+快照冒充连续 72 小时采样。
 
 两个模式都要求操作者先独立审阅 WiX 7 OSMF/EULA，并在本次
 `workflow_dispatch` 中显式输入对应 EULA ID；仓库不会保存或替操作者作出

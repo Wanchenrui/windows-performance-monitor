@@ -3,6 +3,12 @@
   "baselineId": "v0.4.0-agent-parity",
   "productVersion": "0.4.0",
   "runtimeIdentifier": "win-x64",
+  "validationPlan": {
+    "durationSeconds": 259200,
+    "warmupSeconds": 5,
+    "probeIntervalSeconds": 30,
+    "snapshotPeriodSeconds": 300
+  },
   "source": {
     "repository": "Wanchenrui/windows-performance-monitor",
     "headBranch": "codex/v0.4.0-agent-parity",

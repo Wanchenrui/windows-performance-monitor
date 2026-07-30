@@ -173,8 +173,10 @@ v0.7.2 不需要数据变换。门禁仍对 schema 1 -> 2 backup、失败回滚�
 生产发布不能只检查 72 小时证据的布尔结果。仓库内冻结的 baseline
 candidate 描述同时固定 v0.4 产品版本、源 head、CI run/artifact digest、
 Agent DLL/入口 SHA-256 和验证器 SHA-256。发布门禁重新计算资源阈值，
-要求 UTC 起止跨度和单调计时都达到 72 小时，并验证 baseline head 是当前
-发布 commit 的祖先；候选或证据任一缺失、错配都 fail closed。
+要求 UTC 起止跨度、进程完整退出和采样覆盖都达到 72 小时，并拒绝完成
+时间仍在未来的证据；baseline head 还必须是当前发布 commit 的祖先。
+冻结的 300 秒快照周期和 30 秒资源探针用于推导最低快照与稳态资源样本
+覆盖量；候选或证据任一缺失、错配、稀疏都 fail closed。
 
 ## 隐私与诊断
 

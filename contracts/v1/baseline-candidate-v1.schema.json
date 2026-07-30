@@ -9,6 +9,7 @@
     "baselineId",
     "productVersion",
     "runtimeIdentifier",
+    "validationPlan",
     "source",
     "artifact",
     "agent",
@@ -28,6 +29,30 @@
     },
     "runtimeIdentifier": {
       "const": "win-x64"
+    },
+    "validationPlan": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "durationSeconds",
+        "warmupSeconds",
+        "probeIntervalSeconds",
+        "snapshotPeriodSeconds"
+      ],
+      "properties": {
+        "durationSeconds": {
+          "const": 259200
+        },
+        "warmupSeconds": {
+          "const": 5
+        },
+        "probeIntervalSeconds": {
+          "const": 30
+        },
+        "snapshotPeriodSeconds": {
+          "const": 300
+        }
+      }
     },
     "source": {
       "type": "object",

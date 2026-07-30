@@ -209,10 +209,11 @@ def test_frozen_v04_baseline_candidate_is_schema_valid_and_pinned():
             / "v0.4-agent-baseline-candidate.json"
         ).read_text(encoding="utf-8")
     )
-    jsonschema.Draft202012Validator(
+    validator = jsonschema.Draft202012Validator(
         schema,
         format_checker=jsonschema.FormatChecker(),
-    ).validate(candidate)
+    )
+    validator.validate(candidate)
 
     assert candidate["source"]["repository"] == (
         "Wanchenrui/windows-performance-monitor"
@@ -228,6 +229,15 @@ def test_frozen_v04_baseline_candidate_is_schema_valid_and_pinned():
     assert candidate["agent"]["sha256"] == (
         "A83E7DFC6F38F8965E4618176A5724D0122022D71FF84008BA328A7D7C03A914"
     )
+    assert candidate["validationPlan"] == {
+        "durationSeconds": 259200,
+        "warmupSeconds": 5,
+        "probeIntervalSeconds": 30,
+        "snapshotPeriodSeconds": 300,
+    }
+    tampered_candidate = deepcopy(candidate)
+    tampered_candidate["validationPlan"]["snapshotPeriodSeconds"] = 3600
+    assert list(validator.iter_errors(tampered_candidate))
 
     soak_schema = json.loads(
         (
@@ -330,6 +340,11 @@ def test_release_scripts_are_fail_closed_and_include_final_files():
         soak_validation_script
     )
     assert "soak_candidate_not_in_current_history" in (
+        soak_validation_script
+    )
+    assert "soak_snapshot_coverage_invalid" in soak_validation_script
+    assert "soak_completed_at_in_future" in soak_validation_script
+    assert "soak_resource_sample_coverage_invalid" in (
         soak_validation_script
     )
 

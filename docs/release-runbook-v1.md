@@ -52,12 +52,16 @@ production PFX 和密码只注入证书导入步骤；完整 Python/.NET 测试�
 
 ## Production candidate
 
-1. 确认所有堆叠版本已按顺序合并、`main` 与 GitHub 完全同步且工作树干净。
+1. 确认所有堆叠版本已按顺序使用 merge commit 合并，禁止 squash 或
+   rebase merge；否则冻结的 v0.4 baseline head 不再是发布提交的祖先，
+   production 门禁会按设计失败。随后确认 `main` 与 GitHub 完全同步且
+   工作树干净。
 2. 确认 v0.4 基线真实 72 小时证据
    `release72HourGate.actualWallClockPassed=true`，并保存证据哈希。证据的
    `productVersion` 和 `agentSha256` 必须与
    `release/evidence/v0.4-agent-baseline-candidate.json` 一致；不要手工
-   修改证据来满足门禁。
+   修改证据来满足门禁。快照数、资源样本数和 `maximumAllowed` 还必须
+   与冻结的探针/快照周期一致。
 3. 为四台隔离实验机配置下列 self-hosted runner label，并确保 runner
    以管理员身份运行、没有预装 PerfMonitor：
    `perfmonitor-win11-24h2-x64`、`perfmonitor-win11-25h2-x64`、

@@ -79,6 +79,7 @@ if (
 
 $Candidate = $null
 $CandidatePath = $null
+$ValidationPlan = $null
 if ($BaselineCandidatePath) {
     if (-not $RequireRelease72Hour) {
         throw "soak_candidate_requires_release_72h"
@@ -92,6 +93,16 @@ if ($BaselineCandidatePath) {
     if (
         $Candidate.schemaVersion -cne "1.0" -or
         $Candidate.runtimeIdentifier -cne "win-x64" -or
+        $null -eq $Candidate.validationPlan -or
+        [int]$Candidate.validationPlan.durationSeconds -ne
+            72 * 60 * 60 -or
+        [int]$Candidate.validationPlan.warmupSeconds -ne 5 -or
+        [int](
+            $Candidate.validationPlan.probeIntervalSeconds
+        ) -ne 30 -or
+        [int](
+            $Candidate.validationPlan.snapshotPeriodSeconds
+        ) -ne 300 -or
         [string]$Candidate.productVersion -notmatch
             "^[0-9]+\.[0-9]+\.[0-9]+$" -or
         [string]$Candidate.source.repository -notmatch
@@ -137,6 +148,7 @@ if ($BaselineCandidatePath) {
         [string]$Candidate.agent.sha256
     $ExpectedProductVersion =
         [string]$Candidate.productVersion
+    $ValidationPlan = $Candidate.validationPlan
     $CurrentHead = (
         & git -C $ProjectRoot rev-parse HEAD
     ).Trim()
@@ -225,6 +237,9 @@ $CompletedAt = ConvertTo-SoakTimestamp `
 if ($CompletedAt -le $StartedAt) {
     throw "soak_elapsed_time_invalid"
 }
+if ($CompletedAt -gt [DateTimeOffset]::UtcNow) {
+    throw "soak_completed_at_in_future"
+}
 $UtcElapsedSeconds = (
     $CompletedAt - $StartedAt
 ).TotalSeconds
@@ -236,12 +251,17 @@ if (
 }
 if ($RequireRelease72Hour) {
     $RequiredSeconds = 72 * 60 * 60
+    $MinimumPlanElapsedSeconds = (
+        [int]$ValidationPlan.durationSeconds +
+        [int]$ValidationPlan.warmupSeconds -
+        2
+    )
     if (
-        [int]$Evidence.requestedDurationSeconds -lt
-            $RequiredSeconds -or
+        [int]$Evidence.requestedDurationSeconds -ne
+            [int]$ValidationPlan.durationSeconds -or
         [double]$Evidence.actualElapsedSeconds -lt
-            $RequiredSeconds -or
-        $UtcElapsedSeconds -lt $RequiredSeconds -or
+            $MinimumPlanElapsedSeconds -or
+        $UtcElapsedSeconds -lt $MinimumPlanElapsedSeconds -or
         [int](
             $Evidence.release72HourGate.requiredDurationSeconds
         ) -ne $RequiredSeconds -or
@@ -269,6 +289,29 @@ if (
         [double]$Evidence.snapshots.maximumAllowed
 ) {
     throw "soak_snapshot_evidence_invalid"
+}
+if ($RequireRelease72Hour) {
+    # v1.0: allow one output boundary at shutdown, but require
+    # essentially the full frozen 300-second snapshot cadence.
+    $ExpectedMaximumSnapshots = [Math]::Ceiling(
+        [int]$ValidationPlan.durationSeconds /
+            [double]$ValidationPlan.snapshotPeriodSeconds
+    ) + 3
+    $MinimumSnapshotCount = [Math]::Max(
+        2,
+        [Math]::Floor(
+            [int]$ValidationPlan.durationSeconds /
+                [double]$ValidationPlan.snapshotPeriodSeconds
+        ) - 1
+    )
+    if (
+        [int]$Evidence.snapshots.count -lt
+            $MinimumSnapshotCount -or
+        [int]$Evidence.snapshots.maximumAllowed -ne
+            $ExpectedMaximumSnapshots
+    ) {
+        throw "soak_snapshot_coverage_invalid"
+    }
 }
 
 $AgentBudget = $Budget.agent
@@ -325,6 +368,33 @@ if (
     [int]$Resources.threadLimit -le 0
 ) {
     throw "soak_resource_evidence_range_invalid"
+}
+if ($RequireRelease72Hour) {
+    # v1.0: the outer PowerShell probe uses relative sleeps. Permit
+    # at most one frozen snapshot window of accumulated scheduling
+    # overhead; a longer unobserved interval fails closed.
+    $IdealResourceSamples = [Math]::Floor(
+        (
+            [int]$ValidationPlan.durationSeconds -
+            [int]$ValidationPlan.warmupSeconds
+        ) /
+            [double]$ValidationPlan.probeIntervalSeconds
+    ) - 1
+    $AllowedMissingResourceSamples = [Math]::Ceiling(
+        [int]$ValidationPlan.snapshotPeriodSeconds /
+            [double]$ValidationPlan.probeIntervalSeconds
+    )
+    $MinimumResourceSamples = [Math]::Max(
+        3,
+        $IdealResourceSamples -
+            $AllowedMissingResourceSamples
+    )
+    if (
+        [int]$Resources.samples -lt
+            $MinimumResourceSamples
+    ) {
+        throw "soak_resource_sample_coverage_invalid"
+    }
 }
 $LimitChecks = @(
     @(
