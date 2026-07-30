@@ -1,0 +1,13 @@
+{
+  "$schema": "../contracts/v1/resource-budgets-v1.schema.json",
+  "schemaVersion": "1.0",
+  "agent": {
+    "workingSetPeakMiB": 256,
+    "privateMemoryPeakMiB": 256,
+    "retainedPrivateGrowthMiB": 32,
+    "gcHeapGrowthMiB": 16,
+    "cpuCoreEquivalentMeanPct": 20,
+    "handlePeak": 512,
+    "threadPeak": 64
+  }
+}

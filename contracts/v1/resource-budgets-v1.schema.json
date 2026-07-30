@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.perfmonitor.local/v1/resource-budgets-v1.schema.json",
+  "title": "PerfMonitor resource budgets v1",
+  "type": "object",
+  "required": ["schemaVersion", "agent"],
+  "properties": {
+    "$schema": {"type": "string"},
+    "schemaVersion": {"const": "1.0"},
+    "agent": {
+      "type": "object",
+      "required": [
+        "workingSetPeakMiB",
+        "privateMemoryPeakMiB",
+        "retainedPrivateGrowthMiB",
+        "gcHeapGrowthMiB",
+        "cpuCoreEquivalentMeanPct",
+        "handlePeak",
+        "threadPeak"
+      ],
+      "properties": {
+        "workingSetPeakMiB": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "privateMemoryPeakMiB": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "retainedPrivateGrowthMiB": {
+          "type": "number",
+          "minimum": 0
+        },
+        "gcHeapGrowthMiB": {
+          "type": "number",
+          "minimum": 0
+        },
+        "cpuCoreEquivalentMeanPct": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 100
+        },
+        "handlePeak": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "threadPeak": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}
