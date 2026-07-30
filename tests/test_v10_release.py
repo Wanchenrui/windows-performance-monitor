@@ -304,6 +304,19 @@ def test_support_matrix_is_attested_and_production_bound():
     assert "TimeStamperCertificate" in lifecycle_script
 
 
+def test_clean_ci_runner_creates_crash_evidence_directory():
+    workflow = (
+        ROOT / ".github" / "workflows" / "ci.yml"
+    ).read_text(encoding="utf-8")
+    crash_step = workflow.split(
+        "- name: Force WAL crash and verify recovery",
+        maxsplit=1,
+    )[1].split("- name:", maxsplit=1)[0]
+    assert "New-Item `" in crash_step
+    assert "-Path .\\artifacts `" in crash_step
+    assert "crash-recovery.json" in crash_step
+
+
 def test_support_matrix_schema_accepts_only_the_frozen_four_targets():
     schema = json.loads(
         (

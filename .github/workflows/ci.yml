@@ -265,6 +265,11 @@ jobs:
       - name: Force WAL crash and verify recovery
         shell: powershell
         run: |
+          New-Item `
+            -ItemType Directory `
+            -Path .\artifacts `
+            -Force |
+            Out-Null
           .\scripts\test_crash_recovery.ps1 `
             -AgentPath .\dist\agent\perf-monitor-agent.exe `
             -SupportPath .\dist\support\perf-monitor-support.exe |
