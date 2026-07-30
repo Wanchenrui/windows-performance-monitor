@@ -1,5 +1,43 @@
 ﻿# 变更记录
 
+## 0.5.0
+
+变更点：
+
+- 产品路径切换为独立的 `.NET 10` Agent 与 WPF Desktop；Desktop 仅通过
+  contract v1 IPC 访问 Agent，退出或断线不影响采样与历史写入。
+- 新增按当前用户 SID 派生的 Windows Named Pipe，使用受保护 DACL，仅
+  允许当前用户和 LocalSystem，并显式拒绝 Network SID；协议实现 4 字节
+  小端 framing、4 MiB 分配前上限、JSON 深度限制、hello/版本协商、
+  request deadline、唯一 request ID、能力发现和 latest-wins 订阅。
+- 新增 SQLite schema v1、显式 migration、完整性检查、WAL、单写者有界
+  队列和独立读连接；raw/分钟/小时数据默认保留 48 小时/30 天/366 天，
+  rollup 保留 `min/max/avg/last/count`。
+- 历史查询强制时间范围、指标白名单、最多 16 个指标、5,000 点和 366 天，
+  SQL 侧降采样保留尖峰；SQLite 初始化或写入失败只降级历史，不反压
+  Provider 或实时快照。
+- Desktop 自动重连，断线期间保留最后快照，并在 `instanceId` 改变时记录
+  Agent 重启；增加真实 Named Pipe 重启测试和 Agent/Desktop/SQLite
+  生命周期冒烟。
+- 默认构建与启动不再打包或运行 Python 高频 Agent。Python 0.3 仅保留为
+  oracle、fixtures 与显式 `--dev-http` 开发模式；产品 manifest 对全部
+  .NET 文件和锁文件生成 SHA-256。
+
+潜在风险：
+
+- 当前 Desktop 为首版原生 WPF 状态页，尚未覆盖 Python Web UI 的全部
+  进程排行与图表交互；扩展 UI 不得绕过 IPC 直接访问 SQLite 或 Win32。
+- SQLite schema v1 只有前向 migration；1.0 前仍需完成异常退出恢复、
+  升降级与 migration 回滚矩阵。
+- 跨用户隔离已做 DACL 结构测试，仍需在 1.0 支持矩阵中执行真实多会话
+  安装验证。
+
+回退：
+
+- 可回退到 `v0.4.0`；旧版本忽略但不得删除
+  `%LOCALAPPDATA%\PerfMonitor\data\history-v1.db`。Python oracle 的最后
+  产品回退标签仍为 `v0.3.0`。
+
 ## 0.4.0
 
 变更点：
