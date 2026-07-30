@@ -15,21 +15,37 @@ public sealed class WindowsProviderSmokeTests
         var providers = WindowsProviderFactory.CreateDefault();
         var time = TimeProvider.System;
         var groups = new HashSet<string>(StringComparer.Ordinal);
-
-        foreach (var provider in providers)
+        try
         {
-            var result = await provider.CollectAsync(
-                new ProviderContext(
-                    time,
-                    time.GetUtcNow(),
-                    time.GetTimestamp(),
-                    Math.Max(1, Environment.ProcessorCount)),
-                CancellationToken.None);
-            groups.Add(result.GroupId);
-            Assert.AreEqual(
-                provider.Descriptor.ProviderId,
-                result.ProviderId);
-            Assert.IsNotNull(result.ObservedAtUtc);
+            foreach (var provider in providers)
+            {
+                var result = await provider.CollectAsync(
+                    new ProviderContext(
+                        time,
+                        time.GetUtcNow(),
+                        time.GetTimestamp(),
+                        Math.Max(1, Environment.ProcessorCount)),
+                    CancellationToken.None);
+                groups.Add(result.GroupId);
+                Assert.AreEqual(
+                    provider.Descriptor.ProviderId,
+                    result.ProviderId);
+                Assert.IsNotNull(result.ObservedAtUtc);
+            }
+        }
+        finally
+        {
+            foreach (var provider in providers)
+            {
+                if (provider is IAsyncDisposable asyncDisposable)
+                {
+                    await asyncDisposable.DisposeAsync();
+                }
+                else if (provider is IDisposable disposable)
+                {
+                    disposable.Dispose();
+                }
+            }
         }
 
         CollectionAssert.IsSubsetOf(
