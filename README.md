@@ -1,15 +1,15 @@
 # 电脑性能监控
 
-当前版本为 `0.6.0`。产品运行路径为按用户运行的
+当前开发版本为 `0.7.0`。产品运行路径为按用户运行的
 `.NET 10 PerfMonitor.Agent`、独立 WPF Desktop、受保护 Named Pipe IPC
-和 SQLite 历史库，并新增只读、确定性的诊断事件。Python 0.3 源码继续
+和 SQLite 历史库，并包含只读确定性诊断及稳定 Windows 扩展指标。Python 0.3 源码继续
 保留为指标口径 oracle、golden
 fixture 生成器和差分基线，但不再作为默认或发布版高频 Agent。
 
-## v0.6 架构边界
+## v0.7.0 架构边界
 
 ```text
-Windows Providers
+stable Windows Providers
   -> absolute-deadline scheduler
   -> immutable latest snapshot
      -> latest-wins Named Pipe subscription -> Desktop
@@ -31,7 +31,26 @@ Windows Providers
 - 诊断规则使用快照中的逻辑时间，单线程确定性执行；同一组历史快照按固定
   顺序重放会产生相同事件 ID 与事件序列。
 - v0.6 只有诊断和告警，不提供优化动作、命令执行或特权 Broker。GPU、
-  网络、温度和动作 Broker 属于后续版本。
+  温度、厂商 SDK 和动作 Broker 属于后续隔离版本。
+
+## 稳定扩展指标
+
+v0.7.0 只把可由受支持 Windows/.NET API 非提权读取的指标放入 Agent：
+
+| 指标组 | 周期 | 物理口径 | 首样本 |
+|---|---:|---|---|
+| network | 1 s | 活动非回环接口累计字节的单调时间差分 | 速率为 `null` |
+| diskIo | 1 s | PDH `PhysicalDisk(_Total)` 读写字节/操作速率 | 速率为 `null` |
+| power | 5 s | `GetSystemPowerStatus` 的电源、电量、充电与节能状态 | 可立即读取 |
+
+网络 Provider 逐接口保存 RAM 基线。新接口只建立基线；计数器回退视为复位，
+该接口不参与本周期速率，因此不会产生虚假尖峰。累计口径包括活动虚拟接口，
+所以它表示“网卡计数器总吞吐”，不是去重后的公网链路流量。
+
+磁盘 I/O 使用 `PdhAddEnglishCounter`，不依赖操作系统显示语言。PDH 速率
+需要两个样本，第一帧明确为未就绪而不是 0。电池不存在、状态未知和剩余时间
+未知分别映射为 `batteryPresent=false` 或数值 `null`，不把未知物理量伪造
+为 0。
 
 ## 确定性诊断
 
@@ -175,6 +194,8 @@ dotnet test .\PerfMonitor.slnx --configuration Release --no-restore
 Agent 重启识别、SQLite 有界查询/尖峰保留和存储失败降级。
 v0.6 另覆盖七类规则、滞环/debounce/cooldown、SQLite 事件去重、IPC
 诊断查询，以及从 raw snapshot 历史重放得到字节等价事件。
+v0.7.0 另覆盖网络单调差分、网卡计数器复位、PDH 首样本、电池不存在/
+未知哨兵值和状态型 Provider 释放。
 
 Python/.NET 同窗差分：
 
@@ -224,7 +245,7 @@ SBOM 和来源证明另按发布门禁实现。
 ```text
 src/PerfMonitor.Contracts/          contract v1 DTO、稳定 ID 与历史上限
 src/PerfMonitor.Core/               Provider 契约、调度、原子快照与 fan-out
-src/PerfMonitor.Collectors.Windows/ 非提权 Windows Provider
+src/PerfMonitor.Collectors.Windows/ 非提权 Windows/PDH Provider
 src/PerfMonitor.Ipc.NamedPipes/     安全 framing、ACL、Server/Client 与订阅
 src/PerfMonitor.Storage.Sqlite/     migration、单写者、retention 与 rollup
 src/PerfMonitor.Agent/              产品 Agent 生命周期与查询适配
@@ -238,12 +259,15 @@ scripts/run_agent_soak.ps1          实际资源与 72 小时发布门禁
 
 ## 回退与已知风险
 
-- v0.6 二进制可回退到 `v0.5.0`；v0.5 会忽略 schema v2 新增列，但回退
-  前应备份数据库，且不得写入或删除 `diagnostic_events_v1` 归档表。
-  更早的 v0.4 不读取 SQLite。任何回退不得
+- v0.7.0 不改变 SQLite schema，可直接回退到冻结的 v0.6.0 候选。回退到
+  v0.5.0 前必须恢复 v0.6 migration 前的数据库备份或使用独立数据目录，
+  因为 v0.5 不理解 schema v2。更早的 v0.4 不读取 SQLite。任何回退不得
   删除 `%LOCALAPPDATA%\PerfMonitor\data`，以便重新升级后恢复历史。
 - migration 或写入失败会降级历史能力，但不会停止实时采样。状态目前通过
   稳定错误码暴露；v0.6 的 RAM 诊断仍可查询，但该期间事件可能无法持久化。
 - Named Pipe DACL 的结构在 CI 中验证；跨用户实机矩阵仍需在 1.0 安装/
   升级验证环境复测。
-- 厂商 GPU/温度 SDK 可能阻塞或崩溃，v0.7 前不会放入 Agent 核心。
+- PDH `PhysicalDisk(_Total)` 在计数器损坏或被系统禁用时会局部降级
+  `diskIo`，不会回退到 WMI、PowerShell 或假值；修复系统计数器后自动恢复。
+- 厂商 GPU/温度 SDK 可能阻塞或崩溃，不会放入 Agent 核心；v0.7.1 使用
+  独立 Worker 隔离。

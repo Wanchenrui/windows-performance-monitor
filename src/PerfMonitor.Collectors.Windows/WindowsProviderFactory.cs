@@ -8,6 +8,9 @@ public static class WindowsProviderFactory
         [
             new SystemCpuProvider(),
             new MemoryProvider(),
+            new NetworkThroughputProvider(),
+            new DiskIoProvider(),
+            new PowerStatusProvider(),
             new VolumeCapacityProvider(),
             new UptimeProvider(),
             new ProcessProvider(),

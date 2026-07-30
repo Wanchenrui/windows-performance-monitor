@@ -82,6 +82,9 @@ function Assert-CoreSnapshot {
     foreach ($Group in @(
         "systemCpu",
         "memory",
+        "network",
+        "diskIo",
+        "power",
         "volumes",
         "uptime",
         "processes",

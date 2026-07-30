@@ -1,6 +1,6 @@
 namespace PerfMonitor.Agent;
 
-public static class V06Program
+public static class ServiceProgram
 {
     public static async Task<int> Main(string[] args)
     {

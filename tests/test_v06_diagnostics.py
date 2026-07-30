@@ -4,13 +4,13 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def test_v06_product_version_and_diagnostics_module_are_declared():
+def test_diagnostics_module_remains_declared_after_v06():
     build_props = (ROOT / "Directory.Build.props").read_text(
         encoding="utf-8"
     )
     solution = (ROOT / "PerfMonitor.slnx").read_text(encoding="utf-8")
 
-    assert "<Version>0.6.0</Version>" in build_props
+    assert "<Version>0.7.0</Version>" in build_props
     assert "PerfMonitor.Diagnostics.csproj" in solution
 
 

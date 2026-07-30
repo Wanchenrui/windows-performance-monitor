@@ -36,6 +36,12 @@ public sealed class MainWindow : Window
         SecondaryTextBrush);
     private readonly TextBlock _cpuText = MetricText();
     private readonly TextBlock _memoryText = MetricText();
+    private readonly TextBlock _networkText = MetricText(34);
+    private readonly TextBlock _diskText = MetricText(34);
+    private readonly TextBlock _powerText = TextBlock(
+        "电源：—",
+        13,
+        SecondaryTextBrush);
     private readonly TextBlock _updatedText = TextBlock(
         "尚无实时快照",
         13,
@@ -58,7 +64,7 @@ public sealed class MainWindow : Window
 
         Title = "PerfMonitor Desktop";
         Width = 980;
-        Height = 620;
+        Height = 760;
         MinWidth = 760;
         MinHeight = 480;
         WindowStartupLocation = WindowStartupLocation.CenterScreen;
@@ -118,6 +124,16 @@ public sealed class MainWindow : Window
         root.Children.Add(header);
 
         var cards = new Grid();
+        cards.RowDefinitions.Add(
+            new RowDefinition
+            {
+                Height = new GridLength(1, GridUnitType.Star),
+            });
+        cards.RowDefinitions.Add(
+            new RowDefinition
+            {
+                Height = new GridLength(1, GridUnitType.Star),
+            });
         cards.ColumnDefinitions.Add(
             new ColumnDefinition
             {
@@ -141,6 +157,21 @@ public sealed class MainWindow : Window
         memoryCard.Margin = new Thickness(12, 0, 0, 0);
         Grid.SetColumn(memoryCard, 1);
         cards.Children.Add(memoryCard);
+        var networkCard = MetricCard(
+            "网络吞吐",
+            _networkText,
+            "活动非回环网卡累计 · 下载 / 上传");
+        networkCard.Margin = new Thickness(0, 12, 12, 0);
+        Grid.SetRow(networkCard, 1);
+        cards.Children.Add(networkCard);
+        var diskCard = MetricCard(
+            "磁盘 I/O",
+            _diskText,
+            "所有物理磁盘累计 · 读取 / 写入");
+        diskCard.Margin = new Thickness(12, 12, 0, 0);
+        Grid.SetRow(diskCard, 1);
+        Grid.SetColumn(diskCard, 1);
+        cards.Children.Add(diskCard);
         Grid.SetRow(cards, 1);
         root.Children.Add(cards);
 
@@ -157,6 +188,7 @@ public sealed class MainWindow : Window
             new ColumnDefinition { Width = GridLength.Auto });
         var footerStack = new StackPanel();
         footerStack.Children.Add(_updatedText);
+        footerStack.Children.Add(_powerText);
         footerStack.Children.Add(_historyText);
         footerStack.Children.Add(_diagnosticsText);
         footer.Children.Add(footerStack);
@@ -246,8 +278,29 @@ public sealed class MainWindow : Window
             state.LatestSnapshot,
             GroupIds.Memory,
             MetricIds.MemoryUtilization);
+        var networkReceive = ReadMetric(
+            state.LatestSnapshot,
+            GroupIds.Network,
+            MetricIds.NetworkReceiveBytesPerSecond);
+        var networkSend = ReadMetric(
+            state.LatestSnapshot,
+            GroupIds.Network,
+            MetricIds.NetworkSendBytesPerSecond);
+        var diskRead = ReadMetric(
+            state.LatestSnapshot,
+            GroupIds.DiskIo,
+            MetricIds.DiskReadBytesPerSecond);
+        var diskWrite = ReadMetric(
+            state.LatestSnapshot,
+            GroupIds.DiskIo,
+            MetricIds.DiskWriteBytesPerSecond);
         _cpuText.Text = FormatPercent(cpu);
         _memoryText.Text = FormatPercent(memory);
+        _networkText.Text =
+            $"{FormatRate(networkReceive)} / {FormatRate(networkSend)}";
+        _diskText.Text =
+            $"{FormatRate(diskRead)} / {FormatRate(diskWrite)}";
+        _powerText.Text = FormatPower(state.LatestSnapshot);
         _updatedText.Text = state.LatestSnapshot.CompletedAtUtc is null
             ? "快照正在预热"
             : $"更新：{state.LatestSnapshot.CompletedAtUtc.Value.ToLocalTime():HH:mm:ss} · 序列 {state.LatestSnapshot.Sequence}";
@@ -376,10 +429,10 @@ public sealed class MainWindow : Window
         };
     }
 
-    private static TextBlock MetricText() => new()
+    private static TextBlock MetricText(double size = 62) => new()
     {
         Text = "—",
-        FontSize = 62,
+        FontSize = size,
         FontWeight = FontWeights.SemiBold,
         Foreground = PrimaryTextBrush,
         Margin = new Thickness(0, 26, 0, 18),
@@ -440,4 +493,69 @@ public sealed class MainWindow : Window
             : string.Create(
                 CultureInfo.InvariantCulture,
                 $"{value.Value:F1}%");
+
+    private static string FormatRate(double? value)
+    {
+        if (value is null)
+        {
+            return "—";
+        }
+
+        string[] units = ["B/s", "KiB/s", "MiB/s", "GiB/s"];
+        var scaled = Math.Max(0, value.Value);
+        var index = 0;
+        while (scaled >= 1024 && index < units.Length - 1)
+        {
+            scaled /= 1024;
+            index++;
+        }
+
+        return string.Create(
+            CultureInfo.InvariantCulture,
+            $"{scaled:F1} {units[index]}");
+    }
+
+    private static string FormatPower(AgentSnapshot snapshot)
+    {
+        if (!snapshot.Groups.TryGetValue(
+                GroupIds.Power,
+                out var group) ||
+            group.Data is not JsonObject data)
+        {
+            return "电源：—";
+        }
+
+        var source = data["powerSource"]?.GetValue<string>() switch
+        {
+            "ac" => "交流电",
+            "battery" => "电池",
+            _ => "未知",
+        };
+        var present = data["batteryPresent"] is JsonValue presentValue &&
+            presentValue.TryGetValue<bool>(out var presentResult)
+            ? presentResult
+            : (bool?)null;
+        if (present == false)
+        {
+            return $"电源：{source} · 无系统电池";
+        }
+        if (present is null)
+        {
+            return $"电源：{source} · 电池状态未知";
+        }
+
+        var charge = ReadMetric(
+            snapshot,
+            GroupIds.Power,
+            MetricIds.BatteryChargePercent);
+        var charging =
+            data["charging"] is JsonValue chargingValue &&
+            chargingValue.TryGetValue<bool>(out var chargingResult) &&
+            chargingResult;
+        return charge is null
+            ? $"电源：{source} · 电量未知"
+            : string.Create(
+                CultureInfo.InvariantCulture,
+                $"电源：{source} · 电量 {charge.Value:F0}%{(charging ? " · 充电中" : string.Empty)}");
+    }
 }

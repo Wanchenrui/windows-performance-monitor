@@ -38,6 +38,9 @@ public static class GroupIds
 {
     public const string SystemCpu = "systemCpu";
     public const string Memory = "memory";
+    public const string Network = "network";
+    public const string DiskIo = "diskIo";
+    public const string Power = "power";
     public const string Volumes = "volumes";
     public const string Uptime = "uptime";
     public const string Processes = "processes";
@@ -49,6 +52,12 @@ public static class ProviderIds
 {
     public const string SystemCpu = "windows.system-cpu.get-system-times.v1";
     public const string Memory = "windows.memory.global-status.v1";
+    public const string Network =
+        "windows.network.interface-statistics.v1";
+    public const string DiskIo =
+        "windows.disk-io.pdh-physical-disk-total.v1";
+    public const string Power =
+        "windows.power.get-system-power-status.v1";
     public const string Volumes = "windows.volume.drive-info.v1";
     public const string Uptime = "windows.uptime.tick-count.v1";
     public const string Processes = "windows.process.system-diagnostics.v1";
@@ -60,6 +69,12 @@ public static class SourceIds
 {
     public const string SystemCpu = "windows.system-cpu-times.v1";
     public const string Memory = "windows.global-memory-status-ex.v1";
+    public const string Network =
+        "windows.network-interface-statistics.v1";
+    public const string DiskIo =
+        "windows.pdh.physical-disk-total.v1";
+    public const string Power =
+        "windows.get-system-power-status.v1";
     public const string Volumes = "windows.volume-api.v1";
     public const string Uptime = "windows.boot-time.v1";
     public const string ProcessCpu = "windows.get-process-times.v1";
@@ -77,6 +92,26 @@ public static class MetricIds
     public const string MemoryUsedBytes = "system.memory.used.bytes";
     public const string MemoryAvailableBytes = "system.memory.available.bytes";
     public const string MemoryTotalBytes = "system.memory.total.bytes";
+    public const string NetworkReceiveBytesPerSecond =
+        "system.network.receive.bytes_per_second";
+    public const string NetworkSendBytesPerSecond =
+        "system.network.send.bytes_per_second";
+    public const string NetworkActiveInterfaceCount =
+        "system.network.active_interface.count";
+    public const string DiskReadBytesPerSecond =
+        "system.disk.read.bytes_per_second";
+    public const string DiskWriteBytesPerSecond =
+        "system.disk.write.bytes_per_second";
+    public const string DiskReadOperationsPerSecond =
+        "system.disk.read.operations_per_second";
+    public const string DiskWriteOperationsPerSecond =
+        "system.disk.write.operations_per_second";
+    public const string BatteryChargePercent =
+        "system.power.battery.charge.percent";
+    public const string BatteryLifeRemainingSeconds =
+        "system.power.battery.life_remaining.seconds";
+    public const string BatteryFullLifeSeconds =
+        "system.power.battery.full_life.seconds";
     public const string VolumeUtilization = "system.volume.utilization.percent";
     public const string VolumeUsedBytes = "system.volume.used.bytes";
     public const string VolumeFreeBytes = "system.volume.free.bytes";
@@ -101,6 +136,8 @@ public static class Units
 {
     public const string Percent = "percent";
     public const string Byte = "byte";
+    public const string BytePerSecond = "byte_per_second";
+    public const string CountPerSecond = "count_per_second";
     public const string Second = "second";
     public const string Millisecond = "millisecond";
     public const string Count = "count";

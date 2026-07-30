@@ -102,7 +102,8 @@ jobs:
             throw "Unexpected product version"
           }
           foreach ($Group in @(
-            "systemCpu", "memory", "volumes", "uptime",
+            "systemCpu", "memory", "network", "diskIo", "power",
+            "volumes", "uptime",
             "processes", "sampler", "self")) {
             if ($Snapshot.groups.PSObject.Properties.Name -notcontains $Group) {
               throw "Missing Agent group: $Group"

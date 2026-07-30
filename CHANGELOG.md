@@ -1,5 +1,37 @@
 ﻿# 变更记录
 
+## 0.7.0
+
+变更点：
+
+- 新增 1 秒网络吞吐 Provider，以活动非回环网卡累计收发字节和单调时钟
+  计算速率；基线按接口 ID 保存在 RAM，新接口和计数器复位不产生假尖峰。
+- 新增 1 秒磁盘 I/O Provider，使用语言无关的
+  `PdhAddEnglishCounter` 读取 `PhysicalDisk(_Total)` 读写字节/操作速率；
+  首样本按 PDH 双样本物理约束保持 `null`。
+- 新增 5 秒电源/电池 Provider，使用 `GetSystemPowerStatus` 表达交流/
+  电池供电、电池存在、充电、节能、电量和寿命；255/`UINT_MAX` 哨兵值不
+  映射为 0。
+- contract v1 追加稳定 group/provider/source/metric ID，以及
+  `byte_per_second`、`count_per_second` 单位；网络、磁盘和电量进入有界
+  SQLite 历史白名单。
+- Desktop 增加网络、磁盘和电源只读状态；Provider 调度器在所有采集任务
+  停止后释放 PDH 原生查询句柄。
+
+潜在风险：
+
+- 网络汇总包含活动虚拟接口，可能同时计算隧道与底层适配器；该值定义为
+  “网卡计数器总吞吐”，不宣称等于去重后的物理链路流量。
+- `PhysicalDisk(_Total)` 被禁用或系统性能计数器损坏时，只有 `diskIo`
+  局部不可用；不会用 WMI/PowerShell 或 0 值兜底。
+- 本阶段不包含 GPU、温度、厂商 SDK 或系统修改动作，分别由后续隔离
+  Worker 和 Broker 版本实现。
+
+回退：
+
+- v0.7.0 没有 SQLite migration，可回退到 v0.6.0 候选；旧二进制会忽略
+  新指标行。保留数据目录，不需要删除历史数据库。
+
 ## 0.6.0
 
 变更点：

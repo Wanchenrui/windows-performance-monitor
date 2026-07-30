@@ -1,3 +1,5 @@
+using System.Collections.Concurrent;
+
 namespace PerfMonitor.Core;
 
 public sealed class ProviderScheduler : IAsyncDisposable
@@ -9,6 +11,10 @@ public sealed class ProviderScheduler : IAsyncDisposable
     private readonly SemaphoreSlim _concurrency;
     private readonly CancellationTokenSource _stopping = new();
     private readonly List<Task> _runners = [];
+    private readonly ConcurrentDictionary<
+        IMetricProvider,
+        Task<ProviderResult>> _outstandingCollections =
+        new(ReferenceEqualityComparer.Instance);
     private int _started;
 
     public ProviderScheduler(
@@ -86,6 +92,24 @@ public sealed class ProviderScheduler : IAsyncDisposable
     public async ValueTask DisposeAsync()
     {
         await StopAsync().ConfigureAwait(false);
+        // v0.7.0: stateful native providers (for example PDH)
+        // are disposed only after all isolated collections have stopped.
+        foreach (var provider in _providers)
+        {
+            if (_outstandingCollections.TryGetValue(
+                    provider,
+                    out var collection))
+            {
+                _ = DisposeAfterCollectionAsync(
+                    provider,
+                    collection);
+            }
+            else
+            {
+                await DisposeProviderAsync(provider)
+                    .ConfigureAwait(false);
+            }
+        }
         _stopping.Dispose();
     }
 
@@ -255,6 +279,11 @@ public sealed class ProviderScheduler : IAsyncDisposable
                 catch (Exception exception) when (
                     exception is OperationCanceledException or TimeoutException)
                 {
+                    // Never release native Provider state while an
+                    // uncancellable call may still be using it.
+                    _outstandingCollections.TryAdd(
+                        provider,
+                        inFlight);
                 }
             }
 
@@ -331,6 +360,46 @@ public sealed class ProviderScheduler : IAsyncDisposable
                 context.TimeProvider.GetUtcNow(),
                 ExceptionClassifier.Availability(exception),
                 ExceptionClassifier.StableCode(exception));
+        }
+    }
+
+    private static async ValueTask DisposeProviderAsync(
+        IMetricProvider provider)
+    {
+        if (provider is IAsyncDisposable asyncDisposable)
+        {
+            await asyncDisposable.DisposeAsync()
+                .ConfigureAwait(false);
+        }
+        else if (provider is IDisposable disposable)
+        {
+            disposable.Dispose();
+        }
+    }
+
+    private static async Task DisposeAfterCollectionAsync(
+        IMetricProvider provider,
+        Task<ProviderResult> collection)
+    {
+        try
+        {
+            _ = await collection.ConfigureAwait(false);
+        }
+        catch
+        {
+            // CollectIsolatedAsync normally converts failures to a
+            // result. Shutdown cleanup still must not race the call.
+        }
+
+        try
+        {
+            await DisposeProviderAsync(provider)
+                .ConfigureAwait(false);
+        }
+        catch
+        {
+            // Deferred cleanup cannot report through a disposed host.
+            // The process boundary remains the final native cleanup.
         }
     }
 }

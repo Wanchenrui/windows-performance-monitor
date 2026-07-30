@@ -130,6 +130,9 @@ public static class AgentRunner
         [
             GroupIds.SystemCpu,
             GroupIds.Memory,
+            GroupIds.Network,
+            GroupIds.DiskIo,
+            GroupIds.Power,
             GroupIds.Volumes,
             GroupIds.Uptime,
             GroupIds.Processes,
