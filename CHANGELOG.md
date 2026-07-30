@@ -44,6 +44,9 @@
   digest、Agent 与验证器 SHA-256。生产发布会重新按版本化预算计算资源
   结果，并要求证据中的 Agent hash、产品版本和真实 UTC 跨度同时匹配，
   不再仅信任可替换的 `passed` 布尔值。
+- Broker 监听器对客户端在 `ConnectNamedPipe` 完成前立即断开的 Windows
+  `ERROR_NO_DATA (232)` 仅丢弃该 Pipe 实例并继续监听；其他非停止期 I/O
+  故障仍上抛。新增确定性回归测试覆盖该畸形客户端时序。
 
 潜在风险：
 

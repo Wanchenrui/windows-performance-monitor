@@ -217,6 +217,66 @@ public sealed class BrokerPipeTests
         }
     }
 
+    [TestMethod]
+    [Timeout(15000)]
+    public async Task ClientCloseBeforeAcceptKeepsListenerHealthy()
+    {
+        using var directory = new TemporaryDirectory();
+        await using var audit = new BrokerAuditStore(
+            directory.File("broker-v1.db"));
+        await audit.InitializeAsync(CancellationToken.None);
+        await audit.RecoverPendingAsync(
+            DateTimeOffset.UtcNow,
+            CancellationToken.None);
+        var coordinator = new BrokerActionCoordinator(
+            BrokerMachinePolicy.Default,
+            audit,
+            new FakeExecutor(),
+            forceDryRunOnly: true);
+        var endpoint = TestEndpoint();
+        var factoryCalls = 0;
+
+        NamedPipeServerStream CreateServerStream(
+            bool firstInstance)
+        {
+            var pipe = endpoint.CreateServerStream(firstInstance);
+            if (Interlocked.Increment(ref factoryCalls) == 1)
+            {
+                using var abortedClient =
+                    new NamedPipeClientStream(
+                        ".",
+                        endpoint.PipeName,
+                        PipeDirection.InOut,
+                        PipeOptions.Asynchronous);
+                abortedClient.Connect(5_000);
+            }
+
+            return pipe;
+        }
+
+        await using var server = new BrokerNamedPipeServer(
+            endpoint,
+            coordinator,
+            CreateServerStream,
+            new FakeIdentityResolver(),
+            forceDryRunOnly: true);
+        server.Start();
+        var client = new BrokerActionClient(
+            new BrokerClientOptions
+            {
+                PipeName = endpoint.PipeName,
+            });
+
+        var capabilities = await client.GetCapabilitiesAsync(
+            CancellationToken.None);
+
+        Assert.IsTrue(capabilities.BrokerAvailable);
+        Assert.IsTrue(capabilities.DryRunOnly);
+        Assert.IsGreaterThanOrEqualTo(2, factoryCalls);
+        await server.StopAsync();
+        Assert.IsTrue(server.Completion.IsCompletedSuccessfully);
+    }
+
     private static BrokerPipeEndpoint TestEndpoint() =>
         new($"PerfMonitor.Broker.Test.{Guid.NewGuid():N}");
 

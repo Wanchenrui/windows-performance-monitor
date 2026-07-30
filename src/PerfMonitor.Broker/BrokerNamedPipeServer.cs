@@ -8,9 +8,14 @@ namespace PerfMonitor.Broker;
 
 public sealed class BrokerNamedPipeServer : IAsyncDisposable
 {
+    private const int ErrorNoDataHResult =
+        unchecked((int)0x800700E8);
+
     private readonly BrokerPipeEndpoint _endpoint;
     private readonly BrokerActionCoordinator _coordinator;
     private readonly IBrokerClientIdentityResolver _identityResolver;
+    private readonly Func<bool, NamedPipeServerStream>
+        _createServerStream;
     private readonly bool _forceDryRunOnly;
     private readonly TimeProvider _timeProvider;
     private readonly SemaphoreSlim _clientSlots = new(
@@ -37,8 +42,28 @@ public sealed class BrokerNamedPipeServer : IAsyncDisposable
             throw new ArgumentNullException(nameof(coordinator));
         _identityResolver = identityResolver ??
             new BrokerClientIdentityResolver();
+        _createServerStream = _endpoint.CreateServerStream;
         _forceDryRunOnly = forceDryRunOnly;
         _timeProvider = timeProvider ?? TimeProvider.System;
+    }
+
+    internal BrokerNamedPipeServer(
+        BrokerPipeEndpoint endpoint,
+        BrokerActionCoordinator coordinator,
+        Func<bool, NamedPipeServerStream> createServerStream,
+        IBrokerClientIdentityResolver? identityResolver = null,
+        bool forceDryRunOnly = false,
+        TimeProvider? timeProvider = null)
+        : this(
+            endpoint,
+            coordinator,
+            identityResolver,
+            forceDryRunOnly,
+            timeProvider)
+    {
+        _createServerStream = createServerStream ??
+            throw new ArgumentNullException(
+                nameof(createServerStream));
     }
 
     public string InstanceId => _instanceId;
@@ -95,11 +120,23 @@ public sealed class BrokerNamedPipeServer : IAsyncDisposable
                 NamedPipeServerStream? pipe = null;
                 try
                 {
-                    pipe = _endpoint.CreateServerStream(
+                    pipe = _createServerStream(
                         firstInstance);
                     firstInstance = false;
                     await pipe.WaitForConnectionAsync(
                         cancellationToken).ConfigureAwait(false);
+                }
+                catch (IOException exception) when (
+                    pipe is not null &&
+                    IsClientCloseBeforeAccept(exception))
+                {
+                    // v1.0: a client can connect and close before
+                    // ConnectNamedPipe completes. Windows reports
+                    // ERROR_NO_DATA; discard only that instance and
+                    // keep the listener available.
+                    pipe.Dispose();
+                    _clientSlots.Release();
+                    continue;
                 }
                 catch
                 {
@@ -143,6 +180,10 @@ public sealed class BrokerNamedPipeServer : IAsyncDisposable
             }
         }
     }
+
+    private static bool IsClientCloseBeforeAccept(
+        IOException exception) =>
+        exception.HResult == ErrorNoDataHResult;
 
     private async Task ObserveClientAsync(
         long id,
