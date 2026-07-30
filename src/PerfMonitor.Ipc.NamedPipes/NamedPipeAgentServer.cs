@@ -260,6 +260,15 @@ public sealed class NamedPipeAgentServer : IAsyncDisposable
                             clientStopping.Token).ConfigureAwait(false);
                         break;
 
+                    case "executeAction":
+                        await HandleActionAsync(
+                            pipe,
+                            writeGate,
+                            request,
+                            negotiation.MaxMessageSize,
+                            clientStopping.Token).ConfigureAwait(false);
+                        break;
+
                     case "subscribe":
                         if (subscription is not null)
                         {
@@ -649,6 +658,91 @@ public sealed class NamedPipeAgentServer : IAsyncDisposable
         }
     }
 
+    private async Task HandleActionAsync(
+        Stream pipe,
+        SemaphoreSlim writeGate,
+        IpcRequestMessage request,
+        int maxMessageSize,
+        CancellationToken cancellationToken)
+    {
+        if (request.IdempotencyKey is null ||
+            request.DeadlineUtc is null ||
+            request.DryRun is null ||
+            request.Action is null)
+        {
+            await WriteErrorAsync(
+                pipe,
+                writeGate,
+                request.RequestId,
+                IpcErrorCodes.InvalidRequest,
+                maxMessageSize,
+                cancellationToken).ConfigureAwait(false);
+            return;
+        }
+
+        using var requestCancellation =
+            CancellationTokenSource.CreateLinkedTokenSource(
+                cancellationToken);
+        requestCancellation.CancelAfter(
+            IpcProtocol.ActionRequestTimeout);
+        try
+        {
+            var result = await _service.ExecuteActionAsync(
+                new UserActionRequestContract
+                {
+                    IdempotencyKey = request.IdempotencyKey,
+                    DeadlineUtc = request.DeadlineUtc.Value,
+                    DryRun = request.DryRun.Value,
+                    Action = request.Action,
+                },
+                requestCancellation.Token).ConfigureAwait(false);
+            await WritePayloadAsync(
+                pipe,
+                writeGate,
+                "actionResult",
+                request.RequestId,
+                result,
+                maxMessageSize,
+                cancellationToken).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) when (
+            requestCancellation.IsCancellationRequested &&
+            !cancellationToken.IsCancellationRequested)
+        {
+            await WriteErrorAsync(
+                pipe,
+                writeGate,
+                request.RequestId,
+                IpcErrorCodes.RequestTimedOut,
+                maxMessageSize,
+                cancellationToken).ConfigureAwait(false);
+        }
+        catch (Exception exception) when (
+            exception is ArgumentException or
+            OverflowException)
+        {
+            await WriteErrorAsync(
+                pipe,
+                writeGate,
+                request.RequestId,
+                IpcErrorCodes.InvalidRequest,
+                maxMessageSize,
+                cancellationToken).ConfigureAwait(false);
+        }
+        catch (Exception exception) when (
+            exception is not OutOfMemoryException and
+            not StackOverflowException)
+        {
+            await WriteErrorAsync(
+                pipe,
+                writeGate,
+                request.RequestId,
+                IpcErrorCodes.ServiceUnavailable,
+                maxMessageSize,
+                cancellationToken).ConfigureAwait(false);
+        }
+    }
+
     private async Task SendSubscriptionAsync(
         Stream pipe,
         SemaphoreSlim writeGate,
@@ -707,12 +801,105 @@ public sealed class NamedPipeAgentServer : IAsyncDisposable
                     IpcErrorCodes.InvalidRequest);
             }
 
+            if (request.Type == "executeAction")
+            {
+                ValidateActionShape(document.RootElement);
+            }
+
             return request;
         }
         catch (JsonException)
         {
             throw new IpcProtocolException(
                 IpcErrorCodes.InvalidRequest);
+        }
+    }
+
+    private static void ValidateActionShape(JsonElement root)
+    {
+        string[] rootFields =
+        [
+            "type",
+            "requestId",
+            "idempotencyKey",
+            "deadlineUtc",
+            "dryRun",
+            "action",
+        ];
+        RejectUnknownFields(root, rootFields);
+        if (!root.TryGetProperty(
+                "action",
+                out var action) ||
+            action.ValueKind != JsonValueKind.Object ||
+            !action.TryGetProperty(
+                "actionType",
+                out var actionTypeElement) ||
+            actionTypeElement.ValueKind != JsonValueKind.String)
+        {
+            throw new IpcProtocolException(
+                IpcErrorCodes.InvalidRequest);
+        }
+
+        var fields = actionTypeElement.GetString() switch
+        {
+            ActionTypes.SetProcessPriority => new[]
+            {
+                "actionType",
+                "pid",
+                "creationTimeTicks",
+                "priority",
+            },
+            ActionTypes.TerminateProcess => new[]
+            {
+                "actionType",
+                "pid",
+                "creationTimeTicks",
+            },
+            ActionTypes.StartApprovedDiagnostic => new[]
+            {
+                "actionType",
+                "diagnosticId",
+            },
+            ActionTypes.ApplyApprovedPowerProfile => new[]
+            {
+                "actionType",
+                "powerProfileId",
+            },
+            _ => throw new IpcProtocolException(
+                IpcErrorCodes.InvalidRequest),
+        };
+        RejectUnknownFields(action, fields);
+        try
+        {
+            var request =
+                action.Deserialize<ActionRequestContract>(
+                    IpcJson.Options) ??
+                throw new JsonException(
+                    "Action request is null.");
+            ActionContractValidation.ValidateAction(request);
+        }
+        catch (Exception exception) when (
+            exception is JsonException or
+            ArgumentException)
+        {
+            throw new IpcProtocolException(
+                IpcErrorCodes.InvalidRequest);
+        }
+    }
+
+    private static void RejectUnknownFields(
+        JsonElement element,
+        IReadOnlyCollection<string> allowed)
+    {
+        foreach (var property in element.EnumerateObject())
+        {
+            if (!allowed.Contains(
+                property.Name,
+                StringComparer.Ordinal))
+            {
+                throw new IpcProtocolException(
+                    IpcErrorCodes.InvalidRequest);
+            }
         }
     }
 

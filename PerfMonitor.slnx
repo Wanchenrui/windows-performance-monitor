@@ -1,6 +1,10 @@
 <Solution>
   <Folder Name="/src/">
+    <Project Path="src/PerfMonitor.Actions/PerfMonitor.Actions.csproj" />
     <Project Path="src/PerfMonitor.Agent/PerfMonitor.Agent.csproj" />
+    <Project Path="src/PerfMonitor.Broker/PerfMonitor.Broker.csproj" />
+    <Project Path="src/PerfMonitor.Broker.Client/PerfMonitor.Broker.Client.csproj" />
+    <Project Path="src/PerfMonitor.Broker.Protocol/PerfMonitor.Broker.Protocol.csproj" />
     <Project Path="src/PerfMonitor.Collectors.Windows/PerfMonitor.Collectors.Windows.csproj" />
     <Project Path="src/PerfMonitor.Collectors.Worker/PerfMonitor.Collectors.Worker.csproj" />
     <Project Path="src/PerfMonitor.Contracts/PerfMonitor.Contracts.csproj" />
@@ -13,7 +17,9 @@
     <Project Path="src/PerfMonitor.Storage.Sqlite/PerfMonitor.Storage.Sqlite.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/PerfMonitor.ActionsTests/PerfMonitor.ActionsTests.csproj" />
     <Project Path="tests/PerfMonitor.AgentTests/PerfMonitor.AgentTests.csproj" />
+    <Project Path="tests/PerfMonitor.BrokerTests/PerfMonitor.BrokerTests.csproj" />
     <Project Path="tests/PerfMonitor.ContractTests/PerfMonitor.ContractTests.csproj" />
   </Folder>
 </Solution>

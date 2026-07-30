@@ -7,6 +7,8 @@
     <StartupObject>PerfMonitor.Agent.ServiceProgram</StartupObject>
   </PropertyGroup>
   <ItemGroup>
+    <ProjectReference Include="../PerfMonitor.Actions/PerfMonitor.Actions.csproj" />
+    <ProjectReference Include="../PerfMonitor.Broker.Client/PerfMonitor.Broker.Client.csproj" />
     <ProjectReference Include="../PerfMonitor.Collectors.Windows/PerfMonitor.Collectors.Windows.csproj" />
     <ProjectReference Include="../PerfMonitor.Collectors.Worker/PerfMonitor.Collectors.Worker.csproj" />
     <ProjectReference Include="../PerfMonitor.Core/PerfMonitor.Core.csproj" />

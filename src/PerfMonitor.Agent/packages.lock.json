@@ -45,17 +45,35 @@
           "SQLitePCLRaw.core": "3.0.5"
         }
       },
+      "perfmonitor.actions": {
+        "type": "Project",
+        "dependencies": {
+          "PerfMonitor.Contracts": "[0.7.2, )"
+        }
+      },
+      "perfmonitor.broker.client": {
+        "type": "Project",
+        "dependencies": {
+          "PerfMonitor.Broker.Protocol": "[0.7.2, )"
+        }
+      },
+      "perfmonitor.broker.protocol": {
+        "type": "Project",
+        "dependencies": {
+          "PerfMonitor.Contracts": "[0.7.2, )"
+        }
+      },
       "perfmonitor.collectors.windows": {
         "type": "Project",
         "dependencies": {
-          "PerfMonitor.Core": "[0.7.1, )"
+          "PerfMonitor.Core": "[0.7.2, )"
         }
       },
       "perfmonitor.collectors.worker": {
         "type": "Project",
         "dependencies": {
-          "PerfMonitor.Core": "[0.7.1, )",
-          "PerfMonitor.ProviderWorker.Protocol": "[0.7.1, )"
+          "PerfMonitor.Core": "[0.7.2, )",
+          "PerfMonitor.ProviderWorker.Protocol": "[0.7.2, )"
         }
       },
       "perfmonitor.contracts": {
@@ -64,21 +82,21 @@
       "perfmonitor.core": {
         "type": "Project",
         "dependencies": {
-          "PerfMonitor.Contracts": "[0.7.1, )"
+          "PerfMonitor.Contracts": "[0.7.2, )"
         }
       },
       "perfmonitor.diagnostics": {
         "type": "Project",
         "dependencies": {
-          "PerfMonitor.Contracts": "[0.7.1, )",
-          "PerfMonitor.Core": "[0.7.1, )"
+          "PerfMonitor.Contracts": "[0.7.2, )",
+          "PerfMonitor.Core": "[0.7.2, )"
         }
       },
       "perfmonitor.ipc.namedpipes": {
         "type": "Project",
         "dependencies": {
-          "PerfMonitor.Contracts": "[0.7.1, )",
-          "PerfMonitor.Core": "[0.7.1, )"
+          "PerfMonitor.Contracts": "[0.7.2, )",
+          "PerfMonitor.Core": "[0.7.2, )"
         }
       },
       "perfmonitor.providerworker.protocol": {
@@ -88,8 +106,8 @@
         "type": "Project",
         "dependencies": {
           "Microsoft.Data.Sqlite.Core": "[10.0.10, )",
-          "PerfMonitor.Contracts": "[0.7.1, )",
-          "PerfMonitor.Core": "[0.7.1, )",
+          "PerfMonitor.Contracts": "[0.7.2, )",
+          "PerfMonitor.Core": "[0.7.2, )",
           "SQLitePCLRaw.bundle_e_sqlite3": "[3.0.5, )"
         }
       }

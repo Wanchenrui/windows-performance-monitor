@@ -9,11 +9,14 @@
 - `capabilities-v1.schema.json`：Provider、指标、限制和端点发现。
 - `health-v1.schema.json`：轻量实例与健康探测。
 - `diagnostics-v1.schema.json`：只读、确定性的诊断事件查询。
+- `actions-v1.schema.json`：闭合 action 请求结构与动作结果。
 - `error-v1.schema.json`：HTTP 错误。
 - `legacy-stats-v0.2.schema.json`：deprecated `/api/stats` 适配器。
 
-所有对象允许未知新增字段，旧客户端必须忽略未知字段。删除字段、修改单位、
-复用 ID 或收窄既有枚举属于不兼容变更，必须发布新主契约版本。
+公开响应对象允许未知新增字段，旧客户端必须忽略未知响应字段。特权 action
+请求是例外：envelope 和四类 action body 都拒绝未知字段，协议扩展必须
+协商新版本。删除响应字段、修改单位、复用 ID 或收窄既有枚举属于不兼容
+变更，必须发布新主契约版本。
 
 指标、Provider 和错误码分别由 `metric-catalog.json`、
 `provider-catalog.json` 与 `error-codes.json` 管理。展示文本不进入核心

@@ -1,3 +1,5 @@
+using PerfMonitor.Actions;
+using PerfMonitor.Broker.Client;
 using PerfMonitor.Contracts;
 using PerfMonitor.Core;
 using PerfMonitor.Diagnostics;
@@ -34,6 +36,22 @@ public static class AgentServiceRunner
             await Console.Error.WriteLineAsync(
                 diagnosticPolicyWarning).ConfigureAwait(false);
         }
+        var actionPolicy = ActionPolicyFile.LoadOrCreateAgent(
+            options.ActionPolicyPath,
+            out var actionPolicyWarning);
+        if (actionPolicyWarning is not null)
+        {
+            await Console.Error.WriteLineAsync(
+                actionPolicyWarning).ConfigureAwait(false);
+        }
+
+        var actionGateway = new AgentActionGateway(
+            actionPolicy,
+            new BrokerActionClient());
+        // v0.7.2: Broker availability is optional and must never delay
+        // telemetry scheduling. Capabilities start unavailable and are
+        // refreshed asynchronously when the fixed Broker endpoint responds.
+        _ = actionGateway.ProbeAsync(cancellationToken);
 
         await using var storage = new SqliteHistoryStore(
             new SqliteHistoryOptions
@@ -49,6 +67,7 @@ public static class AgentServiceRunner
             storage,
             storage,
             diagnostics,
+            actionGateway,
             diagnosticPolicy.ToCapabilities(),
             providers.Select(provider => provider.Descriptor),
             endpoint,

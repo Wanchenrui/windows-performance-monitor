@@ -188,6 +188,22 @@ public sealed class NamedPipeAgentClient : IAsyncDisposable
             "diagnostics",
             cancellationToken);
 
+    public Task<ActionResultContract> ExecuteActionAsync(
+        UserActionRequestContract request,
+        CancellationToken cancellationToken) =>
+        RequestAsync<ActionResultContract>(
+            new IpcRequestMessage
+            {
+                Type = "executeAction",
+                RequestId = Guid.NewGuid().ToString("N"),
+                IdempotencyKey = request.IdempotencyKey,
+                DeadlineUtc = request.DeadlineUtc,
+                DryRun = request.DryRun,
+                Action = request.Action,
+            },
+            "actionResult",
+            cancellationToken);
+
     public async IAsyncEnumerable<AgentSnapshot> SubscribeAsync(
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {

@@ -14,15 +14,20 @@ $WorkerProject = Join-Path `
 $DesktopProject = Join-Path `
     $ProjectRoot `
     "src\PerfMonitor.Desktop\PerfMonitor.Desktop.csproj"
+$BrokerProject = Join-Path `
+    $ProjectRoot `
+    "src\PerfMonitor.Broker\PerfMonitor.Broker.csproj"
 $DistRoot = Join-Path $ProjectRoot "dist"
 $AgentOutput = Join-Path $DistRoot "agent"
 $WorkerOutput = Join-Path $AgentOutput "provider-worker"
 $DesktopOutput = Join-Path $DistRoot "desktop"
+$BrokerOutput = Join-Path $DistRoot "broker"
 $AgentExe = Join-Path $AgentOutput "perf-monitor-agent.exe"
 $WorkerExe = Join-Path `
     $WorkerOutput `
     "perf-monitor-provider-worker.exe"
 $DesktopExe = Join-Path $DesktopOutput "perf-monitor-desktop.exe"
+$BrokerExe = Join-Path $BrokerOutput "perf-monitor-broker.exe"
 $ManifestPath = Join-Path $DistRoot "build-manifest.json"
 $VenvPython = Join-Path $ProjectRoot ".venv\Scripts\python.exe"
 
@@ -49,7 +54,11 @@ $DistRootFull = [System.IO.Path]::GetFullPath($DistRoot)
 $DistPrefix = $DistRootFull.TrimEnd(
     [System.IO.Path]::DirectorySeparatorChar
 ) + [System.IO.Path]::DirectorySeparatorChar
-foreach ($OutputPath in @($AgentOutput, $DesktopOutput)) {
+foreach ($OutputPath in @(
+    $AgentOutput,
+    $DesktopOutput,
+    $BrokerOutput
+)) {
     $OutputFull = [System.IO.Path]::GetFullPath($OutputPath)
     if (-not $OutputFull.StartsWith(
         $DistPrefix,
@@ -115,10 +124,20 @@ try {
         throw ".NET Desktop 发布失败。"
     }
 
+    & dotnet publish `
+        $BrokerProject `
+        --configuration Release `
+        --no-restore `
+        --output $BrokerOutput
+    if ($LASTEXITCODE -ne 0) {
+        throw ".NET Broker 发布失败。"
+    }
+
     foreach ($RequiredPath in @(
         $AgentExe,
         $WorkerExe,
-        $DesktopExe
+        $DesktopExe,
+        $BrokerExe
     )) {
         if (-not (Test-Path -LiteralPath $RequiredPath)) {
             throw "构建完成但缺少产品入口：$RequiredPath"
@@ -130,10 +149,12 @@ try {
         Get-Item -LiteralPath $WorkerExe
     ).VersionInfo
     $DesktopVersionInfo = (Get-Item -LiteralPath $DesktopExe).VersionInfo
+    $BrokerVersionInfo = (Get-Item -LiteralPath $BrokerExe).VersionInfo
     foreach ($VersionInfo in @(
         $AgentVersionInfo,
         $WorkerVersionInfo,
-        $DesktopVersionInfo
+        $DesktopVersionInfo,
+        $BrokerVersionInfo
     )) {
         if (
             [string]::IsNullOrWhiteSpace($VersionInfo.ProductVersion) -or
@@ -148,7 +169,10 @@ try {
 
     $ProductFiles = @(
         Get-ChildItem `
-            -LiteralPath $AgentOutput, $DesktopOutput `
+            -LiteralPath `
+                $AgentOutput, `
+                $DesktopOutput, `
+                $BrokerOutput `
             -File `
             -Recurse |
         Sort-Object FullName |
@@ -251,6 +275,7 @@ try {
     Write-Output "Agent 构建完成：$AgentExe"
     Write-Output "Provider Worker 构建完成：$WorkerExe"
     Write-Output "Desktop 构建完成：$DesktopExe"
+    Write-Output "Broker 构建完成：$BrokerExe"
     Write-Output "校验清单：$ManifestPath"
 }
 finally {

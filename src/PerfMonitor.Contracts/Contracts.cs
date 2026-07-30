@@ -129,6 +129,7 @@ public sealed record CapabilitiesContract
     public required IReadOnlyList<ProviderCapabilityContract> Groups { get; init; }
     public required HistoryCapabilityContract History { get; init; }
     public DiagnosticsCapabilityContract? Diagnostics { get; init; }
+    public ActionsCapabilityContract? Actions { get; init; }
     public required IReadOnlyDictionary<string, string> Endpoints { get; init; }
     public required IReadOnlyList<string> StableErrorCodes { get; init; }
 }

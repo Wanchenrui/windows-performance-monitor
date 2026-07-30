@@ -1,13 +1,14 @@
 # 电脑性能监控
 
-当前开发版本为 `0.7.1`。产品运行路径为按用户运行的
+当前开发版本为 `0.7.2`。产品运行路径为按用户运行的
 `.NET 10 PerfMonitor.Agent`、独立 WPF Desktop、受保护 Named Pipe IPC
 和 SQLite 历史库，并包含只读确定性诊断、稳定 Windows 指标及隔离硬件
-Worker。Python 0.3 源码继续
+Worker；可选 LocalSystem Broker 只承载显式启用的白名单特权动作。Python
+0.3 源码继续
 保留为指标口径 oracle、golden
 fixture 生成器和差分基线，但不再作为默认或发布版高频 Agent。
 
-## v0.7.1 架构边界
+## v0.7.2 架构边界
 
 ```text
 stable Windows Providers
@@ -19,6 +20,10 @@ isolated GPU / temperature Worker
                          -> bounded RAM events
                          -> existing single SQLite writer
      -> bounded queue -> existing single SQLite writer
+
+Desktop -> per-user Agent action policy
+        -> fixed Broker Pipe -> machine policy + transport identity
+        -> pending audit commit -> one typed OS action
 ```
 
 - `PerfMonitor.Agent` 默认以当前用户、非管理员权限运行。Provider 使用独立
@@ -33,7 +38,9 @@ isolated GPU / temperature Worker
 - 诊断规则使用快照中的逻辑时间，单线程确定性执行；同一组历史快照按固定
   顺序重放会产生相同事件 ID 与事件序列。
 - v0.7.1 的 GPU/温度只读采集位于 `asInvoker` Worker。Agent 不引用
-  厂商硬件库；命令执行、优化动作和特权 Broker 仍不存在。
+  厂商硬件库。
+- v0.7.2 的 Broker 是独立可选服务。Broker 缺失时动作 capability 为
+  unavailable；采样、历史、诊断和 Desktop 只读路径不等待它。
 
 ## 稳定扩展指标
 
@@ -94,6 +101,25 @@ debounce、cooldown、有界证据窗、`firstSeen/lastSeen` 和 confidence。
 不停止 Provider、IPC 或实时快照。配置进程规则默认 watchlist 为空，策略
 只保存进程名，不接受路径、命令行或脚本文本。
 
+## 可选特权 Broker
+
+Broker 只接受 `set_process_priority`、`terminate_process`、
+`start_approved_diagnostic` 和 `apply_approved_power_profile` 四类
+typed DTO。请求没有 caller SID/PID、可执行路径、命令、参数、环境变量、
+脚本、注册表路径或任意 GUID；实际 SID/PID/映像与 SHA-256 从 Broker
+Named Pipe 传输层取得。
+
+Agent 用户策略和 Broker 机器策略默认都关闭全部动作且 `dryRunOnly=true`。
+进程动作必须用 `(PID, creationTimeTicks)` 定位，并在同一进程句柄上重验
+owner SID、保护状态和映像名。Broker console 模式始终强制 dry-run；
+真实动作只允许 LocalSystem service 模式。
+
+动作审计使用独立的
+`%ProgramData%\PerfMonitor\broker\broker-v1.db`，不进入用户历史库。执行前
+先提交 `pending`；幂等作用域为 `(实际 caller SID, idempotencyKey)`。
+相同摘要只重取已存结果，不再次执行；崩溃遗留 `pending` 恢复为
+`indeterminate`，不会自动重放。
+
 ## 构建与运行
 
 开发/构建要求为 Windows 10/11、.NET SDK `10.0.302` 和 64 位
@@ -141,11 +167,13 @@ v1 支持：
 - `getHealth`
 - `queryHistory`
 - `queryDiagnostics`
+- `executeAction`
 - `subscribe`
 - `unsubscribe`
 
 每个连接最多 4,096 个唯一 `requestId`，hello 超时 5 秒，历史请求超时
-10 秒。实时订阅使用容量 1 的 latest-wins 队列，慢 Desktop 不会反压采样。
+10 秒，动作 deadline 最多 15 秒。实时订阅使用容量 1 的 latest-wins
+队列，慢 Desktop 不会反压采样。
 `instanceId + sequence` 只用于识别 Agent 重启，不是认证凭据。完整协议见
 `contracts/v1/ipc-v1.md`。
 
@@ -218,6 +246,9 @@ v0.7.0 另覆盖网络单调差分、网卡计数器复位、PDH 首样本、电
 未知哨兵值和状态型 Provider 释放。
 v0.7.1 另覆盖 Worker 协议边界、BOM/超大/损坏帧、非物理读数、崩溃/
 挂起回收、重启预算、内存超限、共享采集以及真实发布 Worker 握手。
+v0.7.2 另覆盖闭合 action Schema/协议、真实 Pipe SID/PID/映像解析、
+双重策略、PID 复用与 owner 重验、四类 dry-run、持久化幂等/崩溃恢复、
+审计损坏降级和真实发布 Broker dry-run 握手。
 
 Python/.NET 同窗差分：
 
@@ -253,13 +284,15 @@ dist/agent/perf-monitor-agent.exe
 dist/agent/provider-worker/perf-monitor-provider-worker.exe
 dist/agent/provider-worker/THIRD-PARTY-NOTICES.md
 dist/desktop/perf-monitor-desktop.exe
+dist/broker/perf-monitor-broker.exe
+dist/broker/THIRD-PARTY-NOTICES.md
 dist/build-manifest.json
 ```
 
-manifest 记录全部 Agent/Worker/Desktop 文件的 SHA-256 与大小、Git commit/dirty
-状态、所有 Python/.NET 锁文件哈希、.NET SDK、Python oracle 版本和构建
-环境。当前产物为 .NET 10 framework-dependent `win-x64`；1.0 的安装包、代码签名、
-SBOM 和来源证明另按发布门禁实现。
+manifest 记录全部 Agent/Worker/Desktop/Broker 文件的 SHA-256 与大小、
+Git commit/dirty 状态、所有 Python/.NET 锁文件哈希、.NET SDK、Python
+oracle 版本和构建环境。当前产物为 .NET 10 framework-dependent
+`win-x64`；1.0 的安装包、代码签名、SBOM 和来源证明另按发布门禁实现。
 
 `scripts/smoke.ps1` 会启动真实 Agent、SQLite 和 Desktop，关闭 Desktop 后
 确认 Agent 序列继续增长，再等待 Agent 正常退出并校验数据库。
@@ -278,6 +311,10 @@ src/PerfMonitor.Storage.Sqlite/     migration、单写者、retention 与 rollup
 src/PerfMonitor.Agent/              产品 Agent 生命周期与查询适配
 src/PerfMonitor.Desktop/            独立 WPF 客户端、重连与最新状态保留
 src/PerfMonitor.Diagnostics/        确定性规则、策略、状态机与历史重放
+src/PerfMonitor.Actions/            白名单 DTO 策略、幂等协调与审计抽象
+src/PerfMonitor.Broker.Protocol/    闭合 Broker 协议与 256 KiB framing
+src/PerfMonitor.Broker.Client/      Agent 专用 Broker client
+src/PerfMonitor.Broker/             LocalSystem 服务、身份解析、审计与 OS executor
 perf_monitor/                       只读 Python 指标 oracle
 contracts/v1/                       Schema、目录、IPC 文档与 fixtures
 scripts/compare_agents.ps1          Python/.NET 同窗差分
@@ -286,7 +323,8 @@ scripts/run_agent_soak.ps1          实际资源与 72 小时发布门禁
 
 ## 回退与已知风险
 
-- v0.7.1 不改变 SQLite schema，可直接回退到冻结的 v0.7.0 候选。回退到
+- v0.7.2 不改变用户历史 SQLite schema。回退时先停用/卸载 Broker，再回退
+  Agent/Desktop 到冻结的 v0.7.1 候选，并保留 Broker 审计库。回退到
   v0.5.0 前必须恢复 v0.6 migration 前的数据库备份或使用独立数据目录，
   因为 v0.5 不理解 schema v2。更早的 v0.4 不读取 SQLite。任何回退不得
   删除 `%LOCALAPPDATA%\PerfMonitor\data`，以便重新升级后恢复历史。

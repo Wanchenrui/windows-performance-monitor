@@ -152,6 +152,18 @@ jobs:
             --configuration Release --no-restore `
             --output .\artifacts\desktop
           if ($LASTEXITCODE -ne 0) { throw ".NET Desktop publish failed" }
+          dotnet publish .\src\PerfMonitor.Broker\PerfMonitor.Broker.csproj `
+            --configuration Release --no-restore `
+            --output .\artifacts\broker
+          if ($LASTEXITCODE -ne 0) { throw ".NET Broker publish failed" }
+          if (
+            Test-Path `
+              -LiteralPath .\artifacts\agent\perf-monitor-broker.exe
+          ) {
+            throw "Privileged Broker leaked into Agent distribution"
+          }
+          .\scripts\smoke_broker.ps1 `
+            -BrokerPath .\artifacts\broker\perf-monitor-broker.exe
 
       - name: Run Python versus .NET differential gate
         shell: powershell
@@ -197,6 +209,7 @@ jobs:
           path: |
             artifacts/agent/**
             artifacts/desktop/**
+            artifacts/broker/**
             artifacts/agent-snapshot.json
             artifacts/agent-differential.json
             artifacts/agent-soak-accelerated.json
@@ -242,6 +255,12 @@ jobs:
         shell: powershell
         run: .\scripts\smoke.ps1
 
+      - name: Smoke-test isolated Broker dry-run lifecycle
+        shell: powershell
+        run: |
+          .\scripts\smoke_broker.ps1 `
+            -BrokerPath .\dist\broker\perf-monitor-broker.exe
+
       - name: Upload .NET product and build manifest
         uses: actions/upload-artifact@v4
         with:
@@ -249,6 +268,7 @@ jobs:
           path: |
             dist/agent/**
             dist/desktop/**
+            dist/broker/**
             dist/build-manifest.json
           if-no-files-found: error
           retention-days: 14

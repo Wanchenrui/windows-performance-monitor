@@ -93,6 +93,51 @@ def test_contract_allows_unknown_additive_fields():
     _validate("snapshot-v1.schema.json", payload)
 
 
+def test_action_result_has_a_public_schema_and_typed_request_is_closed():
+    result = {
+        "actionId": "0123456789abcdef0123456789abcdef",
+        "idempotencyKey": "fixture-dry-run",
+        "status": "dry_run",
+        "receivedAtUtc": "2026-07-30T06:00:00.010Z",
+        "startedAtUtc": "2026-07-30T06:00:00.012Z",
+        "completedAtUtc": "2026-07-30T06:00:00.020Z",
+        "before": {
+            "diagnosticId": "broker.self_check",
+            "diagnosticRunId": "fixture-run",
+        },
+        "after": {
+            "diagnosticId": "broker.self_check",
+            "diagnosticRunId": "fixture-run",
+        },
+    }
+    _validate("actions-v1.schema.json", result)
+
+    request_schema = {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$ref": (
+            "https://schemas.perfmonitor.local/v1/"
+            "actions-v1.schema.json#/$defs/userActionRequest"
+        ),
+    }
+    validator = Draft202012Validator(
+        request_schema,
+        registry=REGISTRY,
+        format_checker=FormatChecker(),
+    )
+    request = {
+        "idempotencyKey": "fixture-request",
+        "deadlineUtc": "2026-07-30T06:00:10Z",
+        "dryRun": True,
+        "action": {
+            "actionType": "start_approved_diagnostic",
+            "diagnosticId": "broker.self_check",
+        },
+    }
+    assert list(validator.iter_errors(request)) == []
+
+    request["action"]["command"] = "whoami"
+    assert list(validator.iter_errors(request))
+
 def test_catalogs_match_python_contract_constants():
     metric_catalog = _load_json(CONTRACTS / "metric-catalog.json")
     provider_catalog = _load_json(CONTRACTS / "provider-catalog.json")

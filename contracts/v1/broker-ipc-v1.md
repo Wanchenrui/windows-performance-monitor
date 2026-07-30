@@ -28,9 +28,8 @@ impersonation 和客户端进程查询取得真实 SID/PID/映像，再执行机
 - action deadline：15 s；
 - 每连接最多 1,024 个唯一 request ID；
 - request/idempotency ID 最长 128 个 ASCII 字符；
-- 未知字段默认允许用于非执行元数据的向后兼容，但任何名称匹配 path、
-  command、argument、script、powershell、registry、environment 或 GUID
-  的执行字段都必须拒绝。
+- hello、execute envelope 和四类 action body 都使用闭合字段集合；任何
+  未知字段一律拒绝。协议升级通过新版本协商，不在特权请求中静默忽略字段。
 
 ## Hello
 
@@ -54,12 +53,18 @@ Broker 返回：
   "maxMessageSize": 262144,
   "capabilities": {
     "dryRunOnly": true,
-    "actions": []
+    "actions": [
+      {
+        "actionType": "start_approved_diagnostic",
+        "dryRunSupported": true
+      }
+    ]
   }
 }
 ```
 
-capabilities 是提示，不是授权承诺。每次执行仍重新读取策略和目标状态。
+capabilities 是提示，不是授权承诺。每次执行仍重新评估启动时已验证的
+机器策略并重读目标状态；v0.7.2 的策略文件变更需要重启 Broker 才生效。
 
 ## Execute action
 
@@ -118,8 +123,12 @@ capabilities 是提示，不是授权承诺。每次执行仍重新读取策略�
 ```
 
 优先级枚举仅为 `idle`、`below_normal`、`normal`、`above_normal`。
-PID 为 1～4,294,967,295，creation ticks 必须为正数。批准 ID 使用
+PID 为 1～2,147,483,647，creation ticks 必须为正数。批准 ID 使用
 `[a-z0-9][a-z0-9._-]{0,63}`。
+
+首版诊断 ID 只包含编译期固定的 `broker.self_check`；电源 profile ID 只
+包含 `balanced`、`power_saver` 和 `high_performance`。机器策略只能从
+这些固定 ID 中收紧，不能增加路径、命令或 GUID 映射。
 
 ## Response
 
@@ -128,14 +137,15 @@ PID 为 1～4,294,967,295，creation ticks 必须为正数。批准 ID 使用
   "type": "actionResult",
   "requestId": "agent-generated-id",
   "brokerInstanceId": "random-per-start-id",
-  "actionId": "broker-generated-id",
-  "idempotencyKey": "stable-key-for-one-user-intent",
-  "status": "dry_run",
-  "errorCode": null,
-  "receivedAtUtc": "2026-07-30T06:00:00.010Z",
-  "completedAtUtc": "2026-07-30T06:00:00.020Z",
-  "before": {},
-  "after": {}
+  "result": {
+    "actionId": "0123456789abcdef0123456789abcdef",
+    "idempotencyKey": "stable-key-for-one-user-intent",
+    "status": "dry_run",
+    "receivedAtUtc": "2026-07-30T06:00:00.010Z",
+    "completedAtUtc": "2026-07-30T06:00:00.020Z",
+    "before": {},
+    "after": {}
+  }
 }
 ```
 
@@ -176,4 +186,3 @@ PID 为 1～4,294,967,295，creation ticks 必须为正数。批准 ID 使用
 Broker 以实际 caller SID 和 `idempotencyKey` 建立唯一行，并存储规范化
 action envelope 的 SHA-256。终态重取只返回已存结果。`pending` 或
 `indeterminate` 永不重放 executor；不同摘要复用同一键永远冲突。
-

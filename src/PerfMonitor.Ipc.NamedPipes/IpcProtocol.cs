@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using PerfMonitor.Contracts;
 
 namespace PerfMonitor.Ipc.NamedPipes;
 
@@ -13,6 +14,8 @@ public static class IpcProtocol
     public const int MaxRequestsPerConnection = 4_096;
     public static readonly TimeSpan HelloTimeout = TimeSpan.FromSeconds(5);
     public static readonly TimeSpan RequestTimeout = TimeSpan.FromSeconds(10);
+    public static readonly TimeSpan ActionRequestTimeout =
+        TimeSpan.FromSeconds(15);
 }
 
 public sealed record IpcRequestMessage
@@ -29,6 +32,10 @@ public sealed record IpcRequestMessage
     public IReadOnlyList<string>? States { get; init; }
     public int? MaxEvents { get; init; }
     public string? SubscriptionId { get; init; }
+    public string? IdempotencyKey { get; init; }
+    public DateTimeOffset? DeadlineUtc { get; init; }
+    public bool? DryRun { get; init; }
+    public ActionRequestContract? Action { get; init; }
 }
 
 public sealed record IpcErrorPayload

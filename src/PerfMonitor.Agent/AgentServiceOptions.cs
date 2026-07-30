@@ -4,7 +4,8 @@ public sealed record AgentServiceOptions(
     AgentOptions Sampling,
     string DataDirectory,
     bool EnableIpc,
-    string DiagnosticPolicyPath)
+    string DiagnosticPolicyPath,
+    string ActionPolicyPath)
 {
     public static AgentServiceOptions Parse(
         IReadOnlyList<string> arguments)
@@ -12,6 +13,7 @@ public sealed record AgentServiceOptions(
         var samplingArguments = new List<string>(arguments.Count);
         string? dataDirectory = null;
         string? diagnosticPolicyPath = null;
+        string? actionPolicyPath = null;
         var enableIpc = true;
 
         for (var index = 0; index < arguments.Count; index++)
@@ -46,6 +48,18 @@ public sealed record AgentServiceOptions(
                         Path.GetFullPath(arguments[index]);
                     break;
 
+                case "--action-policy":
+                    index++;
+                    if (index >= arguments.Count)
+                    {
+                        throw new ArgumentException(
+                            "--action-policy requires a value.");
+                    }
+
+                    actionPolicyPath =
+                        Path.GetFullPath(arguments[index]);
+                    break;
+
                 default:
                     samplingArguments.Add(argument);
                     break;
@@ -56,11 +70,15 @@ public sealed record AgentServiceOptions(
         diagnosticPolicyPath ??= Path.Combine(
             dataDirectory,
             "diagnostic-policy-v1.json");
+        actionPolicyPath ??= Path.Combine(
+            dataDirectory,
+            "action-policy-v1.json");
         return new AgentServiceOptions(
             AgentOptions.Parse(samplingArguments),
             dataDirectory,
             enableIpc,
-            diagnosticPolicyPath);
+            diagnosticPolicyPath,
+            actionPolicyPath);
     }
 
     private static string DefaultDataDirectory()

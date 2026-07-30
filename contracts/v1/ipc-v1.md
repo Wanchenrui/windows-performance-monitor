@@ -39,6 +39,7 @@ hello 必须在 5 秒内完成。客户端声明的 `maxMessageSize` 必须在 1
 - `getSnapshot`
 - `queryHistory`
 - `queryDiagnostics`
+- `executeAction`
 - `getCapabilities`
 - `getHealth`
 - `subscribe`
@@ -83,6 +84,31 @@ hello 必须在 5 秒内完成。客户端声明的 `maxMessageSize` 必须在 1
 `ruleIds/states` 表示不过滤。响应只包含诊断事件；v0.6 没有 action、
 command、PowerShell、script、registry 或任意执行请求。
 
+v0.7.2 增加可选的 typed `executeAction`。该请求仍只到当前用户 Agent，
+由 Agent 用户策略校验后转发到独立 Broker；Desktop 不得连接 Broker。
+请求 deadline 最多 15 秒：
+
+```json
+{
+  "type": "executeAction",
+  "requestId": "client-generated-id",
+  "idempotencyKey": "stable-user-intent-key",
+  "deadlineUtc": "2026-07-30T06:00:15.000Z",
+  "dryRun": true,
+  "action": {
+    "actionType": "start_approved_diagnostic",
+    "diagnosticId": "broker.self_check"
+  }
+}
+```
+
+`action` 只有 `set_process_priority`、`terminate_process`、
+`start_approved_diagnostic`、`apply_approved_power_profile` 四种闭合
+结构，定义见 `actions-v1.schema.json`。所有结构拒绝未知字段，不接受
+caller SID/PID、路径、命令、参数、环境、脚本、注册表或 GUID。调用者身份
+由 Agent Pipe 和 Broker Pipe 的传输层分别取得。Broker 缺失时返回
+`service_unavailable`，不影响其他 IPC 请求和采样调度。
+
 错误响应：
 
 ```json
@@ -98,6 +124,10 @@ command、PowerShell、script、registry 或任意执行请求。
 
 IPC 稳定错误包括 `contract_version_unsupported`、`invalid_request`、
 `message_too_large`、`request_timed_out` 和 `service_unavailable`。
+动作还使用 `action_policy_denied`、`caller_identity_denied`、
+`client_image_denied`、`target_identity_changed`、`target_owner_mismatch`、
+`target_protected`、`idempotency_conflict`、`idempotency_indeterminate`、
+`audit_unavailable` 和 `executor_failed` 等稳定码。
 
 ## Security invariants
 

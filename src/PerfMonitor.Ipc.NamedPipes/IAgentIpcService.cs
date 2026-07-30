@@ -20,4 +20,8 @@ public interface IAgentIpcService
     ValueTask<DiagnosticsContract> QueryDiagnosticsAsync(
         DiagnosticQueryContract query,
         CancellationToken cancellationToken);
+
+    ValueTask<ActionResultContract> ExecuteActionAsync(
+        UserActionRequestContract request,
+        CancellationToken cancellationToken);
 }

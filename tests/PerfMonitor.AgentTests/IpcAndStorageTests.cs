@@ -122,6 +122,31 @@ public sealed class IpcAndStorageTests
                         },
                         CancellationToken.None);
                 Assert.AreEqual(0, diagnostics.EventCount);
+                var action =
+                    await firstClient.ExecuteActionAsync(
+                        new UserActionRequestContract
+                        {
+                            IdempotencyKey =
+                                "agent-ipc-default-deny",
+                            DeadlineUtc =
+                                DateTimeOffset.UtcNow.AddSeconds(10),
+                            DryRun = true,
+                            Action = new ActionRequestContract
+                            {
+                                ActionType = ActionTypes
+                                    .StartApprovedDiagnostic,
+                                DiagnosticId =
+                                    ApprovedDiagnosticIds
+                                        .BrokerSelfCheck,
+                            },
+                        },
+                        CancellationToken.None);
+                Assert.AreEqual(
+                    ActionStatuses.Denied,
+                    action.Status);
+                Assert.AreEqual(
+                    ActionErrorCodes.ActionPolicyDenied,
+                    action.ErrorCode);
             }
 
             await using var secondClient =
@@ -552,6 +577,20 @@ public sealed class IpcAndStorageTests
                 EventCount = 0,
                 Truncated = false,
                 Events = [],
+            });
+
+        public ValueTask<ActionResultContract> ExecuteActionAsync(
+            UserActionRequestContract request,
+            CancellationToken cancellationToken) =>
+            ValueTask.FromResult(new ActionResultContract
+            {
+                ActionId = Guid.NewGuid().ToString("N"),
+                IdempotencyKey = request.IdempotencyKey,
+                Status = ActionStatuses.Denied,
+                ErrorCode =
+                    ActionErrorCodes.ActionPolicyDenied,
+                ReceivedAtUtc = DateTimeOffset.UtcNow,
+                CompletedAtUtc = DateTimeOffset.UtcNow,
             });
     }
 }

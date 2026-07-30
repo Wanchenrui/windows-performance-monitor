@@ -11,6 +11,7 @@ internal sealed class AgentQueryService : IAgentIpcService
     private readonly IHistoryReader _history;
     private readonly IDiagnosticEventReader _persistedDiagnostics;
     private readonly IDiagnosticEventReader _recentDiagnostics;
+    private readonly AgentActionGateway _actions;
     private readonly CapabilitiesContract _capabilities;
 
     public AgentQueryService(
@@ -18,6 +19,7 @@ internal sealed class AgentQueryService : IAgentIpcService
         IHistoryReader history,
         IDiagnosticEventReader persistedDiagnostics,
         IDiagnosticEventReader recentDiagnostics,
+        AgentActionGateway actions,
         DiagnosticsCapabilityContract diagnosticsCapabilities,
         IEnumerable<ProviderDescriptor> descriptors,
         PipeEndpoint endpoint,
@@ -27,6 +29,7 @@ internal sealed class AgentQueryService : IAgentIpcService
         _history = history;
         _persistedDiagnostics = persistedDiagnostics;
         _recentDiagnostics = recentDiagnostics;
+        _actions = actions;
         _capabilities = BuildCapabilities(
             assembler.InstanceId,
             diagnosticsCapabilities,
@@ -58,7 +61,26 @@ internal sealed class AgentQueryService : IAgentIpcService
         };
     }
 
-    public CapabilitiesContract ReadCapabilities() => _capabilities;
+    public CapabilitiesContract ReadCapabilities()
+    {
+        var actions = _actions.ReadCapabilities();
+        return _capabilities with
+        {
+            Actions = actions,
+            Diagnostics = _capabilities.Diagnostics is null
+                ? null
+                : _capabilities.Diagnostics with
+                {
+                    ActionsSupported =
+                        actions.Actions.Count > 0,
+                },
+        };
+    }
+
+    public ValueTask<ActionResultContract> ExecuteActionAsync(
+        UserActionRequestContract request,
+        CancellationToken cancellationToken) =>
+        _actions.ExecuteAsync(request, cancellationToken);
 
     public async ValueTask<HistoryContract> QueryHistoryAsync(
         HistoryQueryContract query,
@@ -190,6 +212,7 @@ internal sealed class AgentQueryService : IAgentIpcService
                 ["snapshot"] = $"{baseEndpoint}/snapshot",
                 ["history"] = $"{baseEndpoint}/history",
                 ["diagnostics"] = $"{baseEndpoint}/diagnostics",
+                ["actions"] = $"{baseEndpoint}/actions",
                 ["capabilities"] = $"{baseEndpoint}/capabilities",
                 ["health"] = $"{baseEndpoint}/health",
                 ["subscribe"] = $"{baseEndpoint}/subscribe",
@@ -208,6 +231,18 @@ internal sealed class AgentQueryService : IAgentIpcService
                 IpcErrorCodes.MessageTooLarge,
                 IpcErrorCodes.RequestTimedOut,
                 IpcErrorCodes.ServiceUnavailable,
+                ActionErrorCodes.ActionNotSupported,
+                ActionErrorCodes.ActionPolicyDenied,
+                ActionErrorCodes.CallerIdentityDenied,
+                ActionErrorCodes.ClientImageDenied,
+                ActionErrorCodes.TargetNotFound,
+                ActionErrorCodes.TargetIdentityChanged,
+                ActionErrorCodes.TargetOwnerMismatch,
+                ActionErrorCodes.TargetProtected,
+                ActionErrorCodes.IdempotencyConflict,
+                ActionErrorCodes.IdempotencyIndeterminate,
+                ActionErrorCodes.AuditUnavailable,
+                ActionErrorCodes.ExecutorFailed,
             ],
         };
     }

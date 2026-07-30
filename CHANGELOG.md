@@ -1,5 +1,42 @@
 ﻿# 变更记录
 
+## 0.7.2
+
+变更点：
+
+- 新增独立、可选的 `PerfMonitor.Broker` Windows 服务边界；服务模式只允许
+  LocalSystem 和固定 ProgramData/Named Pipe，console 模式始终强制
+  dry-run，Broker 缺失不会延迟或停止 Agent 采样。
+- action contract 仅包含进程优先级、终止同用户进程、固定 Broker
+  self-check 和三个编译期电源 profile ID；协议拒绝未知字段以及 caller
+  身份、路径、命令、参数、环境、脚本、注册表和任意 GUID。
+- Agent 用户策略与 Broker 机器策略默认关闭全部动作；Broker 从 Pipe
+  transport 解析实际 SID/PID/映像/SHA-256，并在进程动作临界区重验
+  `(PID, creationTimeTicks, owner SID)`、保护进程和允许枚举。
+- 新增 Broker 独立 SQLite 审计库：OS 动作前提交 `pending`，以
+  `(caller SID, idempotencyKey)` 实现持久化 at-most-once；同摘要重取
+  已存结果，冲突拒绝，崩溃遗留状态恢复为 `indeterminate` 且永不自动重放。
+- 发布产物新增独立 `dist/broker`，构建 manifest 纳入其哈希与锁文件。
+  CI/本地测试覆盖闭合 framing、真实 Pipe 身份解析、PID 复用/owner/保护
+  目标、四类 fake executor、审计故障/恢复，以及真实发布 Broker 的强制
+  dry-run 与幂等重取。
+
+潜在风险：
+
+- v0.7.2 冻结服务兼容二进制和安全协议，但服务安装、ProgramData ACL、
+  Authenticode 客户端发布者验证及升级切换仍属于 v1.0 安装门禁；候选版本
+  不应手工启用真实动作到生产环境。
+- OS 修改与 SQLite 不能形成同一原子事务。修改后、终态提交前崩溃只能
+  报告 `indeterminate`；调用方必须人工核对，不能把超时当作失败并重试。
+- 机器级电源动作影响整机而非单用户，因此除 SID/映像校验外还必须由机器
+  策略逐项启用；默认策略保持关闭。
+
+回退：
+
+- v0.7.2 不修改用户历史 schema。先停止并卸载 Broker 服务，再回退
+  Agent/Desktop 到 v0.7.1；保留
+  `%ProgramData%\PerfMonitor\broker\broker-v1.db` 作为安全审计，不交给
+  旧版本写入。未安装 Broker 的部署可直接回退二进制。
 ## 0.7.1
 
 变更点：
