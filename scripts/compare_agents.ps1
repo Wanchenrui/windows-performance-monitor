@@ -23,6 +23,18 @@ param(
 
 $ErrorActionPreference = "Stop"
 $ProjectRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
+$BuildProperties = [xml](
+    Get-Content -LiteralPath (
+        Join-Path $ProjectRoot "Directory.Build.props"
+    ) -Raw
+)
+$VersionNode = $BuildProperties.SelectSingleNode(
+    "/Project/PropertyGroup/Version"
+)
+if ($null -eq $VersionNode) {
+    throw "Directory.Build.props 缺少产品版本。"
+}
+$ExpectedAgentVersion = $VersionNode.InnerText.Trim()
 $VenvPython = Join-Path $ProjectRoot ".venv\Scripts\python.exe"
 $AgentPath = (Resolve-Path -LiteralPath $AgentPath).Path
 if ($DotnetHost) {
@@ -300,6 +312,14 @@ try {
     ) {
         throw "差分期间未获得两端完整快照。"
     }
+    if (
+        $LatestPythonSnapshot.contractVersion -ne "1.0" -or
+        $LatestPythonSnapshot.productVersion -ne "0.3.0" -or
+        $LatestAgentSnapshot.contractVersion -ne "1.0" -or
+        $LatestAgentSnapshot.productVersion -ne $ExpectedAgentVersion
+    ) {
+        throw "差分快照的契约或产品版本不正确。"
+    }
 
     $PythonCpuMean = [double]($Pairs |
         Measure-Object -Property pythonCpu -Average).Average
@@ -556,7 +576,7 @@ try {
     $Result = [ordered]@{
         contractVersion = "1.0"
         pythonProductVersion = "0.3.0"
-        agentProductVersion = "0.4.0"
+        agentProductVersion = $ExpectedAgentVersion
         pairs = $Pairs.Count
         alignment = [ordered]@{
             maximumMilliseconds = [Math]::Round(

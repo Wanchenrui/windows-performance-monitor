@@ -6,6 +6,7 @@ using System.Text.Json.Nodes;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using PerfMonitor.Contracts;
 using PerfMonitor.Core;
+using PerfMonitor.Desktop;
 using PerfMonitor.Ipc.NamedPipes;
 using PerfMonitor.Storage.Sqlite;
 
@@ -137,6 +138,105 @@ public sealed class IpcAndStorageTests
         Assert.AreEqual(
             secondService.InstanceId,
             restartedClient.InstanceId);
+    }
+
+    [TestMethod]
+    [Timeout(20000)]
+    public async Task DesktopRetainsSnapshotAndDetectsAgentRestart()
+    {
+        using var identity = WindowsIdentity.GetCurrent(
+            TokenAccessLevels.Query);
+        var sid = identity.User ?? throw new AssertFailedException(
+            "Current test identity has no SID.");
+        var endpoint = new PipeEndpoint(
+            $"PerfMonitor.desktop-test.{Guid.NewGuid():N}",
+            sid);
+        var firstService = new FakeIpcService(
+            "77777777777777777777777777777777",
+            sequence: 7);
+        var firstSubscriptions = new SnapshotSubscriptionHub();
+        var firstServer = new NamedPipeAgentServer(
+            endpoint,
+            firstService,
+            firstSubscriptions);
+        var firstServerDisposed = false;
+        var firstSubscriptionsDisposed = false;
+        var secondSubscriptions = new SnapshotSubscriptionHub();
+        NamedPipeAgentServer? secondServer = null;
+        using var stopping = new CancellationTokenSource();
+        var session = new DesktopAgentSession(
+            endpoint,
+            TimeSpan.FromSeconds(2),
+            TimeSpan.FromMilliseconds(25));
+        var sessionTask = session.RunAsync(stopping.Token);
+
+        try
+        {
+            firstServer.Start();
+            await WaitUntilAsync(
+                () =>
+                    session.Current.Status ==
+                        DesktopConnectionStatus.Connected &&
+                    session.Current.InstanceId ==
+                        firstService.InstanceId &&
+                    session.Current.LatestSnapshot?.Sequence == 7,
+                TimeSpan.FromSeconds(5));
+
+            await firstServer.DisposeAsync();
+            firstServerDisposed = true;
+            await firstSubscriptions.DisposeAsync();
+            firstSubscriptionsDisposed = true;
+            await WaitUntilAsync(
+                () => session.Current.Status ==
+                    DesktopConnectionStatus.Reconnecting,
+                TimeSpan.FromSeconds(5));
+
+            Assert.AreEqual(
+                firstService.InstanceId,
+                session.Current.InstanceId);
+            Assert.AreEqual(
+                7L,
+                session.Current.LatestSnapshot?.Sequence);
+
+            var secondService = new FakeIpcService(
+                "88888888888888888888888888888888",
+                sequence: 8);
+            secondServer = new NamedPipeAgentServer(
+                endpoint,
+                secondService,
+                secondSubscriptions);
+            secondServer.Start();
+            await WaitUntilAsync(
+                () =>
+                    session.Current.Status ==
+                        DesktopConnectionStatus.Connected &&
+                    session.Current.InstanceId ==
+                        secondService.InstanceId &&
+                    session.Current.RestartCount == 1 &&
+                    session.Current.LatestSnapshot?.Sequence == 8,
+                TimeSpan.FromSeconds(5));
+        }
+        finally
+        {
+            stopping.Cancel();
+            await sessionTask;
+            if (!firstServerDisposed)
+            {
+                await firstServer.DisposeAsync();
+            }
+
+            if (!firstSubscriptionsDisposed)
+            {
+                await firstSubscriptions.DisposeAsync();
+            }
+
+            if (secondServer is not null)
+            {
+                await secondServer.DisposeAsync();
+            }
+
+            await secondSubscriptions.DisposeAsync();
+        }
     }
 
     [TestMethod]
@@ -311,6 +411,19 @@ public sealed class IpcAndStorageTests
         snapshot.Groups[GroupIds.SystemCpu].Data!["metrics"]![
             MetricIds.SystemCpuUtilization]!["value"]!
             .GetValue<double>();
+
+    private static async Task WaitUntilAsync(
+        Func<bool> condition,
+        TimeSpan timeout)
+    {
+        using var stopping = new CancellationTokenSource(timeout);
+        while (!condition())
+        {
+            await Task.Delay(
+                TimeSpan.FromMilliseconds(20),
+                stopping.Token);
+        }
+    }
 
     private sealed class FakeIpcService : IAgentIpcService
     {

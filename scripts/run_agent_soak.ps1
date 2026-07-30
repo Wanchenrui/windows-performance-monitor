@@ -34,6 +34,18 @@ param(
 
 $ErrorActionPreference = "Stop"
 $ProjectRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
+$BuildProperties = [xml](
+    Get-Content -LiteralPath (
+        Join-Path $ProjectRoot "Directory.Build.props"
+    ) -Raw
+)
+$VersionNode = $BuildProperties.SelectSingleNode(
+    "/Project/PropertyGroup/Version"
+)
+if ($null -eq $VersionNode) {
+    throw "Directory.Build.props 缺少产品版本。"
+}
+$ExpectedAgentVersion = $VersionNode.InnerText.Trim()
 $AgentPath = (Resolve-Path -LiteralPath $AgentPath).Path
 if ($DotnetHost) {
     $DotnetHost = (Resolve-Path -LiteralPath $DotnetHost).Path
@@ -223,7 +235,7 @@ try {
             $Snapshot = $Line | ConvertFrom-Json
             if (
                 $Snapshot.contractVersion -ne "1.0" -or
-                $Snapshot.productVersion -ne "0.4.0"
+                $Snapshot.productVersion -ne $ExpectedAgentVersion
             ) {
                 throw "长稳输出的契约或产品版本不正确。"
             }
@@ -332,7 +344,7 @@ try {
     $IsRelease72HourRun = $DurationSeconds -ge 72 * 60 * 60
     $Result = [ordered]@{
         contractVersion = "1.0"
-        productVersion = "0.4.0"
+        productVersion = $ExpectedAgentVersion
         profile = if ($IsRelease72HourRun) {
             "release-72h"
         }
