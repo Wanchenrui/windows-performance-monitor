@@ -472,9 +472,15 @@ internal sealed class DiagnosticSnapshotReader
         out string value)
     {
         value = string.Empty;
-        return node is JsonValue jsonValue &&
-            jsonValue.TryGetValue(out value) &&
-            !string.IsNullOrWhiteSpace(value);
+        if (node is not JsonValue jsonValue ||
+            !jsonValue.TryGetValue<string>(out var candidate) ||
+            string.IsNullOrWhiteSpace(candidate))
+        {
+            return false;
+        }
+
+        value = candidate;
+        return true;
     }
 
     private static bool TryReadBoolean(
