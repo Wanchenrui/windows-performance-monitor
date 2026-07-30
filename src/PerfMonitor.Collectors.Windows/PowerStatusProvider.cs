@@ -75,7 +75,7 @@ public sealed class PowerStatusProvider : IMetricProvider
         var status = _source.Read();
         var batteryPresent = BatteryPresent(
             status.BatteryFlag);
-        var charging = batteryPresent == true
+        bool? charging = batteryPresent == true
             ? (status.BatteryFlag & BatteryCharging) != 0
             : null;
         var batterySaver = status.SystemStatusFlag switch
