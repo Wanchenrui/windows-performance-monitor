@@ -384,7 +384,8 @@ public sealed class DiagnosticsTests
         {
             SQLitePCL.Batteries_V2.Init();
             await using (var connection =
-                new SqliteConnection($"Data Source={databasePath}"))
+                new SqliteConnection(
+                    $"Data Source={databasePath};Pooling=False"))
             {
                 await connection.OpenAsync();
                 await using var command = connection.CreateCommand();
@@ -423,7 +424,8 @@ public sealed class DiagnosticsTests
                 SqliteHistoryState.Healthy,
                 store.Health.State);
             await using var verification =
-                new SqliteConnection($"Data Source={databasePath}");
+                new SqliteConnection(
+                    $"Data Source={databasePath};Pooling=False");
             await verification.OpenAsync();
             await using var verifyCommand =
                 verification.CreateCommand();
