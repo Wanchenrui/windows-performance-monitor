@@ -1,5 +1,175 @@
 ﻿# 变更记录
 
+## 0.7.1
+
+变更点：
+
+- 新增当前用户 `asInvoker` 的独立 Provider Worker，固定采集 GPU load、
+  GPU/CPU/主板/存储温度；`LibreHardwareMonitorLib 0.9.6` 不进入 Agent、
+  Core 或稳定 Windows Collector 的依赖闭包。
+- 新增内部协议 v1：4 字节小端长度前缀、1 MiB 上限、固定 `collect`、
+  request/instance/sequence 校验，以及设备、名称、传感器与物理范围上限。
+- Agent 以固定同目录路径、`UseShellExecute=false` 和无 BOM UTF-8 管道
+  启动 Worker；请求串行，GPU/温度 Provider 在 250 ms 内复用一次硬件
+  快照。
+- Worker 超时、崩溃、协议损坏、进程内存超限或重启循环只使 `gpu`/
+  `sensors` 局部降级；进程树终止、Job Object 和滑动窗口重启预算限制
+  资源影响。
+- contract v1 新增 GPU/温度稳定 ID 与 `celsius` 单位；历史只保存最大
+  load/温度聚合，不持久化设备名、底层标识或逐传感器明细。
+- Desktop 增加 GPU 和硬件最高温度卡片；发布产物包含独立 Worker、
+  锁文件哈希和第三方许可说明，并执行真实协议握手。
+
+潜在风险：
+
+- LibreHardwareMonitor 官方说明部分传感器需要管理员权限。产品不自动
+  提权，因此某些机器会明确显示 `partial`、`permission_denied` 或
+  `not_supported`，而不是伪造为 0。
+- GPU load 定义为驱动公开的 load 传感器集合最大值，不宣称等于任一
+  厂商专有的“核心利用率”。设备 ID 只在单次 Worker 生命周期内稳定。
+- Job Object 无法嵌套时仍有私有内存检查和整棵进程树终止，但硬内存限额
+  由操作系统是否接受 Job 绑定决定。
+
+回退：
+
+- v0.7.1 没有 SQLite migration，可保留数据目录并回退到 v0.7.0；旧
+  二进制忽略新增 metric ID。单独移除 `provider-worker` 目录也只会让
+  两个硬件组降级为 `not_supported`。
+
+## 0.7.0
+
+变更点：
+
+- 新增 1 秒网络吞吐 Provider，以活动非回环网卡累计收发字节和单调时钟
+  计算速率；基线按接口 ID 保存在 RAM，新接口和计数器复位不产生假尖峰。
+- 新增 1 秒磁盘 I/O Provider，使用语言无关的
+  `PdhAddEnglishCounter` 读取 `PhysicalDisk(_Total)` 读写字节/操作速率；
+  首样本按 PDH 双样本物理约束保持 `null`。
+- 新增 5 秒电源/电池 Provider，使用 `GetSystemPowerStatus` 表达交流/
+  电池供电、电池存在、充电、节能、电量和寿命；255/`UINT_MAX` 哨兵值不
+  映射为 0。
+- contract v1 追加稳定 group/provider/source/metric ID，以及
+  `byte_per_second`、`count_per_second` 单位；网络、磁盘和电量进入有界
+  SQLite 历史白名单。
+- Desktop 增加网络、磁盘和电源只读状态；Provider 调度器在所有采集任务
+  停止后释放 PDH 原生查询句柄。
+
+潜在风险：
+
+- 网络汇总包含活动虚拟接口，可能同时计算隧道与底层适配器；该值定义为
+  “网卡计数器总吞吐”，不宣称等于去重后的物理链路流量。
+- `PhysicalDisk(_Total)` 被禁用或系统性能计数器损坏时，只有 `diskIo`
+  局部不可用；不会用 WMI/PowerShell 或 0 值兜底。
+- 本阶段不包含 GPU、温度、厂商 SDK 或系统修改动作，分别由后续隔离
+  Worker 和 Broker 版本实现。
+
+回退：
+
+- v0.7.0 没有 SQLite migration，可回退到 v0.6.0 候选；旧二进制会忽略
+  新指标行。保留数据目录，不需要删除历史数据库。
+
+## 0.6.0
+
+变更点：
+
+- 新增确定性诊断模块，首批实现高 CPU、内存压力、系统盘空间低、配置
+  进程 CPU 尖峰、采样缺口、Provider 长时间不可用和 Agent 自身资源异常。
+- 每个事件固定携带规则/版本、严重度、状态、滞环、激活/恢复 debounce、
+  cooldown、有界证据窗、首次/末次时间和 confidence；转换 ID 由确定性
+  输入计算，同一 raw snapshot 历史重放产生字节等价事件。
+- 诊断使用单线程有界队列和快照逻辑时间，不读取 evaluator 墙钟；队列满、
+  策略损坏或事件 sink 失败均不能反压 Provider 调度。
+- 策略持久化为独立 JSON，运行状态只存 RAM；配置进程 watchlist 默认
+  为空，只允许进程名，不接受路径、命令行或脚本。
+- SQLite 升级到 schema v2，事件复用既有单 writer channel，使用确定性
+  事件 ID 去重，并提供 366 天、2,000 条上限的查询；v1 预留表保留为归档。
+- Named Pipe 增加 `queryDiagnostics`，Desktop 可读取当前活动告警；
+  capabilities 明确 `actionsSupported=false`，v0.6 不提供任何优化动作。
+
+潜在风险：
+
+- 默认阈值是产品策略，不是所有硬件的物理极限；部署前应按工作负载校准，
+  并在修改规则语义时同步提升 `ruleVersion`。
+- raw snapshot 只保留 48 小时，超过该窗口只能审阅已持久化事件，不能从
+  原始快照重新计算全部细节。
+- SQLite 不可用时最近事件仍在有界 RAM 中，但重启后无法恢复未落盘事件。
+
+回退：
+
+- 可回退到 `v0.5.0`，但必须保留并建议先备份
+  `%LOCALAPPDATA%\PerfMonitor\data\history-v1.db`。v0.5 不消费诊断
+  schema v2，重新升级后恢复读取；不得以删除数据库作为 migration 回退。
+
+## 0.5.0
+
+变更点：
+
+- 产品路径切换为独立的 `.NET 10` Agent 与 WPF Desktop；Desktop 仅通过
+  contract v1 IPC 访问 Agent，退出或断线不影响采样与历史写入。
+- 新增按当前用户 SID 派生的 Windows Named Pipe，使用受保护 DACL，仅
+  允许当前用户和 LocalSystem，并显式拒绝 Network SID；协议实现 4 字节
+  小端 framing、4 MiB 分配前上限、JSON 深度限制、hello/版本协商、
+  request deadline、唯一 request ID、能力发现和 latest-wins 订阅。
+- 新增 SQLite schema v1、显式 migration、完整性检查、WAL、单写者有界
+  队列和独立读连接；raw/分钟/小时数据默认保留 48 小时/30 天/366 天，
+  rollup 保留 `min/max/avg/last/count`。
+- 历史查询强制时间范围、指标白名单、最多 16 个指标、5,000 点和 366 天，
+  SQL 侧降采样保留尖峰；SQLite 初始化或写入失败只降级历史，不反压
+  Provider 或实时快照。
+- Desktop 自动重连，断线期间保留最后快照，并在 `instanceId` 改变时记录
+  Agent 重启；增加真实 Named Pipe 重启测试和 Agent/Desktop/SQLite
+  生命周期冒烟。
+- 默认构建与启动不再打包或运行 Python 高频 Agent。Python 0.3 仅保留为
+  oracle、fixtures 与显式 `--dev-http` 开发模式；产品 manifest 对全部
+  .NET 文件和锁文件生成 SHA-256。
+
+潜在风险：
+
+- 当前 Desktop 为首版原生 WPF 状态页，尚未覆盖 Python Web UI 的全部
+  进程排行与图表交互；扩展 UI 不得绕过 IPC 直接访问 SQLite 或 Win32。
+- SQLite schema v1 只有前向 migration；1.0 前仍需完成异常退出恢复、
+  升降级与 migration 回滚矩阵。
+- 跨用户隔离已做 DACL 结构测试，仍需在 1.0 支持矩阵中执行真实多会话
+  安装验证。
+
+回退：
+
+- 可回退到 `v0.4.0`；旧版本忽略但不得删除
+  `%LOCALAPPDATA%\PerfMonitor\data\history-v1.db`。Python oracle 的最后
+  产品回退标签仍为 `v0.3.0`。
+
+## 0.4.0
+
+变更点：
+
+- 新增 `net10.0-windows` Agent、Core 和 Windows Collectors，首批实现系统
+  CPU、内存、卷容量、uptime、全量进程和 Agent 自监控。
+- Provider 改为独立绝对期限、有界并发、同 Provider 不重入、局部超时和
+  有界指数退避；原子快照保持 availability/freshness/coverage 正交。
+- 进程 CPU 继续以 `(PID, creationTimeTicks)` 做差分，输出整机归一化与
+  核心等效口径；Idle 伪进程不计入覆盖率分母。
+- 新增 Python/.NET 同窗差分门禁，CPU/内存均值门限为 3/1 个百分点，并
+  精确比较单位、source ID、卷总容量、空值和进程身份。
+- 新增 259,200 周期与快照替换虚拟门禁、短时真实进程资源门禁和默认
+  72 小时的可执行发布长稳脚本；Agent 增加 `--quiet` 避免长稳期间复制
+  控制台输出。
+- CI 发布并冒烟测试 Agent，执行差分与加速长稳，并在上传前用 JSON Schema
+  校验快照、差分和资源证据；Python 0.3 正式进入只读维护。
+
+潜在风险：
+
+- 当前 Agent 仍以 JSONL 作为旁路验证出口，没有 Named Pipe、SQLite 或
+  Desktop 生命周期；不能把它当作 0.5 的最终进程间架构。
+- CI 的加速资源门禁和 259,200 周期虚拟测试不等于真实墙钟 72 小时；正式
+  发布证据必须由 `run_agent_soak.ps1` 产生且
+  `actualWallClockPassed=true`。
+- 不响应取消的第三方硬件 SDK 仍需在 0.7 放入独立 Worker；0.4 仅承载
+  受控的 Windows Provider。
+
+回退：
+
+- 可回退到 `v0.3.0`；本阶段没有 SQLite schema、IPC 或安装格式迁移。
+
 ## 0.3.0
 
 变更点：

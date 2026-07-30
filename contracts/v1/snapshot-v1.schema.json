@@ -41,6 +41,11 @@
       "properties": {
         "systemCpu": {"$ref": "#/$defs/scalarGroup"},
         "memory": {"$ref": "#/$defs/scalarGroup"},
+        "network": {"$ref": "#/$defs/scalarGroup"},
+        "diskIo": {"$ref": "#/$defs/scalarGroup"},
+        "power": {"$ref": "#/$defs/scalarGroup"},
+        "gpu": {"$ref": "#/$defs/scalarGroup"},
+        "sensors": {"$ref": "#/$defs/scalarGroup"},
         "volumes": {"$ref": "#/$defs/volumeGroup"},
         "uptime": {"$ref": "#/$defs/scalarGroup"},
         "processes": {"$ref": "#/$defs/processGroup"},
@@ -128,7 +133,18 @@
       "required": ["value", "unit", "sourceId"],
       "properties": {
         "value": {"type": ["number", "null"]},
-        "unit": {"enum": ["percent", "byte", "second", "millisecond", "count"]},
+        "unit": {
+          "enum": [
+            "percent",
+            "byte",
+            "byte_per_second",
+            "second",
+            "millisecond",
+            "count",
+            "count_per_second",
+            "celsius"
+          ]
+        },
         "sourceId": {"type": "string", "minLength": 1}
       },
       "additionalProperties": true

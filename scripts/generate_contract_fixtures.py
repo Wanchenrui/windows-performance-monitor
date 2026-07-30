@@ -1,4 +1,4 @@
-"""生成并冻结 Python 参考实现的契约 v1 golden fixtures。"""
+﻿"""生成并冻结 Python 参考实现的契约 v1 golden fixtures。"""
 
 from __future__ import annotations
 
@@ -11,6 +11,8 @@ from typing import Any
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
+
+from perf_monitor.diagnostic_fixture_v1 import build_diagnostics_fixture
 
 from perf_monitor.contract_v1 import (
     build_capabilities,
@@ -243,6 +245,7 @@ def generate_fixtures() -> dict[str, dict[str, Any]]:
         "history-normal.json": history,
         "capabilities-normal.json": capabilities,
         "health-normal.json": build_health(normal),
+        "diagnostics-normal.json": build_diagnostics_fixture(),
     }
 
 
