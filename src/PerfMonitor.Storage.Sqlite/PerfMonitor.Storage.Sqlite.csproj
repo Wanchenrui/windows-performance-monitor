@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Data.Sqlite.Core" Version="10.0.10" />
+    <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="3.0.5" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../PerfMonitor.Contracts/PerfMonitor.Contracts.csproj" />
+    <ProjectReference Include="../PerfMonitor.Core/PerfMonitor.Core.csproj" />
+  </ItemGroup>
+</Project>
