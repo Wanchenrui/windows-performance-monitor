@@ -1,3 +1,4 @@
+using System.IO;
 using PerfMonitor.Core;
 using PerfMonitor.Ipc.NamedPipes;
 
