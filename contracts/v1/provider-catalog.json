@@ -6,6 +6,12 @@
     {"groupId": "volumes", "providerId": "windows.volume.psutil.v1", "requiredPrivilege": "user", "costClass": "low"},
     {"groupId": "uptime", "providerId": "windows.uptime.boot-time.v1", "requiredPrivilege": "user", "costClass": "low"},
     {"groupId": "processes", "providerId": "windows.process.win32.v1", "requiredPrivilege": "user", "costClass": "medium"},
-    {"groupId": "sampler", "providerId": "perfmonitor.sampler.fixed-period.v1", "requiredPrivilege": "user", "costClass": "low"}
+    {"groupId": "sampler", "providerId": "perfmonitor.sampler.fixed-period.v1", "requiredPrivilege": "user", "costClass": "low"},
+    {"groupId": "systemCpu", "providerId": "windows.system-cpu.get-system-times.v1", "requiredPrivilege": "user", "costClass": "low"},
+    {"groupId": "volumes", "providerId": "windows.volume.drive-info.v1", "requiredPrivilege": "user", "costClass": "low"},
+    {"groupId": "uptime", "providerId": "windows.uptime.tick-count.v1", "requiredPrivilege": "user", "costClass": "low"},
+    {"groupId": "processes", "providerId": "windows.process.system-diagnostics.v1", "requiredPrivilege": "user", "costClass": "medium"},
+    {"groupId": "sampler", "providerId": "perfmonitor.scheduler.independent-deadline.v1", "requiredPrivilege": "user", "costClass": "low"},
+    {"groupId": "self", "providerId": "perfmonitor.self.process.v1", "requiredPrivilege": "user", "costClass": "low"}
   ]
 }

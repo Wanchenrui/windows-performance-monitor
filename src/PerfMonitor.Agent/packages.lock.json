@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "dependencies": {
+    "net10.0-windows10.0.17763": {
+      "perfmonitor.collectors.windows": {
+        "type": "Project",
+        "dependencies": {
+          "PerfMonitor.Core": "[0.4.0, )"
+        }
+      },
+      "perfmonitor.contracts": {
+        "type": "Project"
+      },
+      "perfmonitor.core": {
+        "type": "Project",
+        "dependencies": {
+          "PerfMonitor.Contracts": "[0.4.0, )"
+        }
+      }
+    }
+  }
+}

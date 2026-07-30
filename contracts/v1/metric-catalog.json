@@ -20,6 +20,10 @@
     {"metricId": "sampler.duration.milliseconds", "unit": "millisecond", "valueType": "number", "sourceIds": ["perfmonitor.monotonic-scheduler.v1"]},
     {"metricId": "sampler.jitter.milliseconds", "unit": "millisecond", "valueType": "number", "sourceIds": ["perfmonitor.monotonic-scheduler.v1"]},
     {"metricId": "sampler.missed_intervals.count", "unit": "count", "valueType": "integer", "sourceIds": ["perfmonitor.monotonic-scheduler.v1"]},
-    {"metricId": "sampler.skipped_intervals.count", "unit": "count", "valueType": "integer", "sourceIds": ["perfmonitor.monotonic-scheduler.v1"]}
+    {"metricId": "sampler.skipped_intervals.count", "unit": "count", "valueType": "integer", "sourceIds": ["perfmonitor.monotonic-scheduler.v1"]},
+    {"metricId": "agent.cpu.core_equivalent.percent", "unit": "percent", "valueType": "number", "sourceIds": ["perfmonitor.self.process-counters.v1"]},
+    {"metricId": "agent.memory.working_set.bytes", "unit": "byte", "valueType": "integer", "sourceIds": ["perfmonitor.self.process-counters.v1"]},
+    {"metricId": "agent.memory.private.bytes", "unit": "byte", "valueType": "integer", "sourceIds": ["perfmonitor.self.process-counters.v1"]},
+    {"metricId": "agent.gc.heap.bytes", "unit": "byte", "valueType": "integer", "sourceIds": ["dotnet.gc-total-memory.v1"]}
   ]
 }

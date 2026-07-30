@@ -1,5 +1,37 @@
 ﻿# 变更记录
 
+## 0.4.0
+
+变更点：
+
+- 新增 `net10.0-windows` Agent、Core 和 Windows Collectors，首批实现系统
+  CPU、内存、卷容量、uptime、全量进程和 Agent 自监控。
+- Provider 改为独立绝对期限、有界并发、同 Provider 不重入、局部超时和
+  有界指数退避；原子快照保持 availability/freshness/coverage 正交。
+- 进程 CPU 继续以 `(PID, creationTimeTicks)` 做差分，输出整机归一化与
+  核心等效口径；Idle 伪进程不计入覆盖率分母。
+- 新增 Python/.NET 同窗差分门禁，CPU/内存均值门限为 3/1 个百分点，并
+  精确比较单位、source ID、卷总容量、空值和进程身份。
+- 新增 259,200 周期与快照替换虚拟门禁、短时真实进程资源门禁和默认
+  72 小时的可执行发布长稳脚本；Agent 增加 `--quiet` 避免长稳期间复制
+  控制台输出。
+- CI 发布并冒烟测试 Agent，执行差分与加速长稳，并在上传前用 JSON Schema
+  校验快照、差分和资源证据；Python 0.3 正式进入只读维护。
+
+潜在风险：
+
+- 当前 Agent 仍以 JSONL 作为旁路验证出口，没有 Named Pipe、SQLite 或
+  Desktop 生命周期；不能把它当作 0.5 的最终进程间架构。
+- CI 的加速资源门禁和 259,200 周期虚拟测试不等于真实墙钟 72 小时；正式
+  发布证据必须由 `run_agent_soak.ps1` 产生且
+  `actualWallClockPassed=true`。
+- 不响应取消的第三方硬件 SDK 仍需在 0.7 放入独立 Worker；0.4 仅承载
+  受控的 Windows Provider。
+
+回退：
+
+- 可回退到 `v0.3.0`；本阶段没有 SQLite schema、IPC 或安装格式迁移。
+
 ## 0.3.0
 
 变更点：
