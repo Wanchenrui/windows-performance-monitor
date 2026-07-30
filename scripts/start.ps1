@@ -33,7 +33,7 @@ $DesktopPath = Join-Path `
 foreach ($RequiredPath in @($AgentPath, $DesktopPath)) {
     if (-not (Test-Path -LiteralPath $RequiredPath)) {
         throw (
-            "未找到 v0.5 产品产物：$RequiredPath`n" +
+            "未找到 .NET 产品产物：$RequiredPath`n" +
             "请先运行 scripts\build.ps1。"
         )
     }
