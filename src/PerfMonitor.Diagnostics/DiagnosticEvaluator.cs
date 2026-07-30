@@ -134,8 +134,7 @@ public sealed class DiagnosticEvaluator
                 observation,
                 state,
                 DiagnosticStates.Active,
-                state.EpisodeFirstSeenUtc.Value,
-                observation.ActivateDebounceSeconds);
+                state.EpisodeFirstSeenUtc.Value);
         }
 
         if (!observation.IsRecovery)
@@ -165,8 +164,7 @@ public sealed class DiagnosticEvaluator
                 observation,
                 state,
                 DiagnosticStates.Resolved,
-                firstSeen,
-                observation.RecoverDebounceSeconds)
+                firstSeen)
             : null;
     }
 
@@ -189,28 +187,14 @@ public sealed class DiagnosticEvaluator
         DiagnosticObservation observation,
         RuleState state,
         string eventState,
-        DateTimeOffset firstSeenUtc,
-        double requiredDurationSeconds)
+        DateTimeOffset firstSeenUtc)
     {
         var evidence = state.Evidence.ToArray();
         var windowFrom = evidence.Length == 0
             ? observation.ObservedAtUtc
             : evidence[0].ObservedAtUtc;
-        var confidence = requiredDurationSeconds <= 0
-            ? 1
-            : Math.Clamp(
-                (observation.ObservedAtUtc - (
-                    eventState == DiagnosticStates.Active
-                        ? firstSeenUtc
-                        : state.RecoverySinceUtc ??
-                            observation.ObservedAtUtc))
-                    .TotalSeconds /
-                requiredDurationSeconds,
-                0,
-                1);
         // State transitions are emitted only after their full debounce
         // interval, so a transition is deterministically fully confident.
-        confidence = Math.Max(confidence, 1);
 
         return new DiagnosticEventContract
         {
@@ -247,7 +231,7 @@ public sealed class DiagnosticEvaluator
             },
             FirstSeenUtc = firstSeenUtc,
             LastSeenUtc = observation.ObservedAtUtc,
-            Confidence = confidence,
+            Confidence = 1,
             Evidence = evidence,
         };
     }

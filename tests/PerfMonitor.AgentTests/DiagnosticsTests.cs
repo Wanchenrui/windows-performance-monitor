@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using Microsoft.Data.Sqlite;
 using PerfMonitor.Contracts;
 using PerfMonitor.Core;
 using PerfMonitor.Diagnostics;
@@ -275,6 +276,179 @@ public sealed class DiagnosticsTests
         }
     }
 
+    [TestMethod]
+    public void HysteresisAndCooldownSuppressFlappingEpisodes()
+    {
+        var policy = OnlyHighCpu(
+            activateDebounceSeconds: 0,
+            recoverDebounceSeconds: 0,
+            cooldownSeconds: 10);
+        var origin = DateTimeOffset.Parse(
+            "2026-01-01T00:00:00Z",
+            System.Globalization.CultureInfo.InvariantCulture);
+        var events = DiagnosticReplay.Replay(
+            [
+                CpuSnapshot(1, origin, 95),
+                CpuSnapshot(2, origin.AddSeconds(1), 80),
+                CpuSnapshot(3, origin.AddSeconds(2), 70),
+                CpuSnapshot(4, origin.AddSeconds(3), 95),
+                CpuSnapshot(5, origin.AddSeconds(4), 70),
+                CpuSnapshot(6, origin.AddSeconds(11), 95),
+            ],
+            policy);
+
+        Assert.AreEqual(3, events.Count);
+        CollectionAssert.AreEqual(
+            new[]
+            {
+                DiagnosticStates.Active,
+                DiagnosticStates.Resolved,
+                DiagnosticStates.Active,
+            },
+            events.Select(item => item.State).ToArray());
+        Assert.IsTrue(
+            events[1].Evidence.Any(item =>
+                item.Condition == "hysteresis_band"));
+    }
+
+    [TestMethod]
+    public void InvalidPolicyFallsBackWithoutOverwritingFile()
+    {
+        var directory = Path.Combine(
+            Path.GetTempPath(),
+            $"perf-monitor-policy-{Guid.NewGuid():N}");
+        var path = Path.Combine(directory, "policy.json");
+        Directory.CreateDirectory(directory);
+        try
+        {
+            File.WriteAllText(path, "{invalid-json");
+            var policy = DiagnosticPolicyFile.LoadOrCreate(
+                path,
+                out var warningCode);
+
+            Assert.AreEqual(
+                "diagnostic_policy_fallback",
+                warningCode);
+            Assert.AreEqual(
+                DiagnosticPolicy.Default.HighCpu.ActivateAtOrAbove,
+                policy.HighCpu.ActivateAtOrAbove);
+            Assert.AreEqual(
+                "{invalid-json",
+                File.ReadAllText(path));
+        }
+        finally
+        {
+            Directory.Delete(directory, recursive: true);
+        }
+    }
+
+    [TestMethod]
+    public async Task RejectedEventSinkDoesNotStopRealtimeDiagnostics()
+    {
+        var sink = new RejectingDiagnosticSink();
+        var policy = OnlyHighCpu(
+            activateDebounceSeconds: 0,
+            recoverDebounceSeconds: 0,
+            cooldownSeconds: 0);
+        await using var engine = new DiagnosticEngine(policy, [sink]);
+        engine.Start();
+        var now = DateTimeOffset.UtcNow;
+        Assert.IsTrue(engine.TryPublish(CpuSnapshot(1, now, 95)));
+        await engine.WaitForIdleAsync(TimeSpan.FromSeconds(5));
+        var result = await engine.QueryDiagnosticsAsync(
+            new DiagnosticQueryContract
+            {
+                FromEpochMs = now.AddMinutes(-1)
+                    .ToUnixTimeMilliseconds(),
+                ToEpochMs = now.AddMinutes(1)
+                    .ToUnixTimeMilliseconds(),
+                MaxEvents = 10,
+            },
+            "response-instance",
+            CancellationToken.None);
+
+        Assert.AreEqual(1, result.EventCount);
+        Assert.AreEqual(1L, engine.Health.SinkFailures);
+    }
+
+    [TestMethod]
+    [Timeout(20000)]
+    public async Task SchemaV1DiagnosticRowsAreArchivedDuringV2Migration()
+    {
+        var directory = Path.Combine(
+            Path.GetTempPath(),
+            $"perf-monitor-diagnostic-migration-{Guid.NewGuid():N}");
+        var databasePath = Path.Combine(directory, "history.db");
+        Directory.CreateDirectory(directory);
+        try
+        {
+            SQLitePCL.Batteries_V2.Init();
+            await using (var connection =
+                new SqliteConnection($"Data Source={databasePath}"))
+            {
+                await connection.OpenAsync();
+                await using var command = connection.CreateCommand();
+                command.CommandText = """
+                    CREATE TABLE schema_migrations (
+                        version INTEGER PRIMARY KEY,
+                        applied_at_utc TEXT NOT NULL
+                    );
+                    INSERT INTO schema_migrations
+                    VALUES (1, '2026-01-01T00:00:00Z');
+                    CREATE TABLE diagnostic_events (
+                        event_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        occurred_at_ms INTEGER NOT NULL,
+                        diagnostic_id TEXT NOT NULL,
+                        severity TEXT NOT NULL,
+                        payload_json TEXT NOT NULL
+                    );
+                    INSERT INTO diagnostic_events(
+                        occurred_at_ms,
+                        diagnostic_id,
+                        severity,
+                        payload_json
+                    ) VALUES (1, 'legacy', 'warning', '{}');
+                    PRAGMA user_version=1;
+                    """;
+                _ = await command.ExecuteNonQueryAsync();
+            }
+
+            await using var store = new SqliteHistoryStore(
+                new SqliteHistoryOptions
+                {
+                    DatabasePath = databasePath,
+                });
+            await store.StartAsync(CancellationToken.None);
+            Assert.AreEqual(
+                SqliteHistoryState.Healthy,
+                store.Health.State);
+            await using var verification =
+                new SqliteConnection($"Data Source={databasePath}");
+            await verification.OpenAsync();
+            await using var verifyCommand =
+                verification.CreateCommand();
+            verifyCommand.CommandText = """
+                SELECT
+                    (SELECT user_version FROM pragma_user_version),
+                    (SELECT COUNT(*) FROM diagnostic_events_v1),
+                    (SELECT COUNT(*) FROM diagnostic_events);
+                """;
+            await using var reader =
+                await verifyCommand.ExecuteReaderAsync();
+            Assert.IsTrue(await reader.ReadAsync());
+            Assert.AreEqual(2L, reader.GetInt64(0));
+            Assert.AreEqual(1L, reader.GetInt64(1));
+            Assert.AreEqual(0L, reader.GetInt64(2));
+        }
+        finally
+        {
+            if (Directory.Exists(directory))
+            {
+                Directory.Delete(directory, recursive: true);
+            }
+        }
+    }
+
     private static DiagnosticPolicy OnlyHighCpu(
         double activateDebounceSeconds,
         double recoverDebounceSeconds,
@@ -523,4 +697,11 @@ public sealed class DiagnosticsTests
                 FreshnessStates.Fresh),
             new SnapshotRetention(3600, 86_400),
             groups);
+
+    private sealed class RejectingDiagnosticSink :
+        IDiagnosticEventSink
+    {
+        public bool TryPublishDiagnostic(
+            DiagnosticEventContract diagnosticEvent) => false;
+    }
 }

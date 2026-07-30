@@ -65,6 +65,7 @@ def _validate(schema_name, payload):
         ("history-normal.json", "history-v1.schema.json"),
         ("capabilities-normal.json", "capabilities-v1.schema.json"),
         ("health-normal.json", "health-v1.schema.json"),
+        ("diagnostics-normal.json", "diagnostics-v1.schema.json"),
     ],
 )
 def test_golden_fixtures_validate_against_schema(fixture_name, schema_name):

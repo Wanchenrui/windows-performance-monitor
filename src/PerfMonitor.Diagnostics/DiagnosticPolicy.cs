@@ -71,6 +71,19 @@ public sealed record DiagnosticPolicy
                 "diagnostic_policy_schema_unsupported");
         }
 
+        if (HighCpu is null ||
+            MemoryPressure is null ||
+            SystemDiskLow is null ||
+            ProcessCpuSpike is null ||
+            SamplingGap is null ||
+            ProviderUnavailable is null ||
+            AgentResourceAnomaly is null ||
+            WatchedProcessNames is null)
+        {
+            throw new InvalidDataException(
+                "diagnostic_policy_required_field_missing");
+        }
+
         ValidateThreshold(HighCpu, nameof(HighCpu));
         ValidateThreshold(MemoryPressure, nameof(MemoryPressure));
         ValidateThreshold(SystemDiskLow, nameof(SystemDiskLow));
@@ -394,8 +407,14 @@ public sealed record DiagnosticPolicy
         }
     }
 
-    private static string ValidateProcessName(string value)
+    private static string ValidateProcessName(string? value)
     {
+        if (value is null)
+        {
+            throw new InvalidDataException(
+                "diagnostic_policy_process_name_invalid");
+        }
+
         var name = value.Trim();
         if (name.Length is 0 or > 128 ||
             name.Any(char.IsControl) ||
