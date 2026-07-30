@@ -12,7 +12,7 @@ internal sealed record PersistedMetric(
 internal static class SnapshotMetricExtractor
 {
     private static readonly HashSet<string> AllowedMetricIds =
-        new(HistoryPolicy.MetricIds, StringComparer.Ordinal);
+        new(HistoryPolicy.SupportedMetricIds, StringComparer.Ordinal);
 
     public static IReadOnlyList<PersistedMetric> Extract(
         AgentSnapshot snapshot)

@@ -8,7 +8,9 @@ internal static class SqliteHistoryQuery
     private const long MillisecondsPerMinute = 60_000;
     private const long MillisecondsPerHour = 3_600_000;
     private static readonly HashSet<string> SupportedMetricIds =
-        new(HistoryPolicy.MetricIds, StringComparer.Ordinal);
+        new(
+            HistoryPolicy.SupportedMetricIds,
+            StringComparer.Ordinal);
 
     public static async Task<HistoryContract> ExecuteAsync(
         SqliteConnection connection,

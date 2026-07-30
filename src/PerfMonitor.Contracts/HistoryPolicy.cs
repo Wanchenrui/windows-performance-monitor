@@ -8,7 +8,7 @@ public static class HistoryPolicy
     public const int RamPointLimit = 86_400;
     public static readonly TimeSpan MaxQueryRange = TimeSpan.FromDays(366);
 
-    public static IReadOnlyList<string> MetricIds { get; } =
+    public static IReadOnlyList<string> SupportedMetricIds { get; } =
     [
         MetricIds.SystemCpuUtilization,
         MetricIds.MemoryUtilization,
