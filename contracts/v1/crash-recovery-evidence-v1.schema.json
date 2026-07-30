@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.perfmonitor.local/v1/crash-recovery-evidence-v1.schema.json",
+  "title": "PerfMonitor crash recovery evidence v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "productVersion",
+    "databaseSchemaVersion",
+    "agentSha256",
+    "supportSha256",
+    "passed",
+    "walObservedBeforeTermination",
+    "integrityPassedAfterTermination",
+    "integrityPassedAfterRestart",
+    "committedSnapshotCountBeforeRestart",
+    "snapshotCountAfterRestart",
+    "instanceChanged"
+  ],
+  "properties": {
+    "schemaVersion": {"const": "1.0"},
+    "productVersion": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "databaseSchemaVersion": {"const": 2},
+    "agentSha256": {
+      "type": "string",
+      "pattern": "^[0-9A-F]{64}$"
+    },
+    "supportSha256": {
+      "type": "string",
+      "pattern": "^[0-9A-F]{64}$"
+    },
+    "passed": {"const": true},
+    "walObservedBeforeTermination": {"const": true},
+    "integrityPassedAfterTermination": {"const": true},
+    "integrityPassedAfterRestart": {"const": true},
+    "committedSnapshotCountBeforeRestart": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "snapshotCountAfterRestart": {
+      "type": "integer",
+      "minimum": 2
+    },
+    "instanceChanged": {"const": true}
+  }
+}

@@ -1,0 +1,171 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.perfmonitor.local/v1/baseline-candidate-v1.schema.json",
+  "title": "PerfMonitor frozen baseline candidate v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "baselineId",
+    "productVersion",
+    "runtimeIdentifier",
+    "validationPlan",
+    "source",
+    "artifact",
+    "agent",
+    "validator"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0"
+    },
+    "baselineId": {
+      "type": "string",
+      "pattern": "^v[0-9]+\\.[0-9]+\\.[0-9]+-[a-z0-9-]+$"
+    },
+    "productVersion": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "runtimeIdentifier": {
+      "const": "win-x64"
+    },
+    "validationPlan": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "durationSeconds",
+        "warmupSeconds",
+        "probeIntervalSeconds",
+        "snapshotPeriodSeconds"
+      ],
+      "properties": {
+        "durationSeconds": {
+          "const": 259200
+        },
+        "warmupSeconds": {
+          "const": 5
+        },
+        "probeIntervalSeconds": {
+          "const": 30
+        },
+        "snapshotPeriodSeconds": {
+          "const": 300
+        }
+      }
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "repository",
+        "headBranch",
+        "headCommit",
+        "workflowRunId",
+        "workflowMergeCommit",
+        "workflowFile"
+      ],
+      "properties": {
+        "repository": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$"
+        },
+        "headBranch": {
+          "type": "string",
+          "minLength": 1
+        },
+        "headCommit": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "workflowRunId": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "workflowMergeCommit": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "workflowFile": {
+          "const": ".github/workflows/ci.yml"
+        }
+      }
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "name",
+        "sha256",
+        "sizeBytes",
+        "createdAtUtc"
+      ],
+      "properties": {
+        "id": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9A-F]{64}$"
+        },
+        "sizeBytes": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "createdAtUtc": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "agent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "sha256",
+        "entryPointPath",
+        "entryPointSha256"
+      ],
+      "properties": {
+        "path": {
+          "const": "agent/perf-monitor-agent.dll"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9A-F]{64}$"
+        },
+        "entryPointPath": {
+          "const": "agent/perf-monitor-agent.exe"
+        },
+        "entryPointSha256": {
+          "type": "string",
+          "pattern": "^[0-9A-F]{64}$"
+        }
+      }
+    },
+    "validator": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "sha256"
+      ],
+      "properties": {
+        "path": {
+          "const": "scripts/run_agent_soak.ps1"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9A-F]{64}$"
+        }
+      }
+    }
+  }
+}

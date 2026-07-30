@@ -1,0 +1,676 @@
+name: v1 Release Candidate
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: Signature trust mode; production requires pinned secrets.
+        required: true
+        default: test
+        type: choice
+        options:
+          - test
+          - production
+      wix_eula_id:
+        description: Enter wix7 only after reviewing and accepting the WiX 7 EULA.
+        required: true
+        type: string
+      installer_url:
+        description: Final MSI URL; production requires HTTPS.
+        required: true
+        default: artifact://PerfMonitor-1.0.0-win-x64.msi
+        type: string
+      sbom_url:
+        description: Final CycloneDX SBOM URL; production requires HTTPS.
+        required: true
+        default: artifact://PerfMonitor-sbom.cdx.json
+        type: string
+      support_matrix_run_id:
+        description: Successful attested v1 support-matrix workflow run ID; production only.
+        required: false
+        default: ""
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+  id-token: write
+  attestations: write
+
+concurrency:
+  group: v1-release-${{ github.ref }}-${{ inputs.mode }}
+  cancel-in-progress: false
+
+jobs:
+  release-candidate:
+    runs-on: windows-latest
+    timeout-minutes: 120
+    env:
+      DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+      NUGET_XMLDOC_MODE: skip
+      RELEASE_MODE: ${{ inputs.mode }}
+      WIX_EULA_ID: ${{ inputs.wix_eula_id }}
+      INSTALLER_URL: ${{ inputs.installer_url }}
+      SBOM_URL: ${{ inputs.sbom_url }}
+      SUPPORT_MATRIX_RUN_ID: ${{ inputs.support_matrix_run_id }}
+
+    steps:
+      - name: Checkout exact source
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Validate explicit release inputs
+        shell: pwsh
+        env:
+          PRODUCTION_SIGN_SUBJECT: ${{ secrets.PERFMONITOR_SIGNING_SUBJECT }}
+          PRODUCTION_SIGN_SHA256: ${{ secrets.PERFMONITOR_SIGNING_CERT_SHA256 }}
+          PRODUCTION_TIMESTAMP_URL: ${{ secrets.PERFMONITOR_TIMESTAMP_URL }}
+        run: |
+          if ($env:WIX_EULA_ID -cne "wix7") {
+            throw (
+              "WiX 7 EULA was not explicitly accepted for this run. " +
+              "Review it, then enter wix7."
+            )
+          }
+          if ($env:RELEASE_MODE -eq "production") {
+            $AllowedRef = (
+              $env:GITHUB_REF -ceq "refs/heads/main" -or
+              $env:GITHUB_REF -ceq "refs/tags/v1.0.0"
+            )
+            if (-not $AllowedRef) {
+              throw "Production candidates may run only from main or v1.0.0."
+            }
+            foreach ($Name in @(
+              "PRODUCTION_SIGN_SUBJECT",
+              "PRODUCTION_SIGN_SHA256",
+              "PRODUCTION_TIMESTAMP_URL"
+            )) {
+              if ([string]::IsNullOrWhiteSpace(
+                [Environment]::GetEnvironmentVariable($Name)
+              )) {
+                throw "Production signing input is missing: $Name"
+              }
+            }
+            if (
+              $env:PRODUCTION_SIGN_SUBJECT -match "[`r`n]" -or
+              $env:PRODUCTION_SIGN_SHA256 -notmatch
+                "^[0-9A-Fa-f]{64}$" -or
+              $env:PRODUCTION_TIMESTAMP_URL -notmatch "^https://" -or
+              $env:SUPPORT_MATRIX_RUN_ID -notmatch "^[1-9][0-9]*$"
+            ) {
+              throw (
+                "Production signer, timestamp URL, or support-matrix " +
+                "run ID is invalid."
+              )
+            }
+            "SIGN_SUBJECT=$env:PRODUCTION_SIGN_SUBJECT" |
+              Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          }
+
+      - name: Download exact support-matrix evidence
+        if: inputs.mode == 'production'
+        uses: actions/download-artifact@v4
+        with:
+          name: perf-monitor-v1-support-matrix-${{ github.sha }}
+          path: artifacts/support-matrix
+          github-token: ${{ github.token }}
+          run-id: ${{ inputs.support_matrix_run_id }}
+
+      - name: Verify support-matrix run and attestation
+        if: inputs.mode == 'production'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $EvidencePath = (
+            Resolve-Path `
+              -LiteralPath (
+                ".\artifacts\support-matrix\" +
+                "support-matrix-evidence-v1.json"
+              )
+          ).Path
+          $Run = (
+            gh api (
+              "repos/$env:GITHUB_REPOSITORY/actions/runs/" +
+              $env:SUPPORT_MATRIX_RUN_ID
+            )
+          ) | ConvertFrom-Json
+          if (
+            $LASTEXITCODE -ne 0 -or
+            $Run.conclusion -cne "success" -or
+            $Run.event -cne "workflow_dispatch" -or
+            $Run.head_sha -cne $env:GITHUB_SHA -or
+            $Run.path -cne ".github/workflows/support-matrix.yml"
+          ) {
+            throw "Support-matrix workflow run identity is invalid."
+          }
+          $Evidence = Get-Content `
+            -LiteralPath $EvidencePath `
+            -Raw |
+            ConvertFrom-Json
+          if (
+            [string]$Evidence.sourceWorkflow.runId -cne
+              [string]$Run.id -or
+            [int]$Evidence.sourceWorkflow.runAttempt -ne
+              [int]$Run.run_attempt -or
+            $Evidence.sourceWorkflow.repository -cne
+              $env:GITHUB_REPOSITORY
+          ) {
+            throw "Support-matrix evidence/run binding is invalid."
+          }
+          gh attestation verify `
+            $EvidencePath `
+            --repo $env:GITHUB_REPOSITORY `
+            --signer-workflow (
+              "$env:GITHUB_REPOSITORY/" +
+              ".github/workflows/support-matrix.yml"
+            ) `
+            --source-digest $env:GITHUB_SHA `
+            --format json |
+            Set-Content `
+              -LiteralPath (
+                ".\artifacts\support-matrix\" +
+                "attestation-verification.json"
+              ) `
+              -Encoding utf8
+          if ($LASTEXITCODE -ne 0) {
+            throw "Support-matrix attestation verification failed."
+          }
+          "SUPPORT_MATRIX_EVIDENCE=$EvidencePath" |
+            Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Set up .NET 10 SDK
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: "10.0.302"
+          cache: true
+          cache-dependency-path: "**/packages.lock.json"
+
+      - name: Set up Python 3.12 x64
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          architecture: x64
+          cache: pip
+          cache-dependency-path: |
+            requirements.txt
+            requirements-dev.txt
+            requirements-audit.txt
+
+      - name: Create verified Python oracle
+        shell: pwsh
+        run: .\scripts\setup.ps1
+
+      - name: Restore locked release tools
+        shell: pwsh
+        run: |
+          dotnet restore `
+            .\tools\PerfMonitor.ReleaseTools\PerfMonitor.ReleaseTools.csproj `
+            --locked-mode
+          if ($LASTEXITCODE -ne 0) {
+            throw "Release tool restore failed."
+          }
+          dotnet tool restore
+          if ($LASTEXITCODE -ne 0) {
+            throw "CycloneDX tool restore failed."
+          }
+          dotnet restore `
+            .\installer\PerfMonitor.Installer\PerfMonitor.Installer.wixproj `
+            --locked-mode `
+            -p:AcceptEula=$env:WIX_EULA_ID
+          if ($LASTEXITCODE -ne 0) {
+            throw "Locked WiX restore failed."
+          }
+
+      - name: Create isolated test signing identity
+        if: inputs.mode == 'test'
+        shell: pwsh
+        run: |
+          $Password = [Guid]::NewGuid().ToString("N") +
+            [Guid]::NewGuid().ToString("N")
+          Write-Output "::add-mask::$Password"
+          $env:PERFMONITOR_TEST_CERT_PASSWORD = $Password
+          $Certificate = (
+            .\scripts\new_test_certificate.ps1 `
+              -InstallTrust `
+              -ValidHours 4
+          ) | ConvertFrom-Json
+          foreach ($Value in @(
+            $Certificate.subject,
+            $Certificate.sha1Thumbprint,
+            $Certificate.sha256Thumbprint
+          )) {
+            if ([string]$Value -match "[`r`n]") {
+              throw "Signing identity contains a newline."
+            }
+          }
+          "SIGN_SUBJECT=$($Certificate.subject)" |
+            Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "SIGN_CERT_SHA1=$($Certificate.sha1Thumbprint)" |
+            Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "SIGN_CERT_SHA256=$($Certificate.sha256Thumbprint)" |
+            Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "SIGN_TIMESTAMP_URL=" |
+            Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          Remove-Item `
+            -LiteralPath $Certificate.pfxPath, $Certificate.cerPath `
+            -Force
+
+      - name: Build and test exact payload
+        shell: pwsh
+        run: |
+          .\scripts\build.ps1 `
+            -ReleaseMode $env:RELEASE_MODE `
+            -Publisher $env:SIGN_SUBJECT
+
+      - name: Import pinned production signing identity
+        if: inputs.mode == 'production'
+        shell: pwsh
+        env:
+          PRODUCTION_PFX_BASE64: ${{ secrets.PERFMONITOR_SIGNING_PFX_BASE64 }}
+          PRODUCTION_PFX_PASSWORD: ${{ secrets.PERFMONITOR_SIGNING_PFX_PASSWORD }}
+          PRODUCTION_SIGN_SUBJECT: ${{ secrets.PERFMONITOR_SIGNING_SUBJECT }}
+          PRODUCTION_SIGN_SHA256: ${{ secrets.PERFMONITOR_SIGNING_CERT_SHA256 }}
+          PRODUCTION_TIMESTAMP_URL: ${{ secrets.PERFMONITOR_TIMESTAMP_URL }}
+        run: |
+          $PfxPath = Join-Path $env:RUNNER_TEMP "perf-monitor-signing.pfx"
+          try {
+            if (
+              [string]::IsNullOrWhiteSpace(
+                $env:PRODUCTION_PFX_BASE64
+              ) -or
+              [string]::IsNullOrWhiteSpace(
+                $env:PRODUCTION_PFX_PASSWORD
+              )
+            ) {
+              throw "Production PFX or password is missing."
+            }
+            [IO.File]::WriteAllBytes(
+              $PfxPath,
+              [Convert]::FromBase64String(
+                $env:PRODUCTION_PFX_BASE64
+              )
+            )
+            $SecurePassword = ConvertTo-SecureString `
+              -String $env:PRODUCTION_PFX_PASSWORD `
+              -AsPlainText `
+              -Force
+            $Certificates = @(
+              Import-PfxCertificate `
+                -FilePath $PfxPath `
+                -CertStoreLocation "Cert:\CurrentUser\My" `
+                -Password $SecurePassword `
+                -Exportable:$false
+            )
+            $Certificate = $Certificates |
+              Where-Object {
+                $_.HasPrivateKey -and
+                $_.Subject -ceq $env:PRODUCTION_SIGN_SUBJECT
+              } |
+              Select-Object -First 1
+            if ($null -eq $Certificate) {
+              throw "Pinned production certificate was not imported."
+            }
+            . .\scripts\release_common.ps1
+            $Sha256 = Assert-PerfMonitorCodeSigningCertificate `
+              -Certificate $Certificate `
+              -Mode production `
+              -ExpectedSubject $env:PRODUCTION_SIGN_SUBJECT `
+              -ExpectedSha256Thumbprint $env:PRODUCTION_SIGN_SHA256
+            "SIGN_CERT_SHA1=$($Certificate.Thumbprint)" |
+              Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+            "SIGN_CERT_SHA256=$Sha256" |
+              Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+            "SIGN_TIMESTAMP_URL=$env:PRODUCTION_TIMESTAMP_URL" |
+              Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          }
+          finally {
+            if (Test-Path -LiteralPath $PfxPath) {
+              Remove-Item -LiteralPath $PfxPath -Force
+            }
+          }
+
+      - name: Sign all product entry points
+        shell: pwsh
+        run: |
+          $Arguments = @{
+            Paths = @(
+              ".\dist\agent\perf-monitor-agent.exe"
+              (
+                ".\dist\agent\provider-worker\" +
+                "perf-monitor-provider-worker.exe"
+              )
+              ".\dist\desktop\perf-monitor-desktop.exe"
+              ".\dist\broker\perf-monitor-broker.exe"
+              ".\dist\support\perf-monitor-support.exe"
+            )
+            CertificateSha1 = $env:SIGN_CERT_SHA1
+            Mode = $env:RELEASE_MODE
+            ExpectedSubject = $env:SIGN_SUBJECT
+            ExpectedSha256Thumbprint = $env:SIGN_CERT_SHA256
+            EvidencePath = ".\artifacts\payload-signing.json"
+          }
+          if ($env:RELEASE_MODE -eq "production") {
+            $Arguments.TimestampUrl = $env:SIGN_TIMESTAMP_URL
+          }
+          .\scripts\sign_release.ps1 @Arguments | Out-Host
+
+      - name: Build and sign synthetic previous installer
+        shell: pwsh
+        run: |
+          $BuildResult = (
+            .\scripts\build_installer.ps1 `
+              -Mode $env:RELEASE_MODE `
+              -WixEulaId $env:WIX_EULA_ID `
+              -Publisher $env:SIGN_SUBJECT `
+              -OutputDirectory .\artifacts\installer-previous `
+              -ProductVersionOverride 0.9.0
+          ) | ConvertFrom-Json
+          $PreviousMsi = $BuildResult.path
+          $SignArguments = @{
+            Paths = @($PreviousMsi)
+            CertificateSha1 = $env:SIGN_CERT_SHA1
+            Mode = $env:RELEASE_MODE
+            ExpectedSubject = $env:SIGN_SUBJECT
+            ExpectedSha256Thumbprint = $env:SIGN_CERT_SHA256
+          }
+          if ($env:RELEASE_MODE -eq "production") {
+            $SignArguments.TimestampUrl = $env:SIGN_TIMESTAMP_URL
+          }
+          .\scripts\sign_release.ps1 @SignArguments | Out-Null
+          "PREVIOUS_MSI=$PreviousMsi" |
+            Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Build and sign current installer
+        shell: pwsh
+        run: |
+          $BuildResult = (
+            .\scripts\build_installer.ps1 `
+              -Mode $env:RELEASE_MODE `
+              -WixEulaId $env:WIX_EULA_ID `
+              -Publisher $env:SIGN_SUBJECT `
+              -OutputDirectory .\dist\installer
+          ) | ConvertFrom-Json
+          $CurrentMsi = $BuildResult.path
+          $SignArguments = @{
+            Paths = @($CurrentMsi)
+            CertificateSha1 = $env:SIGN_CERT_SHA1
+            Mode = $env:RELEASE_MODE
+            ExpectedSubject = $env:SIGN_SUBJECT
+            ExpectedSha256Thumbprint = $env:SIGN_CERT_SHA256
+            EvidencePath = ".\artifacts\installer-signing.json"
+          }
+          if ($env:RELEASE_MODE -eq "production") {
+            $SignArguments.TimestampUrl = $env:SIGN_TIMESTAMP_URL
+          }
+          .\scripts\sign_release.ps1 @SignArguments | Out-Host
+          "CURRENT_MSI=$CurrentMsi" |
+            Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Verify installer tables and signer binding
+        shell: pwsh
+        run: |
+          .\scripts\test_installer_contract.ps1 `
+            -MsiPath $env:CURRENT_MSI `
+            -SignatureMode $env:RELEASE_MODE `
+            -ExpectedSubject $env:SIGN_SUBJECT `
+            -ExpectedSha256Thumbprint $env:SIGN_CERT_SHA256 |
+            Set-Content `
+              -LiteralPath .\artifacts\installer-contract.json `
+              -Encoding utf8
+
+      - name: Exercise install, upgrade, downgrade, and uninstall
+        shell: pwsh
+        run: |
+          .\scripts\test_installer_lifecycle.ps1 `
+            -CurrentMsiPath $env:CURRENT_MSI `
+            -PreviousMsiPath $env:PREVIOUS_MSI `
+            -SignatureMode $env:RELEASE_MODE `
+            -ExpectedSubject $env:SIGN_SUBJECT `
+            -ExpectedSha256Thumbprint $env:SIGN_CERT_SHA256 `
+            -EvidencePath .\artifacts\installer-lifecycle.json |
+            Out-Host
+
+      - name: Run runtime, recovery, and resource gates
+        shell: pwsh
+        run: |
+          .\scripts\smoke.ps1
+          .\scripts\test_crash_recovery.ps1 `
+            -AgentPath .\dist\agent\perf-monitor-agent.exe `
+            -SupportPath .\dist\support\perf-monitor-support.exe |
+            Set-Content `
+              -LiteralPath .\artifacts\crash-recovery.json `
+              -Encoding utf8
+          .\scripts\run_agent_soak.ps1 `
+            -AgentPath .\dist\agent\perf-monitor-agent.exe `
+            -DurationSeconds 90 `
+            -WarmupSeconds 5 `
+            -ProbeIntervalSeconds 5 `
+            -SnapshotPeriodSeconds 5 `
+            -OutputPath .\artifacts\agent-soak-release.json
+
+      - name: Scan dependencies and generate final SBOM
+        shell: pwsh
+        run: |
+          .\scripts\test_vulnerabilities.ps1 `
+            -OutputDirectory .\artifacts\vulnerability `
+            -BootstrapAuditTool `
+            -ReleaseScope
+          .\scripts\new_sbom.ps1 `
+            -OutputPath .\dist\release\PerfMonitor-sbom.cdx.json `
+            -AdditionalArtifactPaths @($env:CURRENT_MSI)
+
+      - name: Create and verify signed update manifest
+        shell: pwsh
+        run: |
+          [xml]$Properties = Get-Content `
+            -LiteralPath .\Directory.Build.props `
+            -Raw
+          $Version = $Properties.SelectSingleNode(
+            "/Project/PropertyGroup/Version"
+          ).InnerText.Trim()
+          $Commit = (git rev-parse HEAD).Trim()
+          .\scripts\new_update_manifest.ps1 `
+            -ProductVersion $Version `
+            -GitCommit $Commit `
+            -InstallerPath $env:CURRENT_MSI `
+            -InstallerUrl $env:INSTALLER_URL `
+            -SbomPath .\dist\release\PerfMonitor-sbom.cdx.json `
+            -SbomUrl $env:SBOM_URL `
+            -CertificateSha1 $env:SIGN_CERT_SHA1 `
+            -Mode $env:RELEASE_MODE `
+            -ExpectedSubject $env:SIGN_SUBJECT `
+            -ExpectedSha256Thumbprint $env:SIGN_CERT_SHA256 `
+            -OutputPath .\dist\release\update-manifest-v1.json |
+            Out-Host
+          .\scripts\test_update_manifest.ps1 `
+            -ManifestPath .\dist\release\update-manifest-v1.json `
+            -AllowedMode $env:RELEASE_MODE `
+            -ExpectedSubject $env:SIGN_SUBJECT `
+            -ExpectedSha256Thumbprint $env:SIGN_CERT_SHA256 `
+            -InstallerPath $env:CURRENT_MSI `
+            -SbomPath .\dist\release\PerfMonitor-sbom.cdx.json |
+            Set-Content `
+              -LiteralPath .\artifacts\update-manifest-validation.json `
+              -Encoding utf8
+
+      - name: Create and validate final release manifest
+        shell: pwsh
+        run: |
+          $ManifestArguments = @{
+            SignatureMode = $env:RELEASE_MODE
+            PayloadSigningEvidencePath =
+              ".\artifacts\payload-signing.json"
+            InstallerSigningEvidencePath =
+              ".\artifacts\installer-signing.json"
+            InstallerPath = $env:CURRENT_MSI
+            SbomPath =
+              ".\dist\release\PerfMonitor-sbom.cdx.json"
+            VulnerabilityGatePath = (
+              ".\artifacts\vulnerability\" +
+              "vulnerability-gate.json"
+            )
+            InstallerContractEvidencePath =
+              ".\artifacts\installer-contract.json"
+            InstallerLifecycleEvidencePath =
+              ".\artifacts\installer-lifecycle.json"
+            CrashRecoveryEvidencePath =
+              ".\artifacts\crash-recovery.json"
+            ResourceEvidencePath =
+              ".\artifacts\agent-soak-release.json"
+            UpdateManifestPath =
+              ".\dist\release\update-manifest-v1.json"
+            OutputPath =
+              ".\dist\release\release-manifest-v1.json"
+          }
+          if ($env:RELEASE_MODE -eq "production") {
+            $ManifestArguments.Baseline72HourEvidencePath = (
+              ".\release\evidence\" +
+              "v0.4-agent-soak-72h.json"
+            )
+            $ManifestArguments.BaselineCandidatePath = (
+              ".\release\evidence\" +
+              "v0.4-agent-baseline-candidate.json"
+            )
+            $ManifestArguments.SupportMatrixEvidencePath = (
+              $env:SUPPORT_MATRIX_EVIDENCE
+            )
+          }
+          .\scripts\new_release_manifest.ps1 `
+            @ManifestArguments |
+            Out-Host
+          & .\.venv\Scripts\python.exe `
+            .\scripts\validate_evidence.py `
+            release-manifest-v1.schema.json `
+            .\dist\release\release-manifest-v1.json
+          if ($LASTEXITCODE -ne 0) {
+            throw "Release manifest schema validation failed."
+          }
+          & .\.venv\Scripts\python.exe `
+            .\scripts\validate_evidence.py `
+            update-manifest-v1.schema.json `
+            .\dist\release\update-manifest-v1.json
+          if ($LASTEXITCODE -ne 0) {
+            throw "Update manifest schema validation failed."
+          }
+          & .\.venv\Scripts\python.exe `
+            .\scripts\validate_evidence.py `
+            soak-evidence-v1.schema.json `
+            .\artifacts\agent-soak-release.json
+          if ($LASTEXITCODE -ne 0) {
+            throw "Release resource evidence schema validation failed."
+          }
+          $EvidenceContracts = @(
+            [pscustomobject]@{
+              Schema = "installer-contract-evidence-v1.schema.json"
+              Path = ".\artifacts\installer-contract.json"
+            }
+            [pscustomobject]@{
+              Schema = "installer-lifecycle-evidence-v1.schema.json"
+              Path = ".\artifacts\installer-lifecycle.json"
+            }
+            [pscustomobject]@{
+              Schema = "crash-recovery-evidence-v1.schema.json"
+              Path = ".\artifacts\crash-recovery.json"
+            }
+            [pscustomobject]@{
+              Schema = "vulnerability-gate-v1.schema.json"
+              Path = (
+                ".\artifacts\vulnerability\" +
+                "vulnerability-gate.json"
+              )
+            }
+            [pscustomobject]@{
+              Schema = "signing-evidence-v1.schema.json"
+              Path = ".\artifacts\payload-signing.json"
+            }
+            [pscustomobject]@{
+              Schema = "signing-evidence-v1.schema.json"
+              Path = ".\artifacts\installer-signing.json"
+            }
+          )
+          if ($env:RELEASE_MODE -eq "production") {
+            $EvidenceContracts += [pscustomobject]@{
+              Schema = "soak-evidence-v1.schema.json"
+              Path = (
+                ".\release\evidence\" +
+                "v0.4-agent-soak-72h.json"
+              )
+            }
+            $EvidenceContracts += [pscustomobject]@{
+              Schema = "baseline-candidate-v1.schema.json"
+              Path = (
+                ".\release\evidence\" +
+                "v0.4-agent-baseline-candidate.json"
+              )
+            }
+            $EvidenceContracts += [pscustomobject]@{
+              Schema = "support-matrix-evidence-v1.schema.json"
+              Path = $env:SUPPORT_MATRIX_EVIDENCE
+            }
+          }
+          foreach ($EvidenceContract in $EvidenceContracts) {
+            & .\.venv\Scripts\python.exe `
+              .\scripts\validate_evidence.py `
+              $EvidenceContract.Schema `
+              $EvidenceContract.Path
+            if ($LASTEXITCODE -ne 0) {
+              throw (
+                "Evidence validation failed: " +
+                $EvidenceContract.Schema
+              )
+            }
+          }
+
+      - name: Attest final MSI and release metadata
+        uses: actions/attest@v4
+        with:
+          subject-path: |
+            dist/installer/*.msi
+            dist/release/PerfMonitor-sbom.cdx.json
+            dist/release/update-manifest-v1.json
+            dist/release/update-manifest-v1.json.p7s
+            dist/release/release-manifest-v1.json
+
+      - name: Upload signed candidate and evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: perf-monitor-v1-${{ inputs.mode }}-${{ github.sha }}
+          path: |
+            dist/agent/**
+            dist/desktop/**
+            dist/broker/**
+            dist/support/**
+            dist/installer/*.msi
+            dist/release/**
+            dist/build-manifest.json
+            artifacts/*.json
+            artifacts/support-matrix/**
+            artifacts/vulnerability/**
+            release/evidence/*.json
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Remove ephemeral signing material
+        if: always()
+        shell: pwsh
+        run: |
+          if ($env:SIGN_CERT_SHA1 -match "^[0-9A-Fa-f]{40}$") {
+            if ($env:RELEASE_MODE -eq "test") {
+              .\scripts\remove_test_certificate.ps1 `
+                -Sha1Thumbprint $env:SIGN_CERT_SHA1
+            }
+            else {
+              $Path = "Cert:\CurrentUser\My\$env:SIGN_CERT_SHA1"
+              if (Test-Path -LiteralPath $Path) {
+                Remove-Item -LiteralPath $Path -Force
+              }
+            }
+          }
+          Get-ChildItem `
+            -LiteralPath $env:RUNNER_TEMP `
+            -Filter "perf-monitor-*.pfx" `
+            -File `
+            -ErrorAction SilentlyContinue |
+            Remove-Item -Force

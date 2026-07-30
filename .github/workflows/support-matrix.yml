@@ -1,0 +1,431 @@
+name: v1 Windows Support Matrix
+
+on:
+  workflow_dispatch:
+    inputs:
+      wix_eula_id:
+        description: Enter wix7 only after reviewing and accepting the WiX 7 EULA.
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+  attestations: write
+
+concurrency:
+  group: v1-support-matrix-${{ github.sha }}
+  cancel-in-progress: false
+
+jobs:
+  build-test-candidate:
+    runs-on: windows-latest
+    timeout-minutes: 120
+    env:
+      DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+      NUGET_XMLDOC_MODE: skip
+      WIX_EULA_ID: ${{ inputs.wix_eula_id }}
+
+    steps:
+      - name: Validate protected source and explicit license input
+        shell: pwsh
+        run: |
+          if (
+            $env:GITHUB_REF -cne "refs/heads/main" -and
+            $env:GITHUB_REF -cne "refs/tags/v1.0.0"
+          ) {
+            throw (
+              "Support-matrix evidence may be generated only from " +
+              "main or v1.0.0."
+            )
+          }
+          if ($env:WIX_EULA_ID -cne "wix7") {
+            throw (
+              "WiX 7 EULA was not explicitly accepted for this run. " +
+              "Review it, then enter wix7."
+            )
+          }
+
+      - name: Checkout exact source
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Set up .NET 10 SDK
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: "10.0.302"
+          cache: true
+          cache-dependency-path: "**/packages.lock.json"
+
+      - name: Set up Python 3.12 x64
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          architecture: x64
+          cache: pip
+          cache-dependency-path: |
+            requirements.txt
+            requirements-dev.txt
+
+      - name: Restore locked tools and installer
+        shell: pwsh
+        run: |
+          .\scripts\setup.ps1
+          dotnet restore `
+            .\tools\PerfMonitor.ReleaseTools\PerfMonitor.ReleaseTools.csproj `
+            --locked-mode
+          if ($LASTEXITCODE -ne 0) {
+            throw "Release tool restore failed."
+          }
+          dotnet restore `
+            .\installer\PerfMonitor.Installer\PerfMonitor.Installer.wixproj `
+            --locked-mode `
+            -p:AcceptEula=$env:WIX_EULA_ID
+          if ($LASTEXITCODE -ne 0) {
+            throw "Locked WiX restore failed."
+          }
+
+      - name: Create isolated test signing identity
+        shell: pwsh
+        run: |
+          $Password = [Guid]::NewGuid().ToString("N") +
+            [Guid]::NewGuid().ToString("N")
+          Write-Output "::add-mask::$Password"
+          $env:PERFMONITOR_TEST_CERT_PASSWORD = $Password
+          $Certificate = (
+            .\scripts\new_test_certificate.ps1 `
+              -InstallTrust `
+              -ValidHours 4
+          ) | ConvertFrom-Json
+          foreach ($Value in @(
+            $Certificate.subject,
+            $Certificate.sha1Thumbprint,
+            $Certificate.sha256Thumbprint
+          )) {
+            if ([string]$Value -match "[`r`n]") {
+              throw "Signing identity contains a newline."
+            }
+          }
+          "SIGN_SUBJECT=$($Certificate.subject)" |
+            Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "SIGN_CERT_SHA1=$($Certificate.sha1Thumbprint)" |
+            Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "SIGN_CERT_SHA256=$($Certificate.sha256Thumbprint)" |
+            Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          Remove-Item `
+            -LiteralPath $Certificate.pfxPath, $Certificate.cerPath `
+            -Force
+
+      - name: Build, test, and sign exact payload
+        shell: pwsh
+        run: |
+          .\scripts\build.ps1 `
+            -ReleaseMode test `
+            -Publisher $env:SIGN_SUBJECT
+          .\scripts\sign_release.ps1 `
+            -Paths @(
+              ".\dist\agent\perf-monitor-agent.exe"
+              (
+                ".\dist\agent\provider-worker\" +
+                "perf-monitor-provider-worker.exe"
+              )
+              ".\dist\desktop\perf-monitor-desktop.exe"
+              ".\dist\broker\perf-monitor-broker.exe"
+              ".\dist\support\perf-monitor-support.exe"
+            ) `
+            -CertificateSha1 $env:SIGN_CERT_SHA1 `
+            -Mode test `
+            -ExpectedSubject $env:SIGN_SUBJECT `
+            -ExpectedSha256Thumbprint $env:SIGN_CERT_SHA256 `
+            -EvidencePath .\artifacts\matrix-payload-signing.json |
+            Out-Host
+
+      - name: Build and sign matrix installers
+        shell: pwsh
+        run: |
+          $Previous = (
+            .\scripts\build_installer.ps1 `
+              -Mode test `
+              -WixEulaId $env:WIX_EULA_ID `
+              -Publisher $env:SIGN_SUBJECT `
+              -OutputDirectory .\artifacts\matrix-installers\previous `
+              -ProductVersionOverride 0.9.0
+          ) | ConvertFrom-Json
+          .\scripts\sign_release.ps1 `
+            -Paths @($Previous.path) `
+            -CertificateSha1 $env:SIGN_CERT_SHA1 `
+            -Mode test `
+            -ExpectedSubject $env:SIGN_SUBJECT `
+            -ExpectedSha256Thumbprint $env:SIGN_CERT_SHA256 |
+            Out-Null
+
+          $Current = (
+            .\scripts\build_installer.ps1 `
+              -Mode test `
+              -WixEulaId $env:WIX_EULA_ID `
+              -Publisher $env:SIGN_SUBJECT `
+              -OutputDirectory .\artifacts\matrix-installers\current
+          ) | ConvertFrom-Json
+          .\scripts\sign_release.ps1 `
+            -Paths @($Current.path) `
+            -CertificateSha1 $env:SIGN_CERT_SHA1 `
+            -Mode test `
+            -ExpectedSubject $env:SIGN_SUBJECT `
+            -ExpectedSha256Thumbprint $env:SIGN_CERT_SHA256 |
+            Out-Null
+
+          . .\scripts\release_common.ps1
+          [xml]$Properties = Get-Content `
+            -LiteralPath .\Directory.Build.props `
+            -Raw
+          $Version = $Properties.SelectSingleNode(
+            "/Project/PropertyGroup/Version"
+          ).InnerText.Trim()
+          $Commit = (git rev-parse HEAD).Trim()
+          if (
+            $LASTEXITCODE -ne 0 -or
+            $Commit -notmatch "^[0-9a-f]{40}$" -or
+            [bool](git status --porcelain)
+          ) {
+            throw "Support-matrix build source is not clean."
+          }
+          $Metadata = [ordered]@{
+            schemaVersion = "1.0"
+            productVersion = $Version
+            gitCommit = $Commit
+            runtimeIdentifier = "win-x64"
+            signatureMode = "test"
+            signerSubject = $env:SIGN_SUBJECT
+            signerCertificateSha256 = $env:SIGN_CERT_SHA256
+            currentMsiFileName = (
+              Split-Path -Leaf $Current.path
+            )
+            currentMsiSha256 = Get-PerfMonitorSha256 `
+              -Path $Current.path
+            previousMsiFileName = (
+              Split-Path -Leaf $Previous.path
+            )
+            previousMsiSha256 = Get-PerfMonitorSha256 `
+              -Path $Previous.path
+          }
+          Write-PerfMonitorUtf8NoBom `
+            -Path .\artifacts\matrix-installers\build-metadata.json `
+            -Value ($Metadata | ConvertTo-Json -Depth 6)
+          .\scripts\test_installer_contract.ps1 `
+            -MsiPath $Current.path `
+            -SignatureMode test `
+            -ExpectedSubject $env:SIGN_SUBJECT `
+            -ExpectedSha256Thumbprint $env:SIGN_CERT_SHA256 |
+            Set-Content `
+              -LiteralPath (
+                ".\artifacts\matrix-installers\" +
+                "installer-contract.json"
+              ) `
+              -Encoding utf8
+
+      - name: Attest support-matrix installers
+        uses: actions/attest@v4
+        with:
+          subject-path: |
+            artifacts/matrix-installers/current/*.msi
+            artifacts/matrix-installers/previous/*.msi
+            artifacts/matrix-installers/build-metadata.json
+            artifacts/matrix-installers/installer-contract.json
+
+      - name: Upload immutable matrix installer bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: perf-monitor-v1-matrix-installers-${{ github.sha }}
+          path: artifacts/matrix-installers/**
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Remove ephemeral signing material
+        if: always()
+        shell: pwsh
+        run: |
+          if ($env:SIGN_CERT_SHA1 -match "^[0-9A-Fa-f]{40}$") {
+            .\scripts\remove_test_certificate.ps1 `
+              -Sha1Thumbprint $env:SIGN_CERT_SHA1
+          }
+
+  exercise-supported-targets:
+    needs: build-test-candidate
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - targetId: windows-11-24h2
+            runnerLabel: perfmonitor-win11-24h2-x64
+          - targetId: windows-11-25h2
+            runnerLabel: perfmonitor-win11-25h2-x64
+          - targetId: windows-server-2022-desktop
+            runnerLabel: perfmonitor-server2022-desktop-x64
+          - targetId: windows-server-2025-desktop
+            runnerLabel: perfmonitor-server2025-desktop-x64
+    runs-on:
+      - self-hosted
+      - Windows
+      - X64
+      - ${{ matrix.runnerLabel }}
+    timeout-minutes: 120
+    env:
+      DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+
+    steps:
+      - name: Checkout exact source
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Set up .NET 10 SDK and Desktop runtime
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: "10.0.302"
+
+      - name: Download exact attested installer bundle
+        uses: actions/download-artifact@v4
+        with:
+          name: perf-monitor-v1-matrix-installers-${{ github.sha }}
+          path: artifacts/matrix-installers
+
+      - name: Fail before mutation on the wrong host
+        shell: pwsh
+        run: |
+          .\scripts\test_support_matrix_host.ps1 `
+            -TargetId "${{ matrix.targetId }}" |
+            Out-Host
+
+      - name: Exercise full installer lifecycle
+        shell: pwsh
+        run: |
+          $MetadataPath = (
+            Resolve-Path `
+              -LiteralPath (
+                ".\artifacts\matrix-installers\" +
+                "build-metadata.json"
+              )
+          ).Path
+          $Metadata = Get-Content `
+            -LiteralPath $MetadataPath `
+            -Raw |
+            ConvertFrom-Json
+          $CurrentMsi = (
+            Resolve-Path `
+              -LiteralPath (
+                ".\artifacts\matrix-installers\current\" +
+                $Metadata.currentMsiFileName
+              )
+          ).Path
+          $PreviousMsi = (
+            Resolve-Path `
+              -LiteralPath (
+                ".\artifacts\matrix-installers\previous\" +
+                $Metadata.previousMsiFileName
+              )
+          ).Path
+          $EvidenceDirectory = (
+            ".\artifacts\matrix-entry\" +
+            "${{ matrix.targetId }}"
+          )
+          $LifecyclePath = Join-Path `
+            $EvidenceDirectory `
+            "installer-lifecycle.json"
+          $EntryPath = Join-Path `
+            $EvidenceDirectory `
+            "support-matrix-entry.json"
+          .\scripts\test_installer_lifecycle.ps1 `
+            -CurrentMsiPath $CurrentMsi `
+            -PreviousMsiPath $PreviousMsi `
+            -SignatureMode test `
+            -ExpectedSubject $Metadata.signerSubject `
+            -ExpectedSha256Thumbprint (
+              $Metadata.signerCertificateSha256
+            ) `
+            -EvidencePath $LifecyclePath |
+            Out-Host
+          .\scripts\new_support_matrix_entry.ps1 `
+            -TargetId "${{ matrix.targetId }}" `
+            -BuildMetadataPath $MetadataPath `
+            -LifecycleEvidencePath $LifecyclePath `
+            -CurrentMsiPath $CurrentMsi `
+            -PreviousMsiPath $PreviousMsi `
+            -OutputPath $EntryPath |
+            Out-Host
+
+      - name: Upload target evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: perf-monitor-v1-matrix-entry-${{ matrix.targetId }}-${{ github.sha }}
+          path: artifacts/matrix-entry/${{ matrix.targetId }}/**
+          if-no-files-found: error
+          retention-days: 30
+
+  aggregate-support-matrix:
+    needs: exercise-supported-targets
+    runs-on: windows-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout exact source
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Download all target evidence
+        uses: actions/download-artifact@v4
+        with:
+          pattern: perf-monitor-v1-matrix-entry-*-${{ github.sha }}
+          path: artifacts/matrix-entries
+          merge-multiple: true
+
+      - name: Merge and validate fail-closed evidence
+        shell: pwsh
+        run: |
+          $EntryPaths = @(
+            Get-ChildItem `
+              -LiteralPath .\artifacts\matrix-entries `
+              -Filter support-matrix-entry.json `
+              -File `
+              -Recurse |
+              Select-Object -ExpandProperty FullName
+          )
+          $OutputPath = (
+            ".\artifacts\support-matrix\" +
+            "support-matrix-evidence-v1.json"
+          )
+          .\scripts\merge_support_matrix_evidence.ps1 `
+            -EntryPaths $EntryPaths `
+            -Repository $env:GITHUB_REPOSITORY `
+            -WorkflowRunId $env:GITHUB_RUN_ID `
+            -WorkflowRunAttempt (
+              [int]$env:GITHUB_RUN_ATTEMPT
+            ) `
+            -OutputPath $OutputPath |
+            Out-Host
+          .\scripts\test_support_matrix_evidence.ps1 `
+            -EvidencePath $OutputPath `
+            -ExpectedProductVersion 1.0.0 `
+            -ExpectedGitCommit $env:GITHUB_SHA |
+            Set-Content `
+              -LiteralPath (
+                ".\artifacts\support-matrix\" +
+                "support-matrix-validation.json"
+              ) `
+              -Encoding utf8
+
+      - name: Attest aggregate support-matrix evidence
+        uses: actions/attest@v4
+        with:
+          subject-path: |
+            artifacts/support-matrix/support-matrix-evidence-v1.json
+            artifacts/support-matrix/support-matrix-validation.json
+
+      - name: Upload attested support-matrix evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: perf-monitor-v1-support-matrix-${{ github.sha }}
+          path: artifacts/support-matrix/**
+          if-no-files-found: error
+          retention-days: 30

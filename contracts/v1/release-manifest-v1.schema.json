@@ -1,0 +1,314 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.perfmonitor.local/v1/release-manifest-v1.schema.json",
+  "title": "PerfMonitor final release manifest v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "productVersion",
+    "contractVersion",
+    "runtimeIdentifier",
+    "builtAtUtc",
+    "gitCommit",
+    "gitDirty",
+    "signature",
+    "sbom",
+    "vulnerabilityGate",
+    "gates",
+    "baseline72Hour",
+    "baseline72HourCandidate",
+    "supportMatrix",
+    "updateManifest",
+    "files",
+    "dependencyLockHashes",
+    "toolchain",
+    "candidateEligible",
+    "provenanceAttestationRequired"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0"
+    },
+    "productVersion": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "contractVersion": {
+      "const": "1.0"
+    },
+    "runtimeIdentifier": {
+      "const": "win-x64"
+    },
+    "gitCommit": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "gitDirty": {
+      "type": "boolean"
+    },
+    "builtAtUtc": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "signature": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mode",
+        "subject",
+        "certificateSha256",
+        "payloadEvidenceSha256",
+        "installerEvidenceSha256"
+      ],
+      "properties": {
+        "mode": {
+          "enum": [
+            "test",
+            "production"
+          ]
+        },
+        "subject": {
+          "type": "string",
+          "minLength": 1
+        },
+        "certificateSha256": {
+          "type": "string",
+          "pattern": "^[0-9A-F]{64}$"
+        },
+        "payloadEvidenceSha256": {
+          "type": "string",
+          "pattern": "^[0-9A-F]{64}$"
+        },
+        "installerEvidenceSha256": {
+          "type": "string",
+          "pattern": "^[0-9A-F]{64}$"
+        }
+      }
+    },
+    "sbom": {
+      "$ref": "#/$defs/fileDigest"
+    },
+    "vulnerabilityGate": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/fileDigest"
+        },
+        {
+          "type": "object",
+          "required": [
+            "passed",
+            "findingCount",
+            "waivedCount"
+          ],
+          "properties": {
+            "passed": {
+              "const": true
+            },
+            "findingCount": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "waivedCount": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        }
+      ]
+    },
+    "gates": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "installerContract",
+        "installerLifecycle",
+        "crashRecovery",
+        "resourceBudget"
+      ],
+      "properties": {
+        "installerContract": {
+          "$ref": "#/$defs/fileDigest"
+        },
+        "installerLifecycle": {
+          "$ref": "#/$defs/fileDigest"
+        },
+        "crashRecovery": {
+          "$ref": "#/$defs/fileDigest"
+        },
+        "resourceBudget": {
+          "$ref": "#/$defs/fileDigest"
+        }
+      }
+    },
+    "baseline72Hour": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/fileDigest"
+        }
+      ]
+    },
+    "baseline72HourCandidate": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/fileDigest"
+        }
+      ]
+    },
+    "supportMatrix": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/fileDigest"
+        }
+      ]
+    },
+    "updateManifest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "manifest",
+        "signature"
+      ],
+      "properties": {
+        "manifest": {
+          "$ref": "#/$defs/fileDigest"
+        },
+        "signature": {
+          "$ref": "#/$defs/fileDigest"
+        }
+      }
+    },
+    "files": {
+      "type": "array",
+      "minItems": 6,
+      "items": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/fileDigest"
+          },
+          {
+            "type": "object",
+            "required": [
+              "kind"
+            ],
+            "properties": {
+              "kind": {
+                "enum": [
+                  "payload",
+                  "installer",
+                  "metadata",
+                  "evidence"
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    "dependencyLockHashes": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "type": "string",
+        "pattern": "^[0-9A-F]{64}$"
+      }
+    },
+    "toolchain": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "dotnetSdk",
+        "cycloneDx",
+        "pipAudit",
+        "wix",
+        "signToolPackage"
+      ],
+      "properties": {
+        "dotnetSdk": {
+          "type": "string",
+          "minLength": 1
+        },
+        "cycloneDx": {
+          "const": "6.2.0"
+        },
+        "pipAudit": {
+          "const": "2.10.1"
+        },
+        "wix": {
+          "const": "7.0.0"
+        },
+        "signToolPackage": {
+          "const": "10.0.28000.2270"
+        }
+      }
+    },
+    "candidateEligible": {
+      "type": "boolean"
+    },
+    "provenanceAttestationRequired": {
+      "const": true
+    }
+  },
+  "$defs": {
+    "fileDigest": {
+      "type": "object",
+      "required": [
+        "path",
+        "sha256",
+        "sizeBytes"
+      ],
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9A-F]{64}$"
+        },
+        "sizeBytes": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "signature": {
+            "properties": {"mode": {"const": "production"}},
+            "required": ["mode"]
+          }
+        },
+        "required": ["signature"]
+      },
+      "then": {
+        "properties": {
+          "gitDirty": {"const": false},
+          "baseline72Hour": {"$ref": "#/$defs/fileDigest"},
+          "baseline72HourCandidate": {
+            "$ref": "#/$defs/fileDigest"
+          },
+          "supportMatrix": {"$ref": "#/$defs/fileDigest"},
+          "candidateEligible": {"const": true}
+        }
+      },
+      "else": {
+        "properties": {
+          "candidateEligible": {"const": false}
+        }
+      }
+    }
+  ]
+}

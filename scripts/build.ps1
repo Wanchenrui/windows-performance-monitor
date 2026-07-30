@@ -1,110 +1,359 @@
 ﻿[CmdletBinding()]
-param()
+param(
+    [ValidateSet("unsigned", "test", "production")]
+    [string]$ReleaseMode = "unsigned",
+
+    [string]$Publisher = ""
+)
 
 $ErrorActionPreference = "Stop"
 $ProjectRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
+$SolutionPath = Join-Path $ProjectRoot "PerfMonitor.slnx"
+$BuildPropertiesPath = Join-Path $ProjectRoot "Directory.Build.props"
+$AgentProject = Join-Path `
+    $ProjectRoot `
+    "src\PerfMonitor.Agent\PerfMonitor.Agent.csproj"
+$WorkerProject = Join-Path `
+    $ProjectRoot `
+    "src\PerfMonitor.ProviderWorker\PerfMonitor.ProviderWorker.csproj"
+$DesktopProject = Join-Path `
+    $ProjectRoot `
+    "src\PerfMonitor.Desktop\PerfMonitor.Desktop.csproj"
+$BrokerProject = Join-Path `
+    $ProjectRoot `
+    "src\PerfMonitor.Broker\PerfMonitor.Broker.csproj"
+$SupportProject = Join-Path `
+    $ProjectRoot `
+    "src\PerfMonitor.Support\PerfMonitor.Support.csproj"
+$DistRoot = Join-Path $ProjectRoot "dist"
+$AgentOutput = Join-Path $DistRoot "agent"
+$WorkerOutput = Join-Path $AgentOutput "provider-worker"
+$DesktopOutput = Join-Path $DistRoot "desktop"
+$BrokerOutput = Join-Path $DistRoot "broker"
+$SupportOutput = Join-Path $DistRoot "support"
+$AgentExe = Join-Path $AgentOutput "perf-monitor-agent.exe"
+$WorkerExe = Join-Path `
+    $WorkerOutput `
+    "perf-monitor-provider-worker.exe"
+$DesktopExe = Join-Path $DesktopOutput "perf-monitor-desktop.exe"
+$BrokerExe = Join-Path $BrokerOutput "perf-monitor-broker.exe"
+$SupportExe = Join-Path $SupportOutput "perf-monitor-support.exe"
+$ManifestPath = Join-Path $DistRoot "build-manifest.json"
 $VenvPython = Join-Path $ProjectRoot ".venv\Scripts\python.exe"
-$SpecFile = Join-Path $ProjectRoot "perf-monitor.spec"
-$ExePath = Join-Path $ProjectRoot "dist\perf-monitor.exe"
-$ManifestPath = Join-Path $ProjectRoot "dist\build-manifest.json"
-$RuntimeLockPath = Join-Path $ProjectRoot "requirements.txt"
-$DevelopmentLockPath = Join-Path $ProjectRoot "requirements-dev.txt"
-$DotnetSdkLockPath = Join-Path $ProjectRoot "global.json"
-$ContractsLockPath = Join-Path $ProjectRoot "src\PerfMonitor.Contracts\packages.lock.json"
-$ContractTestsLockPath = Join-Path $ProjectRoot "tests\PerfMonitor.ContractTests\packages.lock.json"
 
 if (-not (Test-Path -LiteralPath $VenvPython)) {
     throw "未找到 .venv。请先运行 scripts\setup.ps1。"
 }
+$null = Get-Command dotnet -ErrorAction Stop
+
+$BuildProperties = [xml](
+    Get-Content -LiteralPath $BuildPropertiesPath -Raw
+)
+$VersionNode = $BuildProperties.SelectSingleNode(
+    "/Project/PropertyGroup/Version"
+)
+if ($null -eq $VersionNode) {
+    throw "Directory.Build.props 缺少产品版本。"
+}
+$ExpectedVersion = $VersionNode.InnerText.Trim()
+if ([string]::IsNullOrWhiteSpace($ExpectedVersion)) {
+    throw "Directory.Build.props 的产品版本为空。"
+}
+$CompanyNode = $BuildProperties.SelectSingleNode(
+    "/Project/PropertyGroup/Company"
+)
+if (-not $Publisher -and $null -ne $CompanyNode) {
+    $Publisher = $CompanyNode.InnerText.Trim()
+}
+if (
+    [string]::IsNullOrWhiteSpace($Publisher) -or
+    $Publisher.Length -gt 255 -or
+    $Publisher -match "[;`r`n]"
+) {
+    # v1.0: the signer subject crosses both the MSBuild property and
+    # MSI Manufacturer boundaries; reject list separators and overflow.
+    throw "发布者主体为空、过长或包含分号/换行。"
+}
+if (
+    $ReleaseMode -eq "production" -and
+    $Publisher -like "*Not Configured*"
+) {
+    throw "production_publisher_not_configured"
+}
+$BuildPropertyArguments = @(
+    "-p:Company=$Publisher"
+)
+
+$DistRootFull = [System.IO.Path]::GetFullPath($DistRoot)
+$DistPrefix = $DistRootFull.TrimEnd(
+    [System.IO.Path]::DirectorySeparatorChar
+) + [System.IO.Path]::DirectorySeparatorChar
+foreach ($OutputPath in @(
+    $AgentOutput,
+    $DesktopOutput,
+    $BrokerOutput,
+    $SupportOutput
+)) {
+    $OutputFull = [System.IO.Path]::GetFullPath($OutputPath)
+    if (-not $OutputFull.StartsWith(
+        $DistPrefix,
+        [StringComparison]::OrdinalIgnoreCase
+    )) {
+        throw "拒绝清理 dist 之外的输出目录：$OutputFull"
+    }
+    if (Test-Path -LiteralPath $OutputFull) {
+        Remove-Item -LiteralPath $OutputFull -Recurse -Force
+    }
+}
+New-Item -ItemType Directory -Path $DistRoot -Force | Out-Null
 
 Push-Location $ProjectRoot
 try {
     & $VenvPython -m pip check
     if ($LASTEXITCODE -ne 0) {
-        throw "依赖一致性检查失败。"
+        throw "Python oracle 依赖一致性检查失败。"
     }
 
     & $VenvPython -m pytest
     if ($LASTEXITCODE -ne 0) {
-        throw "测试失败，已阻止构建。"
+        throw "Python oracle 测试失败，已阻止构建。"
     }
 
-    & $VenvPython -m PyInstaller --noconfirm --clean $SpecFile
+    & dotnet restore $SolutionPath --locked-mode
     if ($LASTEXITCODE -ne 0) {
-        throw "PyInstaller 构建失败。"
+        throw ".NET 锁定依赖还原失败。"
     }
 
-    if (-not (Test-Path -LiteralPath $ExePath)) {
-        throw "构建完成但未找到 perf-monitor.exe。"
+    # v1.0：加密终端上的可复用 MSBuild worker 可能被拦截层异常终止；
+    # 发布门禁固定单节点，避免环境故障伪装成测试失败。
+    & dotnet test `
+        $SolutionPath `
+        --configuration Release `
+        --no-restore `
+        --disable-build-servers `
+        -maxcpucount:1 `
+        $BuildPropertyArguments
+    if ($LASTEXITCODE -ne 0) {
+        throw ".NET 测试失败，已阻止构建。"
     }
 
-    $ExpectedVersion = (
-        & $VenvPython -c "from perf_monitor import APP_VERSION; print(APP_VERSION)"
-    ).Trim()
-    if ($LASTEXITCODE -ne 0 -or -not $ExpectedVersion) {
-        throw "无法读取应用版本。"
+    & dotnet publish `
+        $AgentProject `
+        --configuration Release `
+        --no-restore `
+        --output $AgentOutput `
+        $BuildPropertyArguments
+    if ($LASTEXITCODE -ne 0) {
+        throw ".NET Agent 发布失败。"
     }
 
-    $VersionInfo = (Get-Item -LiteralPath $ExePath).VersionInfo
-    if (-not $VersionInfo.ProductVersion.StartsWith($ExpectedVersion)) {
-        throw "产物版本资源不正确：$($VersionInfo.ProductVersion)"
+    & dotnet publish `
+        $WorkerProject `
+        --configuration Release `
+        --no-restore `
+        --output $WorkerOutput `
+        $BuildPropertyArguments
+    if ($LASTEXITCODE -ne 0) {
+        throw ".NET Provider Worker 发布失败。"
     }
 
-    $Hash = (Get-FileHash -LiteralPath $ExePath -Algorithm SHA256).Hash
+    & dotnet publish `
+        $DesktopProject `
+        --configuration Release `
+        --no-restore `
+        --output $DesktopOutput `
+        $BuildPropertyArguments
+    if ($LASTEXITCODE -ne 0) {
+        throw ".NET Desktop 发布失败。"
+    }
+
+    & dotnet publish `
+        $BrokerProject `
+        --configuration Release `
+        --no-restore `
+        --output $BrokerOutput `
+        $BuildPropertyArguments
+    if ($LASTEXITCODE -ne 0) {
+        throw ".NET Broker 发布失败。"
+    }
+
+    & dotnet publish `
+        $SupportProject `
+        --configuration Release `
+        --no-restore `
+        --output $SupportOutput `
+        $BuildPropertyArguments
+    if ($LASTEXITCODE -ne 0) {
+        throw ".NET Support/Recovery 工具发布失败。"
+    }
+
+    foreach ($RequiredPath in @(
+        $AgentExe,
+        $WorkerExe,
+        $DesktopExe,
+        $BrokerExe,
+        $SupportExe
+    )) {
+        if (-not (Test-Path -LiteralPath $RequiredPath)) {
+            throw "构建完成但缺少产品入口：$RequiredPath"
+        }
+    }
+
+    $AgentVersionInfo = (Get-Item -LiteralPath $AgentExe).VersionInfo
+    $WorkerVersionInfo = (
+        Get-Item -LiteralPath $WorkerExe
+    ).VersionInfo
+    $DesktopVersionInfo = (Get-Item -LiteralPath $DesktopExe).VersionInfo
+    $BrokerVersionInfo = (Get-Item -LiteralPath $BrokerExe).VersionInfo
+    $SupportVersionInfo = (
+        Get-Item -LiteralPath $SupportExe
+    ).VersionInfo
+    foreach ($VersionInfo in @(
+        $AgentVersionInfo,
+        $WorkerVersionInfo,
+        $DesktopVersionInfo,
+        $BrokerVersionInfo,
+        $SupportVersionInfo
+    )) {
+        if (
+            [string]::IsNullOrWhiteSpace($VersionInfo.ProductVersion) -or
+            -not $VersionInfo.ProductVersion.StartsWith(
+                $ExpectedVersion,
+                [StringComparison]::Ordinal
+            )
+        ) {
+            throw "产品版本资源不正确：$($VersionInfo.ProductVersion)"
+        }
+    }
+
+    $ProductFiles = @(
+        Get-ChildItem `
+            -LiteralPath `
+                $AgentOutput, `
+                $DesktopOutput, `
+                $BrokerOutput, `
+                $SupportOutput `
+            -File `
+            -Recurse |
+        Sort-Object FullName |
+        ForEach-Object {
+            $RelativePath = $_.FullName.Substring(
+                $DistRootFull.Length + 1
+            ).Replace("\", "/")
+            [ordered]@{
+                path = $RelativePath
+                sha256 = (
+                    Get-FileHash `
+                        -LiteralPath $_.FullName `
+                        -Algorithm SHA256
+                ).Hash
+                sizeBytes = $_.Length
+            }
+        }
+    )
+
+    $DependencyPaths =
+        [System.Collections.Generic.List[string]]::new()
+    foreach ($Path in @(
+        (Join-Path $ProjectRoot "requirements.txt"),
+        (Join-Path $ProjectRoot "requirements-dev.txt"),
+        (Join-Path $ProjectRoot "requirements-audit.txt"),
+        (Join-Path $ProjectRoot "global.json"),
+        $BuildPropertiesPath,
+        (Join-Path $ProjectRoot ".config\dotnet-tools.json"),
+        (Join-Path `
+            $ProjectRoot `
+            "release\vulnerability-waivers-v1.json"),
+        (Join-Path `
+            $ProjectRoot `
+            (
+                "installer\PerfMonitor.Installer\" +
+                "PerfMonitor.Installer.wixproj"
+            ))
+    )) {
+        $null = $DependencyPaths.Add($Path)
+    }
+    foreach ($LockFile in Get-ChildItem `
+        -LiteralPath @(
+            (Join-Path $ProjectRoot "src"),
+            (Join-Path $ProjectRoot "tests"),
+            (Join-Path $ProjectRoot "tools"),
+            (Join-Path $ProjectRoot "installer")
+        ) `
+        -Filter "packages.lock.json" `
+        -File `
+        -Recurse `
+        -ErrorAction SilentlyContinue) {
+        $null = $DependencyPaths.Add($LockFile.FullName)
+    }
+
+    $DependencyLockHashes = [ordered]@{}
+    foreach ($LockPath in $DependencyPaths |
+        Sort-Object -Unique) {
+        $LockFull = [System.IO.Path]::GetFullPath($LockPath)
+        $ProjectPrefix = $ProjectRoot.TrimEnd(
+            [System.IO.Path]::DirectorySeparatorChar
+        ) + [System.IO.Path]::DirectorySeparatorChar
+        if (-not $LockFull.StartsWith(
+            $ProjectPrefix,
+            [StringComparison]::OrdinalIgnoreCase
+        )) {
+            throw "依赖锁文件位于项目目录之外：$LockFull"
+        }
+        $RelativeLockPath = $LockFull.Substring(
+            $ProjectRoot.Length + 1
+        ).Replace("\", "/")
+        $DependencyLockHashes[$RelativeLockPath] = (
+            Get-FileHash -LiteralPath $LockFull -Algorithm SHA256
+        ).Hash
+    }
+
     $GitCommit = (& git rev-parse HEAD).Trim()
     if ($LASTEXITCODE -ne 0 -or -not $GitCommit) {
         throw "无法读取 Git commit。"
     }
     $GitDirty = [bool](& git status --porcelain)
-    $PyInstallerVersion = (
-        & $VenvPython -m PyInstaller --version
-    ).Trim()
-    $PythonVersion = (& $VenvPython --version 2>&1).ToString().Trim()
-    $PythonArchitecture = (
-        & $VenvPython -c "import platform; print(platform.machine())"
-    ).Trim()
+    $PythonVersion = (
+        & $VenvPython --version 2>&1
+    ).ToString().Trim()
+    $DotnetSdkVersion = (& dotnet --version).Trim()
     $BuildEnvironment = if ($env:GITHUB_ACTIONS -eq "true") {
         "github-actions"
     }
     else {
         "local"
     }
+
     $Manifest = [ordered]@{
-        productVersion = $VersionInfo.ProductVersion
-        fileVersion = $VersionInfo.FileVersion
-        sha256 = $Hash
-        sizeBytes = (Get-Item -LiteralPath $ExePath).Length
-        builtAt = (Get-Date).ToUniversalTime().ToString("o")
+        productVersion = $ExpectedVersion
+        contractVersion = "1.0"
+        deployment = "framework-dependent"
+        targetFramework = "net10.0-windows10.0.17763.0"
+        runtimeIdentifier = "win-x64"
+        signatureMode = "unsigned"
+        releaseEligible = $false
+        intendedSignatureMode = $ReleaseMode
+        publisher = $Publisher
+        builtAtUtc = [DateTimeOffset]::UtcNow.ToString("O")
         gitCommit = $GitCommit
         gitDirty = $GitDirty
-        dependencyLockHashes = [ordered]@{
-            requirements = (
-                Get-FileHash -LiteralPath $RuntimeLockPath -Algorithm SHA256
-            ).Hash
-            requirementsDev = (
-                Get-FileHash -LiteralPath $DevelopmentLockPath -Algorithm SHA256
-            ).Hash
-            dotnetSdk = (
-                Get-FileHash -LiteralPath $DotnetSdkLockPath -Algorithm SHA256
-            ).Hash
-            dotnetContracts = (
-                Get-FileHash -LiteralPath $ContractsLockPath -Algorithm SHA256
-            ).Hash
-            dotnetContractTests = (
-                Get-FileHash -LiteralPath $ContractTestsLockPath -Algorithm SHA256
-            ).Hash
+        files = $ProductFiles
+        dependencyLockHashes = $DependencyLockHashes
+        toolchain = [ordered]@{
+            dotnetSdk = $DotnetSdkVersion
+            pythonOracle = $PythonVersion
         }
-        python = $PythonVersion
-        pythonArchitecture = $PythonArchitecture
-        pyInstaller = $PyInstallerVersion
         buildEnvironment = $BuildEnvironment
     }
     $Manifest |
-        ConvertTo-Json |
+        ConvertTo-Json -Depth 8 |
         Set-Content -LiteralPath $ManifestPath -Encoding UTF8
 
-    Write-Output "构建完成：$ExePath"
-    Write-Output "SHA256：$Hash"
+    Write-Output "Agent 构建完成：$AgentExe"
+    Write-Output "Provider Worker 构建完成：$WorkerExe"
+    Write-Output "Desktop 构建完成：$DesktopExe"
+    Write-Output "Broker 构建完成：$BrokerExe"
+    Write-Output "Support/Recovery 构建完成：$SupportExe"
     Write-Output "校验清单：$ManifestPath"
 }
 finally {
