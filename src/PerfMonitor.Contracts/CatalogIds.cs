@@ -41,6 +41,8 @@ public static class GroupIds
     public const string Network = "network";
     public const string DiskIo = "diskIo";
     public const string Power = "power";
+    public const string Gpu = "gpu";
+    public const string Sensors = "sensors";
     public const string Volumes = "volumes";
     public const string Uptime = "uptime";
     public const string Processes = "processes";
@@ -58,6 +60,10 @@ public static class ProviderIds
         "windows.disk-io.pdh-physical-disk-total.v1";
     public const string Power =
         "windows.power.get-system-power-status.v1";
+    public const string Gpu =
+        "worker.librehardwaremonitor.gpu.v1";
+    public const string Sensors =
+        "worker.librehardwaremonitor.temperature.v1";
     public const string Volumes = "windows.volume.drive-info.v1";
     public const string Uptime = "windows.uptime.tick-count.v1";
     public const string Processes = "windows.process.system-diagnostics.v1";
@@ -75,6 +81,8 @@ public static class SourceIds
         "windows.pdh.physical-disk-total.v1";
     public const string Power =
         "windows.get-system-power-status.v1";
+    public const string LibreHardwareMonitor =
+        "librehardwaremonitor.sensor-api.v1";
     public const string Volumes = "windows.volume-api.v1";
     public const string Uptime = "windows.boot-time.v1";
     public const string ProcessCpu = "windows.get-process-times.v1";
@@ -112,6 +120,22 @@ public static class MetricIds
         "system.power.battery.life_remaining.seconds";
     public const string BatteryFullLifeSeconds =
         "system.power.battery.full_life.seconds";
+    public const string GpuDeviceCount =
+        "system.gpu.device.count";
+    public const string GpuLoadMaxPercent =
+        "system.gpu.load.max.percent";
+    public const string GpuTemperatureMaxCelsius =
+        "system.gpu.temperature.max.celsius";
+    public const string GpuDeviceLoadPercent =
+        "gpu.device.load.percent";
+    public const string GpuDeviceTemperatureCelsius =
+        "gpu.device.temperature.celsius";
+    public const string HardwareTemperatureSensorCount =
+        "system.hardware.temperature.sensor.count";
+    public const string HardwareTemperatureMaxCelsius =
+        "system.hardware.temperature.max.celsius";
+    public const string HardwareTemperatureCelsius =
+        "hardware.temperature.celsius";
     public const string VolumeUtilization = "system.volume.utilization.percent";
     public const string VolumeUsedBytes = "system.volume.used.bytes";
     public const string VolumeFreeBytes = "system.volume.free.bytes";
@@ -138,6 +162,7 @@ public static class Units
     public const string Byte = "byte";
     public const string BytePerSecond = "byte_per_second";
     public const string CountPerSecond = "count_per_second";
+    public const string Celsius = "celsius";
     public const string Second = "second";
     public const string Millisecond = "millisecond";
     public const string Count = "count";

@@ -1,5 +1,41 @@
 ﻿# 变更记录
 
+## 0.7.1
+
+变更点：
+
+- 新增当前用户 `asInvoker` 的独立 Provider Worker，固定采集 GPU load、
+  GPU/CPU/主板/存储温度；`LibreHardwareMonitorLib 0.9.6` 不进入 Agent、
+  Core 或稳定 Windows Collector 的依赖闭包。
+- 新增内部协议 v1：4 字节小端长度前缀、1 MiB 上限、固定 `collect`、
+  request/instance/sequence 校验，以及设备、名称、传感器与物理范围上限。
+- Agent 以固定同目录路径、`UseShellExecute=false` 和无 BOM UTF-8 管道
+  启动 Worker；请求串行，GPU/温度 Provider 在 250 ms 内复用一次硬件
+  快照。
+- Worker 超时、崩溃、协议损坏、进程内存超限或重启循环只使 `gpu`/
+  `sensors` 局部降级；进程树终止、Job Object 和滑动窗口重启预算限制
+  资源影响。
+- contract v1 新增 GPU/温度稳定 ID 与 `celsius` 单位；历史只保存最大
+  load/温度聚合，不持久化设备名、底层标识或逐传感器明细。
+- Desktop 增加 GPU 和硬件最高温度卡片；发布产物包含独立 Worker、
+  锁文件哈希和第三方许可说明，并执行真实协议握手。
+
+潜在风险：
+
+- LibreHardwareMonitor 官方说明部分传感器需要管理员权限。产品不自动
+  提权，因此某些机器会明确显示 `partial`、`permission_denied` 或
+  `not_supported`，而不是伪造为 0。
+- GPU load 定义为驱动公开的 load 传感器集合最大值，不宣称等于任一
+  厂商专有的“核心利用率”。设备 ID 只在单次 Worker 生命周期内稳定。
+- Job Object 无法嵌套时仍有私有内存检查和整棵进程树终止，但硬内存限额
+  由操作系统是否接受 Job 绑定决定。
+
+回退：
+
+- v0.7.1 没有 SQLite migration，可保留数据目录并回退到 v0.7.0；旧
+  二进制忽略新增 metric ID。单独移除 `provider-worker` 目录也只会让
+  两个硬件组降级为 `not_supported`。
+
 ## 0.7.0
 
 变更点：

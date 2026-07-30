@@ -1,15 +1,17 @@
 # 电脑性能监控
 
-当前开发版本为 `0.7.0`。产品运行路径为按用户运行的
+当前开发版本为 `0.7.1`。产品运行路径为按用户运行的
 `.NET 10 PerfMonitor.Agent`、独立 WPF Desktop、受保护 Named Pipe IPC
-和 SQLite 历史库，并包含只读确定性诊断及稳定 Windows 扩展指标。Python 0.3 源码继续
+和 SQLite 历史库，并包含只读确定性诊断、稳定 Windows 指标及隔离硬件
+Worker。Python 0.3 源码继续
 保留为指标口径 oracle、golden
 fixture 生成器和差分基线，但不再作为默认或发布版高频 Agent。
 
-## v0.7.0 架构边界
+## v0.7.1 架构边界
 
 ```text
 stable Windows Providers
+isolated GPU / temperature Worker
   -> absolute-deadline scheduler
   -> immutable latest snapshot
      -> latest-wins Named Pipe subscription -> Desktop
@@ -30,8 +32,8 @@ stable Windows Providers
   只做非阻塞 `TryWrite`；队列满或存储失败时增加丢弃计数，实时快照继续。
 - 诊断规则使用快照中的逻辑时间，单线程确定性执行；同一组历史快照按固定
   顺序重放会产生相同事件 ID 与事件序列。
-- v0.6 只有诊断和告警，不提供优化动作、命令执行或特权 Broker。GPU、
-  温度、厂商 SDK 和动作 Broker 属于后续隔离版本。
+- v0.7.1 的 GPU/温度只读采集位于 `asInvoker` Worker。Agent 不引用
+  厂商硬件库；命令执行、优化动作和特权 Broker 仍不存在。
 
 ## 稳定扩展指标
 
@@ -51,6 +53,24 @@ v0.7.0 只把可由受支持 Windows/.NET API 非提权读取的指标放入 Age
 需要两个样本，第一帧明确为未就绪而不是 0。电池不存在、状态未知和剩余时间
 未知分别映射为 `batteryPresent=false` 或数值 `null`，不把未知物理量伪造
 为 0。
+
+## 隔离 GPU 与温度指标
+
+v0.7.1 固定使用 `LibreHardwareMonitorLib 0.9.6`，但依赖只存在于
+`PerfMonitor.ProviderWorker`。Agent 通过固定同目录子进程和 1 MiB
+长度前缀 JSON 协议读取结果；协议只有 `collect`，不接受命令、脚本、
+PowerShell、DLL 路径、Provider 名称或开放插件。
+
+| 指标组 | 周期 | 物理口径 | 无硬件/权限不足 |
+|---|---:|---|---|
+| gpu | 5 s | 可读 GPU load 最大值、GPU 温度最大值及设备明细 | `not_supported` / `permission_denied` |
+| sensors | 5 s | 全部可读温度传感器最大值及明细 | `not_supported` / `partial` |
+
+不同 GPU 和温度读数不相加。Worker 以当前用户 `asInvoker` 运行，部分
+传感器需要管理员权限时不会触发 UAC；只局部降低覆盖率。Agent 对 Worker
+请求串行化，并设置 10 秒 Provider 超时、滑动窗口重启预算、256 MiB
+进程内存上限和进程树终止。设备原始硬件标识不出 Worker；实时设备 ID 只在
+一次 Worker 生命周期内稳定，明细不写 SQLite。
 
 ## 确定性诊断
 
@@ -196,6 +216,8 @@ v0.6 另覆盖七类规则、滞环/debounce/cooldown、SQLite 事件去重、IP
 诊断查询，以及从 raw snapshot 历史重放得到字节等价事件。
 v0.7.0 另覆盖网络单调差分、网卡计数器复位、PDH 首样本、电池不存在/
 未知哨兵值和状态型 Provider 释放。
+v0.7.1 另覆盖 Worker 协议边界、BOM/超大/损坏帧、非物理读数、崩溃/
+挂起回收、重启预算、内存超限、共享采集以及真实发布 Worker 握手。
 
 Python/.NET 同窗差分：
 
@@ -228,13 +250,15 @@ CPU/内存均值绝对差默认不得超过 3/1 个百分点；容量、单位�
 
 ```text
 dist/agent/perf-monitor-agent.exe
+dist/agent/provider-worker/perf-monitor-provider-worker.exe
+dist/agent/provider-worker/THIRD-PARTY-NOTICES.md
 dist/desktop/perf-monitor-desktop.exe
 dist/build-manifest.json
 ```
 
-manifest 记录全部 Agent/Desktop 文件的 SHA-256 与大小、Git commit/dirty
+manifest 记录全部 Agent/Worker/Desktop 文件的 SHA-256 与大小、Git commit/dirty
 状态、所有 Python/.NET 锁文件哈希、.NET SDK、Python oracle 版本和构建
-环境。当前产物为 .NET 10 framework-dependent；1.0 的安装包、代码签名、
+环境。当前产物为 .NET 10 framework-dependent `win-x64`；1.0 的安装包、代码签名、
 SBOM 和来源证明另按发布门禁实现。
 
 `scripts/smoke.ps1` 会启动真实 Agent、SQLite 和 Desktop，关闭 Desktop 后
@@ -246,6 +270,9 @@ SBOM 和来源证明另按发布门禁实现。
 src/PerfMonitor.Contracts/          contract v1 DTO、稳定 ID 与历史上限
 src/PerfMonitor.Core/               Provider 契约、调度、原子快照与 fan-out
 src/PerfMonitor.Collectors.Windows/ 非提权 Windows/PDH Provider
+src/PerfMonitor.Collectors.Worker/  Worker 客户端、进程/资源与重启隔离
+src/PerfMonitor.ProviderWorker.Protocol/ 固定有界内部协议
+src/PerfMonitor.ProviderWorker/     GPU/温度硬件库唯一加载进程
 src/PerfMonitor.Ipc.NamedPipes/     安全 framing、ACL、Server/Client 与订阅
 src/PerfMonitor.Storage.Sqlite/     migration、单写者、retention 与 rollup
 src/PerfMonitor.Agent/              产品 Agent 生命周期与查询适配
@@ -259,7 +286,7 @@ scripts/run_agent_soak.ps1          实际资源与 72 小时发布门禁
 
 ## 回退与已知风险
 
-- v0.7.0 不改变 SQLite schema，可直接回退到冻结的 v0.6.0 候选。回退到
+- v0.7.1 不改变 SQLite schema，可直接回退到冻结的 v0.7.0 候选。回退到
   v0.5.0 前必须恢复 v0.6 migration 前的数据库备份或使用独立数据目录，
   因为 v0.5 不理解 schema v2。更早的 v0.4 不读取 SQLite。任何回退不得
   删除 `%LOCALAPPDATA%\PerfMonitor\data`，以便重新升级后恢复历史。
@@ -269,5 +296,5 @@ scripts/run_agent_soak.ps1          实际资源与 72 小时发布门禁
   升级验证环境复测。
 - PDH `PhysicalDisk(_Total)` 在计数器损坏或被系统禁用时会局部降级
   `diskIo`，不会回退到 WMI、PowerShell 或假值；修复系统计数器后自动恢复。
-- 厂商 GPU/温度 SDK 可能阻塞或崩溃，不会放入 Agent 核心；v0.7.1 使用
-  独立 Worker 隔离。
+- 厂商 GPU/温度 SDK 可能阻塞、崩溃或需要更高权限；独立 Worker 超时后
+  会被终止，只有 `gpu`/`sensors` 降级。产品不会为补齐传感器自动提权。

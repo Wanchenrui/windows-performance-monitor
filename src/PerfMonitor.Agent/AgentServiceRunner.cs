@@ -1,4 +1,3 @@
-using PerfMonitor.Collectors.Windows;
 using PerfMonitor.Contracts;
 using PerfMonitor.Core;
 using PerfMonitor.Diagnostics;
@@ -20,7 +19,7 @@ public static class AgentServiceRunner
                 cancellationToken).ConfigureAwait(false);
         }
 
-        var providers = WindowsProviderFactory.CreateDefault();
+        var providers = AgentProviderFactory.CreateDefault();
         var assembler = new SnapshotAssembler(
             providers.Select(provider => provider.Descriptor));
         var endpoint = PipeEndpoint.ForCurrentUser();
@@ -226,6 +225,8 @@ public static class AgentServiceRunner
             GroupIds.Network,
             GroupIds.DiskIo,
             GroupIds.Power,
+            GroupIds.Gpu,
+            GroupIds.Sensors,
             GroupIds.Volumes,
             GroupIds.Uptime,
             GroupIds.Processes,

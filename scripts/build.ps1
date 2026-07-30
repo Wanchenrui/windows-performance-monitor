@@ -8,13 +8,20 @@ $BuildPropertiesPath = Join-Path $ProjectRoot "Directory.Build.props"
 $AgentProject = Join-Path `
     $ProjectRoot `
     "src\PerfMonitor.Agent\PerfMonitor.Agent.csproj"
+$WorkerProject = Join-Path `
+    $ProjectRoot `
+    "src\PerfMonitor.ProviderWorker\PerfMonitor.ProviderWorker.csproj"
 $DesktopProject = Join-Path `
     $ProjectRoot `
     "src\PerfMonitor.Desktop\PerfMonitor.Desktop.csproj"
 $DistRoot = Join-Path $ProjectRoot "dist"
 $AgentOutput = Join-Path $DistRoot "agent"
+$WorkerOutput = Join-Path $AgentOutput "provider-worker"
 $DesktopOutput = Join-Path $DistRoot "desktop"
 $AgentExe = Join-Path $AgentOutput "perf-monitor-agent.exe"
+$WorkerExe = Join-Path `
+    $WorkerOutput `
+    "perf-monitor-provider-worker.exe"
 $DesktopExe = Join-Path $DesktopOutput "perf-monitor-desktop.exe"
 $ManifestPath = Join-Path $DistRoot "build-manifest.json"
 $VenvPython = Join-Path $ProjectRoot ".venv\Scripts\python.exe"
@@ -91,6 +98,15 @@ try {
     }
 
     & dotnet publish `
+        $WorkerProject `
+        --configuration Release `
+        --no-restore `
+        --output $WorkerOutput
+    if ($LASTEXITCODE -ne 0) {
+        throw ".NET Provider Worker 发布失败。"
+    }
+
+    & dotnet publish `
         $DesktopProject `
         --configuration Release `
         --no-restore `
@@ -99,16 +115,24 @@ try {
         throw ".NET Desktop 发布失败。"
     }
 
-    foreach ($RequiredPath in @($AgentExe, $DesktopExe)) {
+    foreach ($RequiredPath in @(
+        $AgentExe,
+        $WorkerExe,
+        $DesktopExe
+    )) {
         if (-not (Test-Path -LiteralPath $RequiredPath)) {
             throw "构建完成但缺少产品入口：$RequiredPath"
         }
     }
 
     $AgentVersionInfo = (Get-Item -LiteralPath $AgentExe).VersionInfo
+    $WorkerVersionInfo = (
+        Get-Item -LiteralPath $WorkerExe
+    ).VersionInfo
     $DesktopVersionInfo = (Get-Item -LiteralPath $DesktopExe).VersionInfo
     foreach ($VersionInfo in @(
         $AgentVersionInfo,
+        $WorkerVersionInfo,
         $DesktopVersionInfo
     )) {
         if (
@@ -208,6 +232,7 @@ try {
         contractVersion = "1.0"
         deployment = "framework-dependent"
         targetFramework = "net10.0-windows10.0.17763.0"
+        runtimeIdentifier = "win-x64"
         builtAtUtc = [DateTimeOffset]::UtcNow.ToString("O")
         gitCommit = $GitCommit
         gitDirty = $GitDirty
@@ -224,6 +249,7 @@ try {
         Set-Content -LiteralPath $ManifestPath -Encoding UTF8
 
     Write-Output "Agent 构建完成：$AgentExe"
+    Write-Output "Provider Worker 构建完成：$WorkerExe"
     Write-Output "Desktop 构建完成：$DesktopExe"
     Write-Output "校验清单：$ManifestPath"
 }

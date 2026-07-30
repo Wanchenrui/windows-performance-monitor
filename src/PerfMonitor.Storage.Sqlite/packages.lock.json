@@ -1,4 +1,4 @@
-﻿{
+{
   "version": 1,
   "dependencies": {
     "net10.0": {
@@ -53,7 +53,7 @@
       "perfmonitor.core": {
         "type": "Project",
         "dependencies": {
-          "PerfMonitor.Contracts": "[0.7.0, )"
+          "PerfMonitor.Contracts": "[0.7.1, )"
         }
       }
     }

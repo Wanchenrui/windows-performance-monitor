@@ -8,14 +8,15 @@ Worker cannot enter the Agent trust boundary.
 
 - anonymous redirected standard input/output pipes;
 - one request followed by one response, strictly serialized;
-- 4-byte unsigned little-endian payload length;
+- 4-byte little-endian positive payload length;
 - UTF-8 JSON payload;
 - maximum payload length: 1,048,576 bytes;
 - EOF, truncated prefixes/payloads, invalid UTF-8/JSON, and oversized messages
   terminate the Worker session.
 
 Standard output MUST contain frames only. Diagnostics use standard error and
-are retained by the Agent with bounded line and character counts.
+are drained into a bounded 4 KiB byte ring so the pipe cannot block the
+Worker.
 
 ## Request
 
@@ -80,12 +81,14 @@ are not persisted.
 
 - no more than 128 devices;
 - no more than 128 sensors per device;
+- no coverage count greater than 4,096, with
+  `readable + skipped == enumerated`;
 - IDs: 1–64 lowercase ASCII letters, digits, `.`, `_`, or `-`;
 - display names: 1–128 characters without control characters;
 - unique device IDs and unique sensor IDs within each device;
 - finite load values in `[0, 100]`;
 - finite temperature values in `[-100, 250]`;
-- non-negative coverage counts with
-  `readable + skipped <= enumerated`;
 - matching protocol version and request ID;
-- monotonically increasing sequence for one `workerInstanceId`.
+- a UTC timestamp that is never trusted for Agent freshness;
+- first sequence exactly `1`, then monotonically increasing for one
+  `workerInstanceId`.

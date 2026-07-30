@@ -8,6 +8,7 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="../PerfMonitor.Collectors.Windows/PerfMonitor.Collectors.Windows.csproj" />
+    <ProjectReference Include="../PerfMonitor.Collectors.Worker/PerfMonitor.Collectors.Worker.csproj" />
     <ProjectReference Include="../PerfMonitor.Core/PerfMonitor.Core.csproj" />
     <ProjectReference Include="../PerfMonitor.Diagnostics/PerfMonitor.Diagnostics.csproj" />
     <ProjectReference Include="../PerfMonitor.Ipc.NamedPipes/PerfMonitor.Ipc.NamedPipes.csproj" />

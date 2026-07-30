@@ -85,6 +85,8 @@ function Assert-CoreSnapshot {
         "network",
         "diskIo",
         "power",
+        "gpu",
+        "sensors",
         "volumes",
         "uptime",
         "processes",
@@ -96,6 +98,25 @@ function Assert-CoreSnapshot {
                 $Group
         ) {
             throw "Agent 冒烟快照缺少指标组：$Group"
+        }
+    }
+}
+
+function Assert-HardwareWorkerHandshake {
+    param(
+        [Parameter(Mandatory = $true)]
+        [object]$Snapshot
+    )
+
+    foreach ($GroupId in @("gpu", "sensors")) {
+        $Group = $Snapshot.groups.PSObject.Properties[
+            $GroupId
+        ].Value
+        if (
+            -not $Group.data.workerInstanceId -or
+            [Int64]$Group.data.workerSequence -le 0
+        ) {
+            throw "Agent 未完成硬件 Worker 握手：$GroupId"
         }
     }
 }
@@ -208,14 +229,17 @@ try {
         throw "Agent 冒烟结束后缺少最终快照。"
     }
     Assert-CoreSnapshot -Snapshot $FinalSnapshot
+    Assert-HardwareWorkerHandshake -Snapshot $FinalSnapshot
     $Database = Get-Item -LiteralPath $DatabasePath
     if ($Database.Length -le 0) {
         throw "SQLite 历史数据库为空。"
     }
 
     Write-Output (
-        "冒烟测试通过：version={0} instanceId={1} " +
-        "sequence={2}->{3} databaseBytes={4}" -f `
+        (
+            "冒烟测试通过：version={0} instanceId={1} " +
+            "sequence={2}->{3} databaseBytes={4}"
+        ) -f `
             $FinalSnapshot.productVersion,
             $FinalSnapshot.instanceId,
             $SequenceBeforeDesktopExit,

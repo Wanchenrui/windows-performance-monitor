@@ -1,4 +1,3 @@
-using PerfMonitor.Collectors.Windows;
 using PerfMonitor.Contracts;
 using PerfMonitor.Core;
 
@@ -10,7 +9,7 @@ public static class AgentRunner
         AgentOptions options,
         CancellationToken cancellationToken)
     {
-        var providers = WindowsProviderFactory.CreateDefault();
+        var providers = AgentProviderFactory.CreateDefault();
         var assembler = new SnapshotAssembler(
             providers.Select(provider => provider.Descriptor));
         await using var scheduler = new ProviderScheduler(
@@ -133,6 +132,8 @@ public static class AgentRunner
             GroupIds.Network,
             GroupIds.DiskIo,
             GroupIds.Power,
+            GroupIds.Gpu,
+            GroupIds.Sensors,
             GroupIds.Volumes,
             GroupIds.Uptime,
             GroupIds.Processes,

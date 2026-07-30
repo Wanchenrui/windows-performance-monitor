@@ -11,12 +11,8 @@
           "PerfMonitor.Contracts": "[0.7.1, )"
         }
       },
-      "perfmonitor.ipc.namedpipes": {
-        "type": "Project",
-        "dependencies": {
-          "PerfMonitor.Contracts": "[0.7.1, )",
-          "PerfMonitor.Core": "[0.7.1, )"
-        }
+      "perfmonitor.providerworker.protocol": {
+        "type": "Project"
       }
     }
   }

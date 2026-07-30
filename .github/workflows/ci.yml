@@ -71,7 +71,7 @@ jobs:
         run: dotnet test .\PerfMonitor.slnx --configuration Release --no-restore
 
       - name: Publish and smoke-test .NET Agent
-        shell: powershell
+        shell: pwsh
         run: |
           [xml]$BuildProperties = Get-Content `
             -LiteralPath .\Directory.Build.props `
@@ -87,8 +87,35 @@ jobs:
             --configuration Release --no-restore `
             --output .\artifacts\agent
           if ($LASTEXITCODE -ne 0) { throw ".NET Agent publish failed" }
+          dotnet publish `
+            .\src\PerfMonitor.ProviderWorker\PerfMonitor.ProviderWorker.csproj `
+            --configuration Release --no-restore `
+            --output .\artifacts\agent\provider-worker
+          if ($LASTEXITCODE -ne 0) {
+            throw ".NET Provider Worker publish failed"
+          }
+          if (
+            Test-Path `
+              -LiteralPath .\artifacts\agent\LibreHardwareMonitorLib.dll
+          ) {
+            throw "Hardware library leaked into Agent root"
+          }
+          if (-not (
+            Test-Path `
+              -LiteralPath (
+                ".\artifacts\agent\provider-worker\" +
+                "LibreHardwareMonitorLib.dll"
+              )
+          )) {
+            throw "Provider Worker is missing its fixed hardware library"
+          }
+          .\scripts\smoke_provider_worker.ps1 `
+            -WorkerPath (
+              ".\artifacts\agent\provider-worker\" +
+              "perf-monitor-provider-worker.exe"
+            )
           .\artifacts\agent\perf-monitor-agent.exe `
-            --once --quiet --warmup-seconds 3 `
+            --once --quiet --warmup-seconds 15 `
             --output .\artifacts\agent-snapshot.json
           if ($LASTEXITCODE -ne 0) { throw ".NET Agent smoke test failed" }
           $Snapshot = Get-Content `
@@ -103,10 +130,22 @@ jobs:
           }
           foreach ($Group in @(
             "systemCpu", "memory", "network", "diskIo", "power",
+            "gpu", "sensors",
             "volumes", "uptime",
             "processes", "sampler", "self")) {
             if ($Snapshot.groups.PSObject.Properties.Name -notcontains $Group) {
               throw "Missing Agent group: $Group"
+            }
+          }
+          foreach ($Group in @("gpu", "sensors")) {
+            $HardwareGroup = (
+              $Snapshot.groups.PSObject.Properties[$Group].Value
+            )
+            if (-not $HardwareGroup.data.workerInstanceId) {
+              throw "Hardware Worker handshake missing for group: $Group"
+            }
+            if ([Int64]$HardwareGroup.data.workerSequence -le 0) {
+              throw "Hardware Worker sequence is invalid for group: $Group"
             }
           }
           dotnet publish .\src\PerfMonitor.Desktop\PerfMonitor.Desktop.csproj `

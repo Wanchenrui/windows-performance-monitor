@@ -17,7 +17,9 @@ public sealed record AgentOptions(
         var warmup = TimeSpan.FromSeconds(3);
         var outputPeriod = TimeSpan.FromSeconds(1);
         string? outputPath = null;
-        var maxConcurrency = 3;
+        // v0.7.1: two hardware groups can wait on one Worker while
+        // the prior three core-provider slots remain available.
+        var maxConcurrency = 5;
 
         for (var index = 0; index < arguments.Count; index++)
         {

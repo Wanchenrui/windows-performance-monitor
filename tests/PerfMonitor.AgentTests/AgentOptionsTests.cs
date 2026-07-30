@@ -7,6 +7,14 @@ namespace PerfMonitor.AgentTests;
 public sealed class AgentOptionsTests
 {
     [TestMethod]
+    public void DefaultsToFiveBoundedProviderSlots()
+    {
+        var options = AgentOptions.Parse([]);
+
+        Assert.AreEqual(5, options.MaxConcurrency);
+    }
+
+    [TestMethod]
     public void ParsesBoundedOnceMode()
     {
         var options = AgentOptions.Parse(

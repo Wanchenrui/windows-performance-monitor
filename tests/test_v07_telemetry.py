@@ -15,7 +15,7 @@ def test_v07_product_and_stable_provider_groups_are_declared():
         )
     )
 
-    assert "<Version>0.7.0</Version>" in build_props
+    assert "<Version>0.7.1</Version>" in build_props
     providers = {
         (entry["groupId"], entry["providerId"])
         for entry in catalog["providers"]

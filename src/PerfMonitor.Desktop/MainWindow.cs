@@ -38,6 +38,8 @@ public sealed class MainWindow : Window
     private readonly TextBlock _memoryText = MetricText();
     private readonly TextBlock _networkText = MetricText(34);
     private readonly TextBlock _diskText = MetricText(34);
+    private readonly TextBlock _gpuText = MetricText(34);
+    private readonly TextBlock _temperatureText = MetricText(34);
     private readonly TextBlock _powerText = TextBlock(
         "电源：—",
         13,
@@ -64,7 +66,7 @@ public sealed class MainWindow : Window
 
         Title = "PerfMonitor Desktop";
         Width = 980;
-        Height = 760;
+        Height = 900;
         MinWidth = 760;
         MinHeight = 480;
         WindowStartupLocation = WindowStartupLocation.CenterScreen;
@@ -134,6 +136,11 @@ public sealed class MainWindow : Window
             {
                 Height = new GridLength(1, GridUnitType.Star),
             });
+        cards.RowDefinitions.Add(
+            new RowDefinition
+            {
+                Height = new GridLength(1, GridUnitType.Star),
+            });
         cards.ColumnDefinitions.Add(
             new ColumnDefinition
             {
@@ -172,6 +179,21 @@ public sealed class MainWindow : Window
         Grid.SetRow(diskCard, 1);
         Grid.SetColumn(diskCard, 1);
         cards.Children.Add(diskCard);
+        var gpuCard = MetricCard(
+            "GPU",
+            _gpuText,
+            "隔离 Worker · 最大 load / 最高温度");
+        gpuCard.Margin = new Thickness(0, 12, 12, 0);
+        Grid.SetRow(gpuCard, 2);
+        cards.Children.Add(gpuCard);
+        var temperatureCard = MetricCard(
+            "硬件温度",
+            _temperatureText,
+            "全部可读传感器的最高温度");
+        temperatureCard.Margin = new Thickness(12, 12, 0, 0);
+        Grid.SetRow(temperatureCard, 2);
+        Grid.SetColumn(temperatureCard, 1);
+        cards.Children.Add(temperatureCard);
         Grid.SetRow(cards, 1);
         root.Children.Add(cards);
 
@@ -294,12 +316,29 @@ public sealed class MainWindow : Window
             state.LatestSnapshot,
             GroupIds.DiskIo,
             MetricIds.DiskWriteBytesPerSecond);
+        var gpuLoad = ReadMetric(
+            state.LatestSnapshot,
+            GroupIds.Gpu,
+            MetricIds.GpuLoadMaxPercent);
+        var gpuTemperature = ReadMetric(
+            state.LatestSnapshot,
+            GroupIds.Gpu,
+            MetricIds.GpuTemperatureMaxCelsius);
+        var hardwareTemperature = ReadMetric(
+            state.LatestSnapshot,
+            GroupIds.Sensors,
+            MetricIds.HardwareTemperatureMaxCelsius);
         _cpuText.Text = FormatPercent(cpu);
         _memoryText.Text = FormatPercent(memory);
         _networkText.Text =
             $"{FormatRate(networkReceive)} / {FormatRate(networkSend)}";
         _diskText.Text =
             $"{FormatRate(diskRead)} / {FormatRate(diskWrite)}";
+        _gpuText.Text =
+            $"{FormatPercent(gpuLoad)} / " +
+            $"{FormatTemperature(gpuTemperature)}";
+        _temperatureText.Text =
+            FormatTemperature(hardwareTemperature);
         _powerText.Text = FormatPower(state.LatestSnapshot);
         _updatedText.Text = state.LatestSnapshot.CompletedAtUtc is null
             ? "快照正在预热"
@@ -514,6 +553,13 @@ public sealed class MainWindow : Window
             CultureInfo.InvariantCulture,
             $"{scaled:F1} {units[index]}");
     }
+
+    private static string FormatTemperature(double? value) =>
+        value is null
+            ? "—"
+            : string.Create(
+                CultureInfo.InvariantCulture,
+                $"{value.Value:F1} °C");
 
     private static string FormatPower(AgentSnapshot snapshot)
     {

@@ -44,6 +44,8 @@
         "network": {"$ref": "#/$defs/scalarGroup"},
         "diskIo": {"$ref": "#/$defs/scalarGroup"},
         "power": {"$ref": "#/$defs/scalarGroup"},
+        "gpu": {"$ref": "#/$defs/scalarGroup"},
+        "sensors": {"$ref": "#/$defs/scalarGroup"},
         "volumes": {"$ref": "#/$defs/volumeGroup"},
         "uptime": {"$ref": "#/$defs/scalarGroup"},
         "processes": {"$ref": "#/$defs/processGroup"},
@@ -139,7 +141,8 @@
             "second",
             "millisecond",
             "count",
-            "count_per_second"
+            "count_per_second",
+            "celsius"
           ]
         },
         "sourceId": {"type": "string", "minLength": 1}

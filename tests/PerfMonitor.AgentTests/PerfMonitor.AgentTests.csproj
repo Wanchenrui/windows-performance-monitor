@@ -13,10 +13,12 @@
   <ItemGroup>
     <ProjectReference Include="../../src/PerfMonitor.Agent/PerfMonitor.Agent.csproj" />
     <ProjectReference Include="../../src/PerfMonitor.Collectors.Windows/PerfMonitor.Collectors.Windows.csproj" />
+    <ProjectReference Include="../../src/PerfMonitor.Collectors.Worker/PerfMonitor.Collectors.Worker.csproj" />
     <ProjectReference Include="../../src/PerfMonitor.Core/PerfMonitor.Core.csproj" />
     <ProjectReference Include="../../src/PerfMonitor.Desktop/PerfMonitor.Desktop.csproj" />
     <ProjectReference Include="../../src/PerfMonitor.Diagnostics/PerfMonitor.Diagnostics.csproj" />
     <ProjectReference Include="../../src/PerfMonitor.Ipc.NamedPipes/PerfMonitor.Ipc.NamedPipes.csproj" />
+    <ProjectReference Include="../../src/PerfMonitor.ProviderWorker.Protocol/PerfMonitor.ProviderWorker.Protocol.csproj" />
     <ProjectReference Include="../../src/PerfMonitor.Storage.Sqlite/PerfMonitor.Storage.Sqlite.csproj" />
   </ItemGroup>
 </Project>

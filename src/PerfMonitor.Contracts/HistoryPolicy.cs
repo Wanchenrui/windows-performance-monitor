@@ -22,6 +22,11 @@ public static class HistoryPolicy
         MetricIds.DiskReadOperationsPerSecond,
         MetricIds.DiskWriteOperationsPerSecond,
         MetricIds.BatteryChargePercent,
+        // v0.7.1: persist only aggregate Worker metrics; ephemeral
+        // device and sensor identities remain in the live snapshot.
+        MetricIds.GpuLoadMaxPercent,
+        MetricIds.GpuTemperatureMaxCelsius,
+        MetricIds.HardwareTemperatureMaxCelsius,
         MetricIds.UptimeSeconds,
         MetricIds.AgentCpuCoreEquivalent,
         MetricIds.AgentWorkingSetBytes,

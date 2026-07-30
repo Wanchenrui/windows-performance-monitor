@@ -10,7 +10,7 @@ def test_diagnostics_module_remains_declared_after_v06():
     )
     solution = (ROOT / "PerfMonitor.slnx").read_text(encoding="utf-8")
 
-    assert "<Version>0.7.0</Version>" in build_props
+    assert "<Version>0.7.1</Version>" in build_props
     assert "PerfMonitor.Diagnostics.csproj" in solution
 
 

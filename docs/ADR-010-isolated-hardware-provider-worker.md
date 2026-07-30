@@ -34,7 +34,8 @@ Worker 不是通用插件宿主。v0.7.1 只允许编译时固定的硬件采集
    `provider-worker/perf-monitor-provider-worker.exe`。
 4. `UseShellExecute=false`；不接受命令行、脚本、PowerShell、DLL 路径、
    Provider 名称或任意插件参数。
-5. Worker 标准输出仅承载协议帧；标准错误按行有界保留，不能阻塞管道。
+5. Worker 标准输出仅承载协议帧；标准错误写入 4 KiB 有界字节环，
+   不能阻塞管道。
 6. Worker 不写注册表、SQLite 或配置文件，不接触 Broker。
 7. 硬件原始标识不进入外部契约或持久化层。设备 ID 是 Worker 生命周期内
    的类型加序号，不保证跨启动稳定。
@@ -52,7 +53,12 @@ Worker 不是通用插件宿主。v0.7.1 只允许编译时固定的硬件采集
 - 每个请求有随机 `requestId`，响应必须原样回显；
 - 响应含 `workerInstanceId` 和单调递增 `sequence`；
 - 名称、设备数、每设备传感器数均有确定上限；
+- coverage 计数上限为 4,096，且必须满足
+  `readable + skipped = enumerated`；
 - 非有限数值、越界利用率和明显非物理温度在信任边界被拒绝。
+
+Worker 返回的时间戳只作协议诊断字段；Agent 使用自己的调度上下文标记
+freshness，不信任子进程时间。
 
 Agent 对同一 Worker 的请求串行化。`gpu` 与 `sensors` Provider 在一个短
 时间窗内共享同一次采集，避免重复访问硬件。
@@ -63,8 +69,8 @@ Object 能力时仍使用私有内存检查和 `Kill(entireProcessTree: true)`�
 
 ## 时间与故障语义
 
-- 初始周期：2 秒；
-- Provider 超时：1.5 秒；
+- 初始周期：5 秒；
+- Provider 超时：10 秒，覆盖首次硬件库初始化；
 - 同一 Worker 同时最多一个请求；
 - 超时或协议错误立即废弃该 Worker 会话；
 - 崩溃后的下一次采集可以重启，但必须服从重启预算；
@@ -74,6 +80,10 @@ Object 能力时仍使用私有内存检查和 `Kill(entireProcessTree: true)`�
 
 Worker 失败不改变 CPU、内存、网络、磁盘、电源、SQLite、IPC 或 Desktop
 的生命周期。
+
+新增两个 Worker Provider 后，Agent 默认有界并发从 3 调整为 5。两个
+硬件组最多占用新增的两个槽，原有核心 Provider 仍保留等价的 3 个槽；
+Worker 内部仍严格串行，因而不会增加并发硬件访问。
 
 ## 数据语义
 
