@@ -98,6 +98,10 @@ jobs:
               throw "Missing Agent group: $Group"
             }
           }
+          dotnet publish .\src\PerfMonitor.Desktop\PerfMonitor.Desktop.csproj `
+            --configuration Release --no-restore `
+            --output .\artifacts\desktop
+          if ($LASTEXITCODE -ne 0) { throw ".NET Desktop publish failed" }
 
       - name: Run Python versus .NET differential gate
         shell: powershell
@@ -142,6 +146,7 @@ jobs:
           name: perf-monitor-agent-${{ github.sha }}
           path: |
             artifacts/agent/**
+            artifacts/desktop/**
             artifacts/agent-snapshot.json
             artifacts/agent-differential.json
             artifacts/agent-soak-accelerated.json
