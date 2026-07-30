@@ -1,3 +1,5 @@
+using System.Reflection;
+
 namespace PerfMonitor.Contracts;
 
 public static class ContractVersions
@@ -7,7 +9,24 @@ public static class ContractVersions
 
 public static class ProductVersions
 {
-    public const string Agent = "0.5.0";
+    public static string Agent { get; } = ReadProductVersion();
+
+    private static string ReadProductVersion()
+    {
+        var informationalVersion = typeof(ProductVersions)
+            .Assembly
+            .GetCustomAttribute<AssemblyInformationalVersionAttribute>()
+            ?.InformationalVersion;
+        var productVersion = informationalVersion?
+            .Split('+', 2, StringSplitOptions.None)[0];
+        if (string.IsNullOrWhiteSpace(productVersion))
+        {
+            throw new InvalidOperationException(
+                "The Contracts assembly has no product version.");
+        }
+
+        return productVersion;
+    }
 }
 
 public static class ServiceIds
