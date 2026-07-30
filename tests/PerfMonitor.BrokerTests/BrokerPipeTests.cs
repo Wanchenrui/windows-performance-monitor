@@ -117,6 +117,8 @@ public sealed class BrokerPipeTests
             PolicyVersion = "pipe-test-v1",
             DryRunOnly = false,
             RequireApprovedClientImage = false,
+            RequireTrustedClientSignature = false,
+            RequireProtectedClientPath = false,
             EnabledActionTypes =
             [
                 ActionTypes.StartApprovedDiagnostic,

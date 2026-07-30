@@ -409,3 +409,45 @@ def test_support_matrix_schema_accepts_only_the_frozen_four_targets():
     missing_target = deepcopy(evidence)
     missing_target["targets"].pop()
     assert list(validator.iter_errors(missing_target))
+
+
+def test_broker_service_binds_actual_authenticode_client_identity():
+    trust = (
+        ROOT
+        / "src"
+        / "PerfMonitor.Broker"
+        / "ClientExecutableTrust.cs"
+    ).read_text(encoding="utf-8")
+    resolver = (
+        ROOT
+        / "src"
+        / "PerfMonitor.Broker"
+        / "BrokerClientIdentityResolver.cs"
+    ).read_text(encoding="utf-8")
+    runner = (
+        ROOT
+        / "src"
+        / "PerfMonitor.Broker"
+        / "BrokerRunner.cs"
+    ).read_text(encoding="utf-8")
+    policy = (
+        ROOT
+        / "src"
+        / "PerfMonitor.Actions"
+        / "ActionPolicies.cs"
+    ).read_text(encoding="utf-8")
+
+    assert "GetFinalPathNameByHandleW" in trust
+    assert "00AAC56B-CD44-11D0-8CC2-00C04FC295EE" in trust
+    assert "WinVerifyTrust" in trust
+    assert "FileHandle = fileHandle.DangerousGetHandle()" in trust
+    assert "WtdCacheOnlyUrlRetrieval" in trust
+    assert "WtdDisableMd2Md4" in trust
+    assert "CodeSigningEku" in trust
+    assert "FileShare.Read" in trust
+    assert "FileShare.ReadWrite" not in trust
+    assert "executable.SignatureTrusted" in resolver
+    assert "executable.IsProtectedInstallPath" in resolver
+    assert "RequireTrustedClientSignature" in policy
+    assert "SignerCertificateSha256" in policy
+    assert "BrokerServicePolicy.Validate(policy)" in runner

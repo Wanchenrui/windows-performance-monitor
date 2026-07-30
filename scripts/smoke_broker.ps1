@@ -122,6 +122,8 @@ try {
         policyVersion = "smoke-machine-v1"
         dryRunOnly = $false
         requireApprovedClientImage = $false
+        requireTrustedClientSignature = $false
+        requireProtectedClientPath = $false
         enabledActionTypes = @(
             "start_approved_diagnostic"
         )

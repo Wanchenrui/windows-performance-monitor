@@ -11,6 +11,11 @@ public static class BrokerRunner
         ArgumentNullException.ThrowIfNull(options);
         var policy = ActionPolicyFile.LoadOrCreateBroker(
             options.PolicyPath);
+        if (options.Mode == BrokerRunMode.Service)
+        {
+            policy = BrokerServicePolicy.Validate(policy);
+        }
+
         await using var audit = new BrokerAuditStore(
             options.DatabasePath);
         await audit.InitializeAsync(cancellationToken)
@@ -63,5 +68,45 @@ public static class BrokerRunner
         }
 
         return 0;
+    }
+}
+
+public static class BrokerServicePolicy
+{
+    public static BrokerMachinePolicy Validate(
+        BrokerMachinePolicy policy,
+        string? programFilesRoot = null)
+    {
+        ArgumentNullException.ThrowIfNull(policy);
+        policy = policy.Validate();
+        if (!policy.RequireApprovedClientImage ||
+            !policy.RequireTrustedClientSignature ||
+            !policy.RequireProtectedClientPath)
+        {
+            throw new InvalidDataException(
+                "broker_service_client_trust_required");
+        }
+
+        if (policy.EnabledActionTypes.Count > 0 &&
+            policy.ApprovedClientImages.Count != 1)
+        {
+            throw new InvalidDataException(
+                "broker_service_approved_agent_required");
+        }
+
+        if (policy.ApprovedClientImages.Any(image =>
+            !WindowsBrokerClientExecutableTrustVerifier
+                .IsExpectedAgentPath(
+                    image.Path,
+                    programFilesRoot ??
+                        Environment.GetFolderPath(
+                            Environment.SpecialFolder
+                                .ProgramFiles))))
+        {
+            throw new InvalidDataException(
+                "broker_service_client_path_invalid");
+        }
+
+        return policy;
     }
 }

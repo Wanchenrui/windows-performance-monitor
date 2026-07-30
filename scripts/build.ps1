@@ -124,10 +124,14 @@ try {
         throw ".NET 锁定依赖还原失败。"
     }
 
+    # v1.0：加密终端上的可复用 MSBuild worker 可能被拦截层异常终止；
+    # 发布门禁固定单节点，避免环境故障伪装成测试失败。
     & dotnet test `
         $SolutionPath `
         --configuration Release `
         --no-restore `
+        --disable-build-servers `
+        -maxcpucount:1 `
         $BuildPropertyArguments
     if ($LASTEXITCODE -ne 0) {
         throw ".NET 测试失败，已阻止构建。"

@@ -31,7 +31,9 @@
 - 新增 MSI 表契约和安装、升级、直接降级阻止、卸载数据保留、重装与受控
   回滚/repair 测试；Server Core 被 LaunchCondition 明确阻止。Broker
   另增加真实 Pipe 畸形 framing、截断 JSON、身份/命令
-  注入、并发重放、幂等冲突和断连渗透测试。
+  注入、并发重放、幂等冲突和断连渗透测试；服务模式另把实际客户端绑定到
+  Program Files 精确 Agent 路径、SHA-256、WinVerifyTrust Code Signing
+  EKU、证书主体及证书 SHA-256 指纹，任一不符均拒绝。
 - 冻结 Windows 11 24H2/25H2 与 Windows Server 2022/2025 Desktop
   Experience x64 支持矩阵，以及 CPU、内存、GC、句柄和线程资源预算。
 - 新增四台专用 self-hosted runner 的支持矩阵工作流：安装前验证真实

@@ -188,6 +188,21 @@ allowlist：只输出版本、schema、稳定 provider/error ID、健康计数�
 
 ## Broker 安全发布门禁
 
+Broker 不只依赖请求体或可伪造的路径。服务端从实际 Named Pipe 连接取得
+客户端 SID/PID，打开该进程映像并在禁止写/删除共享的文件句柄存续期间：
+
+1. 用 `GetFinalPathNameByHandle` 得到重解析后的最终路径；
+2. 计算完整文件 SHA-256；
+3. 以 `WinVerifyTrust/WINTRUST_ACTION_GENERIC_VERIFY_V2` 验证 Authenticode
+   内容和本机信任链；
+4. 从已验证 provider state 取得 signer，要求显式 Code Signing EKU；
+5. 与机器策略中的最终 Program Files 路径、文件 hash、Signer Subject 和
+   DER 证书 SHA-256 同时比较。
+
+service 模式强制开启上述门禁，配置文件不能将其降级。校验禁止网络 URL
+retrieval，避免证书网络查询阻塞 Broker 连接；生产候选的证书吊销/禁用仍由
+发布环境、签名更新清单和升级策略负责。
+
 除既有单元测试外，必须对真实 Broker Pipe 运行畸形 framing、超大长度、
 截断 JSON、未知 operation/action、身份字段注入、幂等冲突、并发重放和
 连接中止。fuzz 输入不得触发动作 executor，服务应继续接受后续合法请求。

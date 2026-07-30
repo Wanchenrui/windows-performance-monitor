@@ -12,6 +12,11 @@ public sealed class ActionCoordinatorTests
     private const string ImageHash =
         "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" +
         "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
+    private const string SignerSubject =
+        "CN=PerfMonitor Test Publisher";
+    private const string SignerCertificateHash =
+        "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB" +
+        "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB";
 
     [TestMethod]
     public void DefaultPoliciesDenyEveryAction()
@@ -87,6 +92,8 @@ public sealed class ActionCoordinatorTests
             PolicyVersion = "all-dry-run-v1",
             DryRunOnly = false,
             RequireApprovedClientImage = false,
+            RequireTrustedClientSignature = false,
+            RequireProtectedClientPath = false,
             EnabledActionTypes = ActionTypes.All,
             AllowedCallerSids = [CallerSid],
             AllowedPriorities = ActionPriorities.All,
@@ -279,6 +286,81 @@ public sealed class ActionCoordinatorTests
     }
 
     [TestMethod]
+    public async Task ClientTrustMismatchNeverCallsExecutor()
+    {
+        await using var audit = new FakeAuditStore();
+        var executor = new FakeExecutor();
+        var coordinator = Coordinator(audit, executor);
+        var cases = new[]
+        {
+            Caller() with
+            {
+                ClientImageSha256 = new string('C', 64),
+            },
+            Caller() with
+            {
+                SignatureTrusted = false,
+            },
+            Caller() with
+            {
+                SignerSubject = "CN=Different Publisher",
+            },
+            Caller() with
+            {
+                SignerCertificateSha256 =
+                    new string('C', 64),
+            },
+            Caller() with
+            {
+                IsProtectedInstallPath = false,
+            },
+        };
+
+        for (var index = 0; index < cases.Length; index++)
+        {
+            var result = await coordinator.ExecuteAsync(
+                Request(
+                    $"client-trust-{index}",
+                    dryRun: false),
+                cases[index],
+                Now,
+                CancellationToken.None);
+            Assert.AreEqual(
+                ActionStatuses.Denied,
+                result.Status);
+            Assert.AreEqual(
+                ActionErrorCodes.ClientImageDenied,
+                result.ErrorCode);
+        }
+
+        Assert.AreEqual(0, executor.CaptureCount);
+        Assert.AreEqual(0, executor.ExecuteCount);
+    }
+
+    [TestMethod]
+    public void TrustedClientPolicyRequiresExactSignerPins()
+    {
+        var policy = EnabledPolicy();
+        var image = policy.ApprovedClientImages.Single();
+        Assert.AreEqual(SignerSubject, image.SignerSubject);
+        Assert.AreEqual(
+            SignerCertificateHash,
+            image.SignerCertificateSha256);
+
+        Assert.ThrowsExactly<InvalidDataException>(() =>
+            (policy with
+            {
+                ApprovedClientImages =
+                [
+                    image with
+                    {
+                        SignerCertificateSha256 = string.Empty,
+                    },
+                ],
+            }).Validate());
+    }
+
+    [TestMethod]
     public async Task UnsupportedPriorityIsRejectedBeforeAudit()
     {
         await using var audit = new FakeAuditStore();
@@ -348,6 +430,8 @@ public sealed class ActionCoordinatorTests
             PolicyVersion = "test-machine-v1",
             DryRunOnly = false,
             RequireApprovedClientImage = true,
+            RequireTrustedClientSignature = true,
+            RequireProtectedClientPath = true,
             EnabledActionTypes =
             [
                 ActionTypes.TerminateProcess,
@@ -362,6 +446,9 @@ public sealed class ActionCoordinatorTests
                             "test-root",
                             "perf-monitor-agent.exe")),
                     Sha256 = ImageHash,
+                    SignerSubject = SignerSubject,
+                    SignerCertificateSha256 =
+                        SignerCertificateHash,
                 },
             ],
         }.Validate();
@@ -374,7 +461,14 @@ public sealed class ActionCoordinatorTests
                 Path.Combine(
                     "test-root",
                     "perf-monitor-agent.exe")),
-            ImageHash);
+            ImageHash)
+        {
+            SignatureTrusted = true,
+            SignerSubject = SignerSubject,
+            SignerCertificateSha256 =
+                SignerCertificateHash,
+            IsProtectedInstallPath = true,
+        };
 
     private static ActionExecutionRequestContract Request(
         string key,

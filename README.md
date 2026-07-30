@@ -111,8 +111,10 @@ debounce、cooldown、有界证据窗、`firstSeen/lastSeen` 和 confidence。
 Broker 只接受 `set_process_priority`、`terminate_process`、
 `start_approved_diagnostic` 和 `apply_approved_power_profile` 四类
 typed DTO。请求没有 caller SID/PID、可执行路径、命令、参数、环境变量、
-脚本、注册表路径或任意 GUID；实际 SID/PID/映像与 SHA-256 从 Broker
-Named Pipe 传输层取得。
+脚本、注册表路径或任意 GUID；实际 SID/PID/映像从 Broker Named Pipe
+传输层取得。服务模式还要求最终路径为 Program Files 下的固定 Agent，
+SHA-256 命中 allowlist，且 WinVerifyTrust 验证的 Code Signing 证书主体与
+证书 SHA-256 指纹精确匹配。
 
 Agent 用户策略和 Broker 机器策略默认都关闭全部动作且 `dryRunOnly=true`。
 进程动作必须用 `(PID, creationTimeTicks)` 定位，并在同一进程句柄上重验

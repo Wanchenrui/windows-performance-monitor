@@ -1,6 +1,5 @@
 using System.IO.Pipes;
 using System.Runtime.InteropServices;
-using System.Security.Cryptography;
 using System.Security.Principal;
 using Microsoft.Win32.SafeHandles;
 using PerfMonitor.Actions;
@@ -16,8 +15,17 @@ public interface IBrokerClientIdentityResolver
 public sealed class BrokerClientIdentityResolver :
     IBrokerClientIdentityResolver
 {
-    private const long MaxClientImageBytes =
-        32L * 1024 * 1024;
+    private readonly IBrokerClientExecutableTrustVerifier
+        _executableTrustVerifier;
+
+    public BrokerClientIdentityResolver(
+        IBrokerClientExecutableTrustVerifier?
+            executableTrustVerifier = null)
+    {
+        _executableTrustVerifier =
+            executableTrustVerifier ??
+            new WindowsBrokerClientExecutableTrustVerifier();
+    }
 
     public BrokerCallerIdentity Resolve(
         NamedPipeServerStream pipe)
@@ -78,12 +86,23 @@ public sealed class BrokerClientIdentityResolver :
         }
 
         var imagePath = ReadImagePath(process);
-        var imageHash = HashImage(imagePath);
+        var executable = _executableTrustVerifier.Verify(
+            imagePath);
         return new BrokerCallerIdentity(
             pipeSid,
             clientPid,
-            imagePath,
-            imageHash);
+            executable.FinalPath,
+            executable.Sha256)
+        {
+            SignatureTrusted =
+                executable.SignatureTrusted,
+            SignerSubject =
+                executable.SignerSubject,
+            SignerCertificateSha256 =
+                executable.SignerCertificateSha256,
+            IsProtectedInstallPath =
+                executable.IsProtectedInstallPath,
+        };
     }
 
     private static string ReadProcessSid(
@@ -126,24 +145,6 @@ public sealed class BrokerClientIdentityResolver :
 
         return Path.GetFullPath(
             new string(buffer, 0, length));
-    }
-
-    private static string HashImage(string imagePath)
-    {
-        using var stream = new FileStream(
-            imagePath,
-            FileMode.Open,
-            FileAccess.Read,
-            FileShare.ReadWrite | FileShare.Delete,
-            bufferSize: 64 * 1024,
-            FileOptions.SequentialScan);
-        if (stream.Length is <= 0 or > MaxClientImageBytes)
-        {
-            throw new ActionExecutorException(
-                ActionErrorCodes.ClientImageDenied);
-        }
-
-        return Convert.ToHexString(SHA256.HashData(stream));
     }
 }
 

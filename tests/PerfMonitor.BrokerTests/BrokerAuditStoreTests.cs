@@ -178,6 +178,8 @@ public sealed class BrokerAuditStoreTests
             PolicyVersion = "denial-machine-v1",
             DryRunOnly = false,
             RequireApprovedClientImage = false,
+            RequireTrustedClientSignature = false,
+            RequireProtectedClientPath = false,
             EnabledActionTypes =
             [
                 ActionTypes.TerminateProcess,

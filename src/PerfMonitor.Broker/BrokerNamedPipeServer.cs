@@ -345,16 +345,11 @@ public sealed class BrokerNamedPipeServer : IAsyncDisposable
         BrokerCallerIdentity caller)
     {
         var policy = _coordinator.Policy;
-        var callerAllowed = policy.AllowedCallerSids.Contains(
-            caller.Sid,
-            StringComparer.Ordinal);
-        var imageAllowed =
-            !policy.RequireApprovedClientImage ||
-            policy.ApprovedClientImages.Any(image =>
-                image.Matches(
-                    caller.ClientImagePath,
-                    caller.ClientImageSha256));
-        var actions = callerAllowed && imageAllowed
+        var callerDecision =
+            ActionPolicyEvaluator.EvaluateCaller(
+                policy,
+                caller);
+        var actions = callerDecision.Allowed
             ? policy.EnabledActionTypes.Select(
                 static action =>
                     new ActionCapabilityItemContract

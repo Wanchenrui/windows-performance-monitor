@@ -19,6 +19,10 @@ def test_v05_product_build_does_not_package_python_agent():
     assert "PerfMonitor.Agent.csproj" in build_script
     assert "PerfMonitor.Desktop.csproj" in build_script
     assert "dotnet publish" in build_script
+    # v1.0: encrypted endpoint environments must not fan out reusable
+    # MSBuild worker processes during the release-gating test pass.
+    assert "--disable-build-servers" in build_script
+    assert "-maxcpucount:1" in build_script
     assert "PyInstaller" not in build_script
     assert "perf-monitor.spec" not in build_script
 

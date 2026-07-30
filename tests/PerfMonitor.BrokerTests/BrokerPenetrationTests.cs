@@ -59,6 +59,32 @@ public sealed class BrokerPenetrationTests
 
     [TestMethod]
     [Timeout(30000)]
+    public async Task DeterministicMalformedCorpusNeverReachesExecutor()
+    {
+        await using var harness = await BrokerHarness.CreateAsync();
+        var random = new Random(0x504D3130);
+        for (var index = 0; index < 24; index++)
+        {
+            var payload = new byte[random.Next(1, 257)];
+            random.NextBytes(payload);
+            payload[0] = index % 2 == 0
+                ? (byte)0xFF
+                : (byte)'[';
+            await SendRawBytesAsync(
+                harness.PipeName,
+                payload);
+            if ((index + 1) % 6 == 0)
+            {
+                await harness.AssertListenerHealthyAsync();
+            }
+        }
+
+        Assert.AreEqual(0, harness.Executor.CaptureCount);
+        Assert.AreEqual(0, harness.Executor.ExecuteCount);
+    }
+
+    [TestMethod]
+    [Timeout(30000)]
     public async Task ConcurrentReplayAndConflictNeverDoubleExecute()
     {
         await using var harness = await BrokerHarness.CreateAsync();
@@ -157,6 +183,20 @@ public sealed class BrokerPenetrationTests
             checked((uint)bytes.Length));
         await pipe.WriteAsync(header);
         await pipe.WriteAsync(bytes);
+        await pipe.FlushAsync();
+    }
+
+    private static async Task SendRawBytesAsync(
+        string pipeName,
+        byte[] payload)
+    {
+        await using var pipe = await ConnectAsync(pipeName);
+        var header = new byte[sizeof(uint)];
+        BinaryPrimitives.WriteUInt32LittleEndian(
+            header,
+            checked((uint)payload.Length));
+        await pipe.WriteAsync(header);
+        await pipe.WriteAsync(payload);
         await pipe.FlushAsync();
     }
 
@@ -314,6 +354,8 @@ public sealed class BrokerPenetrationTests
                 PolicyVersion = "penetration-v1",
                 DryRunOnly = false,
                 RequireApprovedClientImage = false,
+                RequireTrustedClientSignature = false,
+                RequireProtectedClientPath = false,
                 EnabledActionTypes =
                 [
                     ActionTypes.StartApprovedDiagnostic,

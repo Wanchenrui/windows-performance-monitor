@@ -270,6 +270,8 @@ public sealed class WindowsActionExecutorTests
             PolicyVersion = "test-v1",
             DryRunOnly = false,
             RequireApprovedClientImage = false,
+            RequireTrustedClientSignature = false,
+            RequireProtectedClientPath = false,
             EnabledActionTypes =
             [
                 ActionTypes.TerminateProcess,
