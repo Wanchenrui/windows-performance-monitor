@@ -149,9 +149,7 @@ public sealed class DiagnosticsTests
                     DatabasePath = databasePath,
                 });
             await store.StartAsync(CancellationToken.None);
-            var origin = DateTimeOffset.Parse(
-                "2026-01-01T00:00:00Z",
-                System.Globalization.CultureInfo.InvariantCulture);
+            var origin = DateTimeOffset.UtcNow.AddMinutes(-1);
             var diagnosticEvent = DiagnosticReplay.Replay(
                 [CpuSnapshot(1, origin, 95)],
                 OnlyHighCpu(
@@ -223,9 +221,7 @@ public sealed class DiagnosticsTests
                 policy,
                 [store]);
             engine.Start();
-            var origin = DateTimeOffset.Parse(
-                "2026-01-01T00:00:00Z",
-                System.Globalization.CultureInfo.InvariantCulture);
+            var origin = DateTimeOffset.UtcNow.AddMinutes(-1);
             var snapshots = Enumerable.Range(0, 6)
                 .Select(second => CpuSnapshot(
                     second + 1,
