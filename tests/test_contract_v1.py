@@ -100,7 +100,7 @@ def test_catalogs_match_python_contract_constants():
         for item in metric_catalog["metrics"]
     }
     catalog_providers = {
-        item["groupId"]: item["providerId"]
+        (item["groupId"], item["providerId"])
         for item in provider_catalog["providers"]
     }
     catalog_sources = {
@@ -109,9 +109,12 @@ def test_catalogs_match_python_contract_constants():
         for source_id in item["sourceIds"]
     }
 
-    assert catalog_metrics == METRIC_UNITS
-    assert catalog_providers == PROVIDER_IDS
-    assert set(SOURCE_IDS.values()) == catalog_sources
+    assert set(METRIC_UNITS.items()).issubset(catalog_metrics.items())
+    assert {
+        (group_id, provider_id)
+        for group_id, provider_id in PROVIDER_IDS.items()
+    }.issubset(catalog_providers)
+    assert set(SOURCE_IDS.values()).issubset(catalog_sources)
 
 
 def test_contract_never_exposes_python_exception_class_names():

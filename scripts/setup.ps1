@@ -58,4 +58,5 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 Write-Output "环境已就绪：$VenvPython"
-Write-Output "运行方式：.\启动.bat"
+Write-Output "Python 仅作为只读 oracle/开发 HTTP 使用。"
+Write-Output "产品构建：.\scripts\build.ps1；运行：.\启动.bat"

@@ -1,85 +1,263 @@
 ﻿[CmdletBinding()]
 param(
-    [string]$ExePath
+    [string]$AgentPath = "",
+
+    [string]$DesktopPath = "",
+
+    [ValidateRange(10, 60)]
+    [int]$DurationSeconds = 15
 )
 
 $ErrorActionPreference = "Stop"
 $ProjectRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
-if (-not $ExePath) {
-    $ExePath = Join-Path $ProjectRoot "dist\perf-monitor.exe"
+if (-not $AgentPath) {
+    $AgentPath = Join-Path `
+        $ProjectRoot `
+        "dist\agent\perf-monitor-agent.exe"
 }
-if (-not (Test-Path -LiteralPath $ExePath)) {
-    throw "未找到待冒烟测试的 EXE：$ExePath"
+if (-not $DesktopPath) {
+    $DesktopPath = Join-Path `
+        $ProjectRoot `
+        "dist\desktop\perf-monitor-desktop.exe"
 }
+$AgentPath = (Resolve-Path -LiteralPath $AgentPath).Path
+$DesktopPath = (Resolve-Path -LiteralPath $DesktopPath).Path
 
-$Listener = [System.Net.Sockets.TcpListener]::new(
-    [System.Net.IPAddress]::Loopback,
-    0
+$BuildProperties = [xml](
+    Get-Content -LiteralPath (
+        Join-Path $ProjectRoot "Directory.Build.props"
+    ) -Raw
 )
-$Listener.Start()
-$Port = ([System.Net.IPEndPoint]$Listener.LocalEndpoint).Port
-$Listener.Stop()
+$VersionNode = $BuildProperties.SelectSingleNode(
+    "/Project/PropertyGroup/Version"
+)
+if ($null -eq $VersionNode) {
+    throw "Directory.Build.props 缺少产品版本。"
+}
+$ExpectedVersion = $VersionNode.InnerText.Trim()
 
-$PreviousSuppressDialogs = $env:PERF_MONITOR_SUPPRESS_DIALOGS
-$env:PERF_MONITOR_SUPPRESS_DIALOGS = "1"
-$Process = $null
-try {
-    $Arguments = @(
-        "--port", $Port,
-        "--no-browser",
-        "--no-tray",
-        "--exit-after-seconds", "15"
+$Token = [Guid]::NewGuid().ToString("N")
+$TempBase = [System.IO.Path]::GetFullPath(
+    [System.IO.Path]::GetTempPath()
+)
+$DataRoot = Join-Path $TempBase "perf-monitor-smoke-$Token"
+$SnapshotPath = Join-Path $DataRoot "snapshots.jsonl"
+$DatabasePath = Join-Path $DataRoot "history-v1.db"
+$AgentProcess = $null
+$DesktopProcess = $null
+
+function Get-LatestSnapshot {
+    if (-not (Test-Path -LiteralPath $SnapshotPath)) {
+        return $null
+    }
+    $Line = Get-Content -LiteralPath $SnapshotPath |
+        Where-Object { -not [string]::IsNullOrWhiteSpace($_) } |
+        Select-Object -Last 1
+    if (-not $Line) {
+        return $null
+    }
+    try {
+        return $Line | ConvertFrom-Json
+    }
+    catch {
+        return $null
+    }
+}
+
+function Assert-CoreSnapshot {
+    param(
+        [Parameter(Mandatory = $true)]
+        [object]$Snapshot
     )
-    $Process = Start-Process `
-        -FilePath $ExePath `
-        -ArgumentList $Arguments `
+
+    if ($Snapshot.contractVersion -ne "1.0") {
+        throw "Agent 冒烟快照的契约版本错误。"
+    }
+    if ($Snapshot.productVersion -ne $ExpectedVersion) {
+        throw "Agent 冒烟快照的产品版本错误。"
+    }
+    if (-not $Snapshot.instanceId) {
+        throw "Agent 冒烟快照缺少 instanceId。"
+    }
+    foreach ($Group in @(
+        "systemCpu",
+        "memory",
+        "volumes",
+        "uptime",
+        "processes",
+        "sampler",
+        "self"
+    )) {
+        if (
+            $Snapshot.groups.PSObject.Properties.Name -notcontains
+                $Group
+        ) {
+            throw "Agent 冒烟快照缺少指标组：$Group"
+        }
+    }
+}
+
+New-Item -ItemType Directory -Path $DataRoot -Force | Out-Null
+try {
+    $AgentArguments = @(
+        "--quiet",
+        "--warmup-seconds",
+        "1",
+        "--duration-seconds",
+        $DurationSeconds,
+        "--output-period-ms",
+        "500",
+        "--data-directory",
+        "`"$DataRoot`"",
+        "--output",
+        "`"$SnapshotPath`""
+    )
+    $AgentProcess = Start-Process `
+        -FilePath $AgentPath `
+        -ArgumentList $AgentArguments `
         -PassThru `
         -WindowStyle Hidden
 
-    $Health = $null
-    $Deadline = (Get-Date).AddSeconds(12)
-    while ((Get-Date) -lt $Deadline -and $null -eq $Health) {
-        if ($Process.HasExited) {
-            throw "EXE 在健康接口响应前退出，退出码：$($Process.ExitCode)"
+    $FirstSnapshot = $null
+    $ReadyDeadline = [DateTimeOffset]::UtcNow.AddSeconds(8)
+    while (
+        [DateTimeOffset]::UtcNow -lt $ReadyDeadline -and
+        $null -eq $FirstSnapshot
+    ) {
+        $AgentProcess.Refresh()
+        if ($AgentProcess.HasExited) {
+            throw "Agent 在 IPC/SQLite 就绪前退出，退出码：$($AgentProcess.ExitCode)"
         }
-        try {
-            $Health = Invoke-RestMethod `
-                -Uri "http://127.0.0.1:$Port/api/v1/health" `
-                -TimeoutSec 1
+        if (Test-Path -LiteralPath $DatabasePath) {
+            $FirstSnapshot = Get-LatestSnapshot
         }
-        catch {
-            Start-Sleep -Milliseconds 250
+        if ($null -eq $FirstSnapshot) {
+            Start-Sleep -Milliseconds 100
         }
+    }
+    if ($null -eq $FirstSnapshot) {
+        throw "Agent 未在期限内产生 SQLite 数据库和实时快照。"
+    }
+    Assert-CoreSnapshot -Snapshot $FirstSnapshot
+
+    $DesktopProcess = Start-Process `
+        -FilePath $DesktopPath `
+        -PassThru `
+        -WindowStyle Minimized
+    Start-Sleep -Seconds 2
+    $DesktopProcess.Refresh()
+    if ($DesktopProcess.HasExited) {
+        throw "Desktop 在生命周期检查前退出，退出码：$($DesktopProcess.ExitCode)"
+    }
+    $AgentProcess.Refresh()
+    if ($AgentProcess.HasExited) {
+        throw "Desktop 启动后 Agent 意外退出。"
     }
 
-    if ($null -eq $Health) {
-        throw "EXE 启动后健康接口在期限内未响应。"
+    $SequenceBeforeDesktopExit = [Int64](
+        (Get-LatestSnapshot).sequence
+    )
+    if (-not $DesktopProcess.CloseMainWindow()) {
+        Stop-Process -Id $DesktopProcess.Id -Force
     }
-    if ($Health.service -ne "perf-monitor") {
-        throw "健康接口服务标识错误：$($Health.service)"
+    elseif (-not $DesktopProcess.WaitForExit(5000)) {
+        Stop-Process -Id $DesktopProcess.Id -Force
     }
-    if ($Health.productVersion -ne "0.3.0") {
-        throw "健康接口版本错误：$($Health.appVersion)"
-    }
-    if (-not $Health.instanceId) {
-        throw "健康接口缺少 instanceId。"
+    $DesktopProcess.WaitForExit()
+
+    $AgentProcess.Refresh()
+    if ($AgentProcess.HasExited) {
+        throw "Desktop 退出影响了 Agent 生命周期。"
     }
 
-    Wait-Process -Id $Process.Id -Timeout 20
-    $Process.Refresh()
-    if (-not $Process.HasExited -or $Process.ExitCode -ne 0) {
-        throw "EXE 未按预期正常退出。"
+    $ContinuedSnapshot = $null
+    $ContinueDeadline = [DateTimeOffset]::UtcNow.AddSeconds(5)
+    while (
+        [DateTimeOffset]::UtcNow -lt $ContinueDeadline -and
+        (
+            $null -eq $ContinuedSnapshot -or
+            [Int64]$ContinuedSnapshot.sequence -le
+                $SequenceBeforeDesktopExit
+        )
+    ) {
+        Start-Sleep -Milliseconds 100
+        $ContinuedSnapshot = Get-LatestSnapshot
     }
+    if (
+        $null -eq $ContinuedSnapshot -or
+        [Int64]$ContinuedSnapshot.sequence -le
+            $SequenceBeforeDesktopExit
+    ) {
+        throw "Desktop 退出后 Agent 未继续发布快照。"
+    }
+
+    if (-not $AgentProcess.WaitForExit(
+        ($DurationSeconds + 10) * 1000
+    )) {
+        throw "Agent 未按 --duration-seconds 正常退出。"
+    }
+    if ($AgentProcess.ExitCode -ne 0) {
+        throw "Agent 冒烟退出码错误：$($AgentProcess.ExitCode)"
+    }
+
+    $FinalSnapshot = Get-LatestSnapshot
+    if ($null -eq $FinalSnapshot) {
+        throw "Agent 冒烟结束后缺少最终快照。"
+    }
+    Assert-CoreSnapshot -Snapshot $FinalSnapshot
+    $Database = Get-Item -LiteralPath $DatabasePath
+    if ($Database.Length -le 0) {
+        throw "SQLite 历史数据库为空。"
+    }
+
     Write-Output (
-        "冒烟测试通过：service={0} version={1} instanceId={2}" -f `
-            $Health.service,
-            $Health.productVersion,
-            $Health.instanceId
+        "冒烟测试通过：version={0} instanceId={1} " +
+        "sequence={2}->{3} databaseBytes={4}" -f `
+            $FinalSnapshot.productVersion,
+            $FinalSnapshot.instanceId,
+            $SequenceBeforeDesktopExit,
+            $FinalSnapshot.sequence,
+            $Database.Length
     )
 }
 finally {
-    if ($null -ne $Process -and -not $Process.HasExited) {
-        Stop-Process -Id $Process.Id -Force -ErrorAction SilentlyContinue
+    if (
+        $null -ne $DesktopProcess -and
+        -not $DesktopProcess.HasExited
+    ) {
+        Stop-Process `
+            -Id $DesktopProcess.Id `
+            -Force `
+            -ErrorAction SilentlyContinue
     }
-    $env:PERF_MONITOR_SUPPRESS_DIALOGS = $PreviousSuppressDialogs
+    if (
+        $null -ne $AgentProcess -and
+        -not $AgentProcess.HasExited
+    ) {
+        Stop-Process `
+            -Id $AgentProcess.Id `
+            -Force `
+            -ErrorAction SilentlyContinue
+    }
+
+    $DataRootFull = [System.IO.Path]::GetFullPath($DataRoot)
+    $TempPrefix = $TempBase.TrimEnd(
+        [System.IO.Path]::DirectorySeparatorChar
+    ) + [System.IO.Path]::DirectorySeparatorChar
+    if (
+        $DataRootFull.StartsWith(
+            $TempPrefix,
+            [StringComparison]::OrdinalIgnoreCase
+        ) -and
+        (Split-Path -Leaf $DataRootFull).StartsWith(
+            "perf-monitor-smoke-",
+            [StringComparison]::Ordinal
+        ) -and
+        (Test-Path -LiteralPath $DataRootFull)
+    ) {
+        Remove-Item `
+            -LiteralPath $DataRootFull `
+            -Recurse `
+            -Force
+    }
 }
