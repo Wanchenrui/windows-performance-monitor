@@ -186,6 +186,37 @@ public sealed class BrokerPipeTests
         await server.StopAsync();
     }
 
+    [TestMethod]
+    [Timeout(15000)]
+    public async Task PendingAcceptCancellationIsCleanShutdown()
+    {
+        using var directory = new TemporaryDirectory();
+        await using var audit = new BrokerAuditStore(
+            directory.File("broker-v1.db"));
+        await audit.InitializeAsync(CancellationToken.None);
+        await audit.RecoverPendingAsync(
+            DateTimeOffset.UtcNow,
+            CancellationToken.None);
+        var coordinator = new BrokerActionCoordinator(
+            BrokerMachinePolicy.Default,
+            audit,
+            new FakeExecutor(),
+            forceDryRunOnly: true);
+
+        for (var index = 0; index < 32; index++)
+        {
+            await using var server = new BrokerNamedPipeServer(
+                TestEndpoint(),
+                coordinator,
+                new FakeIdentityResolver(),
+                forceDryRunOnly: true);
+            server.Start();
+            await server.StopAsync();
+            Assert.IsTrue(
+                server.Completion.IsCompletedSuccessfully);
+        }
+    }
+
     private static BrokerPipeEndpoint TestEndpoint() =>
         new($"PerfMonitor.Broker.Test.{Guid.NewGuid():N}");
 

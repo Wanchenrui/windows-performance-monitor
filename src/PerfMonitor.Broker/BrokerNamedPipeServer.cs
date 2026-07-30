@@ -124,9 +124,15 @@ public sealed class BrokerNamedPipeServer : IAsyncDisposable
                 _ = ObserveClientAsync(id, task);
             }
         }
-        catch (OperationCanceledException) when (
-            cancellationToken.IsCancellationRequested)
+        catch (Exception exception) when (
+            cancellationToken.IsCancellationRequested &&
+            exception is
+                OperationCanceledException or
+                IOException or
+                ObjectDisposedException)
         {
+            // v1.0: Windows can surface a canceled pending accept as
+            // a closed-pipe I/O failure. It is normal only after stop.
         }
         finally
         {
