@@ -177,6 +177,14 @@
           "PerfMonitor.Storage.Sqlite": "[0.5.0, )"
         }
       },
+      "perf-monitor-desktop": {
+        "type": "Project",
+        "dependencies": {
+          "PerfMonitor.Contracts": "[0.5.0, )",
+          "PerfMonitor.Core": "[0.5.0, )",
+          "PerfMonitor.Ipc.NamedPipes": "[0.5.0, )"
+        }
+      },
       "perfmonitor.collectors.windows": {
         "type": "Project",
         "dependencies": {

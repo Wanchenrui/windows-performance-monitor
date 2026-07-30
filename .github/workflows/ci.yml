@@ -156,13 +156,20 @@ jobs:
   build-and-smoke:
     needs: [test, contract-dotnet]
     runs-on: windows-latest
-    timeout-minutes: 25
+    timeout-minutes: 30
 
     steps:
       - name: Checkout
         uses: actions/checkout@v7
         with:
           fetch-depth: 0
+
+      - name: Set up .NET 10 SDK
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: "10.0.302"
+          cache: true
+          cache-dependency-path: "**/packages.lock.json"
 
       - name: Set up Python
         uses: actions/setup-python@v6
@@ -177,20 +184,21 @@ jobs:
         shell: powershell
         run: .\scripts\setup.ps1
 
-      - name: Build Windows executable
+      - name: Build .NET Agent and Desktop
         shell: powershell
         run: .\scripts\build.ps1
 
-      - name: Smoke-test executable lifecycle
+      - name: Smoke-test Agent/Desktop/SQLite lifecycle
         shell: powershell
         run: .\scripts\smoke.ps1
 
-      - name: Upload executable and build manifest
+      - name: Upload .NET product and build manifest
         uses: actions/upload-artifact@v4
         with:
           name: perf-monitor-${{ github.sha }}
           path: |
-            dist/perf-monitor.exe
+            dist/agent/**
+            dist/desktop/**
             dist/build-manifest.json
           if-no-files-found: error
           retention-days: 14
