@@ -386,8 +386,8 @@ public sealed record DiagnosticPolicy
                 value => !double.IsFinite(value) ||
                     value < 0 ||
                     value > TimeSpan.FromDays(7).TotalSeconds) ||
-                evidence <= 0 ||
-                maxGap <= 0))
+            evidence <= 0 ||
+            maxGap <= 0)
         {
             throw new InvalidDataException(
                 $"diagnostic_policy_timing_invalid:{name}");

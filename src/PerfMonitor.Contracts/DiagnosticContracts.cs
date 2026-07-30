@@ -48,6 +48,13 @@ public static class DiagnosticPolicyLimits
         TimeSpan.FromDays(366);
 }
 
+public static class DiagnosticReplayLimits
+{
+    public const int MaxSnapshots = 200_000;
+    public static readonly TimeSpan MaxRange =
+        TimeSpan.FromHours(48);
+}
+
 public sealed record DiagnosticHysteresisContract
 {
     public required string ActivateWhen { get; init; }

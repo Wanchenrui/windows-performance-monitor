@@ -199,6 +199,86 @@ public sealed class DiagnosticsTests
         }
     }
 
+    [TestMethod]
+    [Timeout(20000)]
+    public async Task SqliteSnapshotHistoryReplaysIdenticalEvents()
+    {
+        var directory = Path.Combine(
+            Path.GetTempPath(),
+            $"perf-monitor-diagnostic-replay-{Guid.NewGuid():N}");
+        var databasePath = Path.Combine(directory, "history.db");
+        try
+        {
+            var policy = OnlyHighCpu(
+                activateDebounceSeconds: 2,
+                recoverDebounceSeconds: 2,
+                cooldownSeconds: 10);
+            await using var store = new SqliteHistoryStore(
+                new SqliteHistoryOptions
+                {
+                    DatabasePath = databasePath,
+                });
+            await store.StartAsync(CancellationToken.None);
+            await using var engine = new DiagnosticEngine(
+                policy,
+                [store]);
+            engine.Start();
+            var origin = DateTimeOffset.Parse(
+                "2026-01-01T00:00:00Z",
+                System.Globalization.CultureInfo.InvariantCulture);
+            var snapshots = Enumerable.Range(0, 6)
+                .Select(second => CpuSnapshot(
+                    second + 1,
+                    origin.AddSeconds(second),
+                    second <= 2 ? 95 : 70))
+                .ToArray();
+            foreach (var snapshot in snapshots)
+            {
+                Assert.IsTrue(store.TryPublish(snapshot));
+                Assert.IsTrue(engine.TryPublish(snapshot));
+            }
+
+            await engine.WaitForIdleAsync(TimeSpan.FromSeconds(10));
+            await store.WaitForIdleAsync(TimeSpan.FromSeconds(10));
+            await store.WaitForDiagnosticsIdleAsync(
+                TimeSpan.FromSeconds(10));
+            var query = new DiagnosticQueryContract
+            {
+                FromEpochMs = origin.AddMinutes(-1)
+                    .ToUnixTimeMilliseconds(),
+                ToEpochMs = origin.AddMinutes(1)
+                    .ToUnixTimeMilliseconds(),
+                MaxEvents = 10,
+            };
+            var live = await engine.QueryDiagnosticsAsync(
+                query,
+                "response-instance",
+                CancellationToken.None);
+            var replayed = await DiagnosticReplay.ReplayAsync(
+                store.ReadSnapshotsForReplayAsync(
+                    query.FromEpochMs!.Value,
+                    query.ToEpochMs!.Value,
+                    maxSnapshots: 100,
+                    cancellationToken: CancellationToken.None),
+                policy);
+
+            Assert.AreEqual(
+                JsonSerializer.Serialize(
+                    live.Events,
+                    ContractJson.Options),
+                JsonSerializer.Serialize(
+                    replayed,
+                    ContractJson.Options));
+        }
+        finally
+        {
+            if (Directory.Exists(directory))
+            {
+                Directory.Delete(directory, recursive: true);
+            }
+        }
+    }
+
     private static DiagnosticPolicy OnlyHighCpu(
         double activateDebounceSeconds,
         double recoverDebounceSeconds,

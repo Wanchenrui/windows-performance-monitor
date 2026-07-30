@@ -23,6 +23,7 @@ public sealed class SqliteHistoryStore :
     IHistoryReader,
     IDiagnosticEventSink,
     IDiagnosticEventReader,
+    ISnapshotReplayReader,
     IAsyncDisposable
 {
     private static readonly JsonSerializerOptions SnapshotJsonOptions = new()
@@ -271,6 +272,88 @@ public sealed class SqliteHistoryStore :
             await Task.Delay(
                 TimeSpan.FromMilliseconds(10),
                 timeoutCancellation.Token).ConfigureAwait(false);
+        }
+    }
+
+    public async IAsyncEnumerable<AgentSnapshot>
+        ReadSnapshotsForReplayAsync(
+            long fromEpochMs,
+            long toEpochMs,
+            int maxSnapshots,
+            [System.Runtime.CompilerServices.EnumeratorCancellation]
+            CancellationToken cancellationToken)
+    {
+        if (fromEpochMs > toEpochMs ||
+            checked(toEpochMs - fromEpochMs + 1) >
+                DiagnosticReplayLimits.MaxRange.TotalMilliseconds)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(fromEpochMs),
+                "diagnostic_replay_range_invalid");
+        }
+
+        if (maxSnapshots <= 0 ||
+            maxSnapshots > DiagnosticReplayLimits.MaxSnapshots)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(maxSnapshots));
+        }
+
+        if (!File.Exists(_options.DatabasePath))
+        {
+            throw new StorageUnavailableException(
+                "sqlite_replay_unavailable");
+        }
+
+        await using var connection =
+            _database.CreateReadOnlyConnection();
+        await connection.OpenAsync(cancellationToken)
+            .ConfigureAwait(false);
+        await _database.ConfigureConnectionAsync(
+            connection,
+            writable: false,
+            cancellationToken).ConfigureAwait(false);
+        await using (var countCommand = connection.CreateCommand())
+        {
+            countCommand.CommandText = """
+                SELECT COUNT(*)
+                FROM snapshots_raw
+                WHERE sample_time_ms BETWEEN $from_ms AND $to_ms;
+                """;
+            countCommand.Parameters.AddWithValue(
+                "$from_ms",
+                fromEpochMs);
+            countCommand.Parameters.AddWithValue("$to_ms", toEpochMs);
+            var count = Convert.ToInt64(
+                await countCommand.ExecuteScalarAsync(
+                    cancellationToken).ConfigureAwait(false),
+                System.Globalization.CultureInfo.InvariantCulture);
+            if (count > maxSnapshots)
+            {
+                throw new InvalidDataException(
+                    "diagnostic_replay_snapshot_limit");
+            }
+        }
+
+        await using var command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT snapshot_json
+            FROM snapshots_raw
+            WHERE sample_time_ms BETWEEN $from_ms AND $to_ms
+            ORDER BY sample_time_ms, instance_id, sequence;
+            """;
+        command.Parameters.AddWithValue("$from_ms", fromEpochMs);
+        command.Parameters.AddWithValue("$to_ms", toEpochMs);
+        await using var reader = await command.ExecuteReaderAsync(
+            cancellationToken).ConfigureAwait(false);
+        while (await reader.ReadAsync(cancellationToken)
+            .ConfigureAwait(false))
+        {
+            yield return JsonSerializer.Deserialize<AgentSnapshot>(
+                    reader.GetString(0),
+                    SnapshotJsonOptions) ??
+                throw new InvalidDataException(
+                    "diagnostic_replay_snapshot_invalid");
         }
     }
 

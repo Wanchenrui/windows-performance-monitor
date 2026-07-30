@@ -33,6 +33,15 @@ public interface IDiagnosticEventReader
         CancellationToken cancellationToken);
 }
 
+public interface ISnapshotReplayReader
+{
+    IAsyncEnumerable<AgentSnapshot> ReadSnapshotsForReplayAsync(
+        long fromEpochMs,
+        long toEpochMs,
+        int maxSnapshots,
+        CancellationToken cancellationToken);
+}
+
 public sealed class SnapshotFanout
 {
     private readonly IReadOnlyList<ISnapshotConsumer> _consumers;
