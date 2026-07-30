@@ -48,7 +48,7 @@
       "perfmonitor.collectors.windows": {
         "type": "Project",
         "dependencies": {
-          "PerfMonitor.Core": "[0.5.0, )"
+          "PerfMonitor.Core": "[0.6.0, )"
         }
       },
       "perfmonitor.contracts": {
@@ -57,22 +57,22 @@
       "perfmonitor.core": {
         "type": "Project",
         "dependencies": {
-          "PerfMonitor.Contracts": "[0.5.0, )"
+          "PerfMonitor.Contracts": "[0.6.0, )"
         }
       },
       "perfmonitor.ipc.namedpipes": {
         "type": "Project",
         "dependencies": {
-          "PerfMonitor.Contracts": "[0.5.0, )",
-          "PerfMonitor.Core": "[0.5.0, )"
+          "PerfMonitor.Contracts": "[0.6.0, )",
+          "PerfMonitor.Core": "[0.6.0, )"
         }
       },
       "perfmonitor.storage.sqlite": {
         "type": "Project",
         "dependencies": {
           "Microsoft.Data.Sqlite.Core": "[10.0.10, )",
-          "PerfMonitor.Contracts": "[0.5.0, )",
-          "PerfMonitor.Core": "[0.5.0, )",
+          "PerfMonitor.Contracts": "[0.6.0, )",
+          "PerfMonitor.Core": "[0.6.0, )",
           "SQLitePCLRaw.bundle_e_sqlite3": "[3.0.5, )"
         }
       }

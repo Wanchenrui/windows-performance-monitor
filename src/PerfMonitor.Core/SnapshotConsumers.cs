@@ -20,6 +20,19 @@ public interface IHistoryReader
         CancellationToken cancellationToken);
 }
 
+public interface IDiagnosticEventSink
+{
+    bool TryPublishDiagnostic(DiagnosticEventContract diagnosticEvent);
+}
+
+public interface IDiagnosticEventReader
+{
+    ValueTask<DiagnosticsContract> QueryDiagnosticsAsync(
+        DiagnosticQueryContract query,
+        string responseInstanceId,
+        CancellationToken cancellationToken);
+}
+
 public sealed class SnapshotFanout
 {
     private readonly IReadOnlyList<ISnapshotConsumer> _consumers;
