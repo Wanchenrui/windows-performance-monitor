@@ -9,7 +9,7 @@ using PerfMonitor.Storage.Sqlite;
 namespace PerfMonitor.AgentTests;
 
 [TestClass]
-public sealed class DiagnosticsTests
+public sealed partial class DiagnosticsTests
 {
     [TestMethod]
     public void ReplayIsDeterministicAcrossHysteresisTransitions()
@@ -216,6 +216,7 @@ public sealed class DiagnosticsTests
                 new SqliteHistoryOptions
                 {
                     DatabasePath = databasePath,
+                    DiagnosticPolicy = policy,
                 });
             await store.StartAsync(CancellationToken.None);
             await using var engine = new DiagnosticEngine(
@@ -373,7 +374,7 @@ public sealed class DiagnosticsTests
 
     [TestMethod]
     [Timeout(20000)]
-    public async Task SchemaV1DiagnosticRowsAreArchivedDuringV2Migration()
+    public async Task SchemaV1DiagnosticRowsAreArchivedDuringCurrentMigration()
     {
         var directory = Path.Combine(
             Path.GetTempPath(),
@@ -396,6 +397,24 @@ public sealed class DiagnosticsTests
                     );
                     INSERT INTO schema_migrations
                     VALUES (1, '2026-01-01T00:00:00Z');
+                    CREATE TABLE snapshots_raw (
+                        instance_id TEXT NOT NULL,
+                        sequence INTEGER NOT NULL,
+                        sample_time_ms INTEGER NOT NULL,
+                        snapshot_json TEXT NOT NULL,
+                        PRIMARY KEY(instance_id, sequence)
+                    ) WITHOUT ROWID;
+                    CREATE INDEX ix_snapshots_raw_time ON snapshots_raw(sample_time_ms);
+                    CREATE TABLE metrics_raw (
+                        instance_id TEXT NOT NULL,
+                        sequence INTEGER NOT NULL,
+                        sample_time_ms INTEGER NOT NULL,
+                        metric_id TEXT NOT NULL,
+                        unit TEXT NOT NULL,
+                        value REAL NOT NULL,
+                        PRIMARY KEY(instance_id, sequence, metric_id)
+                    ) WITHOUT ROWID;
+                    CREATE INDEX ix_metrics_raw_metric_time ON metrics_raw(metric_id, sample_time_ms);
                     CREATE TABLE diagnostic_events (
                         event_id INTEGER PRIMARY KEY AUTOINCREMENT,
                         occurred_at_ms INTEGER NOT NULL,
@@ -438,7 +457,7 @@ public sealed class DiagnosticsTests
             await using var reader =
                 await verifyCommand.ExecuteReaderAsync();
             Assert.IsTrue(await reader.ReadAsync());
-            Assert.AreEqual(2L, reader.GetInt64(0));
+            Assert.AreEqual(3L, reader.GetInt64(0));
             Assert.AreEqual(1L, reader.GetInt64(1));
             Assert.AreEqual(0L, reader.GetInt64(2));
         }
@@ -610,6 +629,12 @@ public sealed class DiagnosticsTests
                         new JsonObject
                         {
                             ["name"] = "hotproc",
+                            ["identity"] = new JsonObject
+                            {
+                                ["pid"] = 42,
+                                ["creationTimeTicks"] = 1234L,
+                            },
+                            ["cpuReady"] = true,
                             ["metrics"] = new JsonObject
                             {
                                 [MetricIds.ProcessCpuNormalized] =
@@ -698,7 +723,17 @@ public sealed class DiagnosticsTests
                 AvailabilityStates.Available,
                 FreshnessStates.Fresh),
             new SnapshotRetention(3600, 86_400),
-            groups);
+            groups.ToDictionary(static entry => entry.Key, entry => entry.Value with
+            {
+                ObservationSequence = sequence,
+                ObservedElapsedSeconds = FixtureElapsedSeconds(time),
+            }, StringComparer.Ordinal))
+        {
+            ElapsedSeconds = FixtureElapsedSeconds(time),
+        };
+
+    private static double FixtureElapsedSeconds(DateTimeOffset time) =>
+        (time - new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero)).TotalSeconds;
 
     private sealed class RejectingDiagnosticSink :
         IDiagnosticEventSink

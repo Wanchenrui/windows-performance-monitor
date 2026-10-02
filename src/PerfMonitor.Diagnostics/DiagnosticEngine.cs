@@ -55,6 +55,7 @@ public sealed class DiagnosticEngine :
     private long _emittedEvents;
     private long _evaluationFailures;
     private long _sinkFailures;
+    private long _deliveryAttempts;
 
     public DiagnosticEngine(
         DiagnosticPolicy policy,
@@ -97,6 +98,16 @@ public sealed class DiagnosticEngine :
 
     public bool TryPublish(AgentSnapshot snapshot)
     {
+        if (snapshot.DeliverySequence is null)
+        {
+            // Direct callers have no shared fanout sequence. Every attempt,
+            // including a rejected one, still establishes an explicit gap.
+            snapshot = snapshot with
+            {
+                DeliverySequence = Interlocked.Increment(ref _deliveryAttempts),
+            };
+        }
+
         if (Volatile.Read(ref _started) == 0 ||
             !_channel.Writer.TryWrite(snapshot))
         {
@@ -148,14 +159,9 @@ public sealed class DiagnosticEngine :
 
         var filtered = snapshot
             .Where(item => validated.Matches(item))
-            .OrderByDescending(static item => item.LastSeenUtc)
-            .ThenByDescending(
-                static item => item.EventId,
-                StringComparer.Ordinal)
             .ToArray();
         var selected = filtered
-            .Take(validated.MaxEvents)
-            .Reverse()
+            .TakeLast(validated.MaxEvents)
             .ToArray();
         return ValueTask.FromResult(new DiagnosticsContract
         {

@@ -125,6 +125,7 @@ internal static class SqliteHistoryQuery
                     SELECT instance_id, sequence
                     FROM metrics_raw
                     WHERE sample_time_ms BETWEEN $from_ms AND $to_ms
+                      AND value IS NOT NULL
                       AND metric_id IN ({metricParameters})
                     GROUP BY instance_id, sequence
                 );
@@ -218,6 +219,7 @@ internal static class SqliteHistoryQuery
                         sequence
                     FROM metrics_raw
                     WHERE sample_time_ms BETWEEN $from_ms AND $to_ms
+                      AND value IS NOT NULL
                       AND metric_id IN ({metricParameters})
                 ),
                 ranked AS (

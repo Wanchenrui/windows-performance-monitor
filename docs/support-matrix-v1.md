@@ -18,7 +18,7 @@ LaunchCondition 阶段阻止。
 ## 发布证据
 
 `.github/workflows/support-matrix.yml` 只从受保护的 `main` 或
-`v1.0.0` 运行，并要求四个专用 self-hosted runner：
+`v1.1.0` 运行，并要求四个专用 self-hosted runner：
 
 | 目标 | Runner label | 强制主机身份 |
 |---|---|---|

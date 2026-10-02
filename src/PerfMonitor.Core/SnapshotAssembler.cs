@@ -1,4 +1,5 @@
 using System.Text.Json.Nodes;
+using System.Text.Json.Serialization;
 using PerfMonitor.Contracts;
 
 namespace PerfMonitor.Core;
@@ -18,7 +19,16 @@ public sealed record SnapshotGroup(
     string Freshness,
     ProviderCoverage Coverage,
     IReadOnlyList<ProviderError> Errors,
-    JsonNode? Data);
+    JsonNode? Data)
+{
+    // Both fields belong to the containing snapshot's Agent instance.
+    // A held value retains its original observation sequence and time.
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public long? ObservationSequence { get; init; }
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public double? ObservedElapsedSeconds { get; init; }
+}
 
 public sealed record AgentSnapshot(
     string ContractVersion,
@@ -31,7 +41,18 @@ public sealed record AgentSnapshot(
     double? DataAgeSeconds,
     SnapshotSummary Summary,
     SnapshotRetention Retention,
-    IReadOnlyDictionary<string, SnapshotGroup> Groups);
+    IReadOnlyDictionary<string, SnapshotGroup> Groups)
+{
+    // Monotonic seconds since this assembler was created. UTC is display
+    // metadata; it cannot establish age or a diagnostic duration.
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public double? ElapsedSeconds { get; init; }
+
+    // Assigned by SnapshotFanout for actual consumer deliveries. Provider
+    // update Sequence may legitimately jump between those deliveries.
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public long? DeliverySequence { get; init; }
+}
 
 public sealed class AtomicSnapshotCache
 {
@@ -53,12 +74,14 @@ public sealed class SnapshotAssembler : IProviderResultSink
     private readonly object _gate = new();
     private readonly TimeProvider _timeProvider;
     private readonly IReadOnlyDictionary<string, ProviderDescriptor> _descriptors;
-    private readonly Dictionary<string, ProviderResult> _latestResults =
+    private readonly Dictionary<string, ObservedResult> _latestResults =
         new(StringComparer.Ordinal);
     private readonly AtomicSnapshotCache _cache;
     private readonly string _instanceId;
+    private readonly long _originTimestamp;
     private long _sequence;
     private ProviderExecution? _latestExecution;
+    private double _latestExecutionElapsedSeconds;
 
     public SnapshotAssembler(
         IEnumerable<ProviderDescriptor> descriptors,
@@ -66,6 +89,7 @@ public sealed class SnapshotAssembler : IProviderResultSink
         string? instanceId = null)
     {
         _timeProvider = timeProvider ?? TimeProvider.System;
+        _originTimestamp = _timeProvider.GetTimestamp();
         _instanceId = instanceId ?? Guid.NewGuid().ToString("N");
         _descriptors = descriptors.ToDictionary(
             descriptor => descriptor.GroupId,
@@ -77,13 +101,13 @@ public sealed class SnapshotAssembler : IProviderResultSink
                 nameof(descriptors));
         }
 
-        _cache = new AtomicSnapshotCache(BuildSnapshot(_timeProvider.GetUtcNow()));
+        _cache = new AtomicSnapshotCache(BuildSnapshot(GetElapsedSeconds()));
     }
 
     public string InstanceId => _instanceId;
 
     public AgentSnapshot Read() =>
-        RefreshAgeAndFreshness(_cache.Read(), _timeProvider.GetUtcNow());
+        RefreshAgeAndFreshness(_cache.Read());
 
     public ValueTask PublishAsync(
         ProviderResult result,
@@ -107,19 +131,32 @@ public sealed class SnapshotAssembler : IProviderResultSink
                     $"Provider ID mismatch for group {result.GroupId}.");
             }
 
-            _latestResults[result.GroupId] = result with
-            {
-                Data = result.Data?.DeepClone(),
-            };
-            _latestExecution = execution;
+            var elapsedSeconds = GetElapsedSeconds();
             _sequence++;
-            _cache.Publish(BuildSnapshot(execution.CompletedAtUtc));
+            // Current schedulers provide exact local collection timestamps.
+            // Duration remains a compatible fallback for synthetic callers.
+            var durationSeconds = double.IsFinite(execution.DurationMilliseconds)
+                ? Math.Max(0, execution.DurationMilliseconds / 1000)
+                : 0;
+            _latestResults[result.GroupId] = new ObservedResult(
+                result with { Data = result.Data?.DeepClone() },
+                result.ObservedAtUtc is null
+                    ? null
+                    : execution.StartedTimestamp is { } started
+                        ? ElapsedSecondsAt(started)
+                        : Math.Max(0, elapsedSeconds - durationSeconds),
+                _sequence);
+            _latestExecution = execution;
+            _latestExecutionElapsedSeconds = execution.CompletedTimestamp is { } completed
+                ? ElapsedSecondsAt(completed)
+                : elapsedSeconds;
+            _cache.Publish(BuildSnapshot(elapsedSeconds));
         }
 
         return ValueTask.CompletedTask;
     }
 
-    private AgentSnapshot BuildSnapshot(DateTimeOffset now)
+    private AgentSnapshot BuildSnapshot(double elapsedSeconds)
     {
         var groups = new Dictionary<string, SnapshotGroup>(
             StringComparer.Ordinal);
@@ -132,7 +169,7 @@ public sealed class SnapshotAssembler : IProviderResultSink
                 groups[descriptor.GroupId] = BuildGroup(
                     descriptor,
                     result,
-                    now);
+                    elapsedSeconds);
             }
             else
             {
@@ -151,7 +188,7 @@ public sealed class SnapshotAssembler : IProviderResultSink
         {
             groups[GroupIds.Sampler] = BuildSamplerGroup(
                 _latestExecution,
-                now);
+                elapsedSeconds);
         }
         else
         {
@@ -167,13 +204,11 @@ public sealed class SnapshotAssembler : IProviderResultSink
 
         var summary = Summarize(groups.Values);
         var observed = groups.Values
-            .Where(group => group.ObservedAtUtc is not null)
-            .Select(group => group.ObservedAtUtc!.Value)
-            .DefaultIfEmpty()
+            .Select(group => group.ObservedElapsedSeconds)
             .Max();
-        double? dataAge = observed == default
+        double? dataAge = observed is null
             ? null
-            : Math.Max(0, (now - observed).TotalSeconds);
+            : Math.Max(0, elapsedSeconds - observed.Value);
 
         return new AgentSnapshot(
             ContractVersions.V1,
@@ -186,18 +221,22 @@ public sealed class SnapshotAssembler : IProviderResultSink
             dataAge,
             summary,
             new SnapshotRetention(3600, 86_400),
-            groups);
+            groups)
+        {
+            ElapsedSeconds = elapsedSeconds,
+        };
     }
 
     private SnapshotGroup BuildGroup(
         ProviderDescriptor descriptor,
-        ProviderResult result,
-        DateTimeOffset now)
+        ObservedResult observed,
+        double elapsedSeconds)
     {
-        var freshness = result.ObservedAtUtc is null
+        var result = observed.Result;
+        var freshness = observed.ElapsedSeconds is null
             ? FreshnessStates.WarmingUp
-            : now - result.ObservedAtUtc.Value >
-                TimeSpan.FromTicks(descriptor.DefaultPeriod.Ticks * 3)
+            : elapsedSeconds - observed.ElapsedSeconds.Value >
+                descriptor.DefaultPeriod.TotalSeconds * 3
                 ? FreshnessStates.Stale
                 : FreshnessStates.Fresh;
         return new SnapshotGroup(
@@ -207,12 +246,16 @@ public sealed class SnapshotAssembler : IProviderResultSink
             freshness,
             result.Coverage,
             result.Errors,
-            result.Data?.DeepClone());
+            result.Data?.DeepClone())
+        {
+            ObservationSequence = observed.Sequence,
+            ObservedElapsedSeconds = observed.ElapsedSeconds,
+        };
     }
 
-    private static SnapshotGroup BuildSamplerGroup(
+    private SnapshotGroup BuildSamplerGroup(
         ProviderExecution execution,
-        DateTimeOffset now)
+        double elapsedSeconds)
     {
         var data = new JsonObject
         {
@@ -240,9 +283,8 @@ public sealed class SnapshotAssembler : IProviderResultSink
                     SourceIds.Scheduler),
             },
         };
-        var stale = now - execution.CompletedAtUtc >
-            TimeSpan.FromTicks(
-                execution.Descriptor.DefaultPeriod.Ticks * 3);
+        var stale = elapsedSeconds - _latestExecutionElapsedSeconds >
+            execution.Descriptor.DefaultPeriod.TotalSeconds * 3;
         return new SnapshotGroup(
             ProviderIds.Sampler,
             execution.CompletedAtUtc,
@@ -250,7 +292,11 @@ public sealed class SnapshotAssembler : IProviderResultSink
             stale ? FreshnessStates.Stale : FreshnessStates.Fresh,
             ProviderCoverage.Complete,
             [],
-            data);
+            data)
+        {
+            ObservationSequence = _sequence,
+            ObservedElapsedSeconds = _latestExecutionElapsedSeconds,
+        };
     }
 
     private static SnapshotSummary Summarize(
@@ -275,8 +321,7 @@ public sealed class SnapshotAssembler : IProviderResultSink
     }
 
     private AgentSnapshot RefreshAgeAndFreshness(
-        AgentSnapshot snapshot,
-        DateTimeOffset now)
+        AgentSnapshot snapshot)
     {
         lock (_gate)
         {
@@ -285,11 +330,26 @@ public sealed class SnapshotAssembler : IProviderResultSink
                 snapshot = _cache.Read();
             }
 
-            var refreshed = BuildSnapshot(now);
+            // Capture time after acquiring the gate: otherwise a concurrent
+            // publication could have a later observation than this envelope.
+            var refreshed = BuildSnapshot(GetElapsedSeconds());
             return refreshed with
             {
                 Sequence = snapshot.Sequence,
             };
         }
     }
+
+    private double GetElapsedSeconds() => ElapsedSecondsAt(_timeProvider.GetTimestamp());
+
+    private double ElapsedSecondsAt(long timestamp) => Math.Max(
+        0,
+        _timeProvider.GetElapsedTime(
+            _originTimestamp,
+            timestamp).TotalSeconds);
+
+    private sealed record ObservedResult(
+        ProviderResult Result,
+        double? ElapsedSeconds,
+        long Sequence);
 }

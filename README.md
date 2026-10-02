@@ -1,6 +1,6 @@
 # 电脑性能监控
 
-当前开发候选版本为 `1.0.0`。产品运行路径为按用户运行的
+当前开发候选版本为 `1.1.0`。产品运行路径为按用户运行的
 `.NET 10 PerfMonitor.Agent`、独立 WPF Desktop、受保护 Named Pipe IPC
 和 SQLite 历史库，并包含只读确定性诊断、稳定 Windows 指标及隔离硬件
 Worker；可选 LocalSystem Broker 只承载显式启用的白名单特权动作。v1.0
@@ -9,9 +9,16 @@ Worker；可选 LocalSystem Broker 只承载显式启用的白名单特权动作
 保留为指标口径 oracle、golden
 fixture 生成器和差分基线，但不再作为默认或发布版高频 Agent。
 
-`1.0.0` 源码版本不等于生产发布已获准：真实 72 小时墙钟证据、完整支持
+`1.1.0` 源码版本不等于生产发布已获准：真实 72 小时墙钟证据、完整支持
 矩阵、GitHub 精确 run/attestation 以及受信任生产证书必须全部通过，才能
 把候选标记为 production。临时自签证书生成的产物始终是 test candidate。
+
+本轮新增紧凑桌面 HUD、资源趋势和进程抽屉，以及托盘驻留和
+`Ctrl+Alt+P` 显隐入口；存储升级到 schema v3，诊断采用单调时间和逻辑
+观测顺序。版本变更、兼容性与新产物验证交接见
+[1.1.0 开发检查点](docs/development/2026-10-02-v1.1.0-checkpoint.md)。
+[升号前开发验收记录](docs/development/2026-10-02-validation.md) 只绑定
+其中列出的 `1.0.0` 工作树产物；其截图结论仅覆盖 125% 缩放下所列窗口状态。
 
 ## v1.0 架构边界
 
@@ -100,7 +107,7 @@ debounce、cooldown、有界证据窗、`firstSeen/lastSeen` 和 confidence。
 | 规则策略 | 持久化配置 | `diagnostic-policy-v1.json` |
 | debounce/cooldown/活动状态 | RAM | 每规则/主体一个有限状态机 |
 | 最近事件 | RAM | 最多 2,000 条 |
-| 历史事件 | SQLite schema v2 | 最多查询 2,000 条、366 天 |
+| 历史事件 | SQLite schema v3 | 最多查询 2,000 条、366 天 |
 
 策略文件损坏或不可写时只把诊断策略降级为 RAM 默认值并输出稳定警告码，
 不停止 Provider、IPC 或实时快照。配置进程规则默认 watchlist 为空，策略
@@ -190,9 +197,29 @@ SQLite 使用单写者、批量事务、WAL、`synchronous=NORMAL`、1 秒
 `busy_timeout`，读写连接分离。启动时执行 `integrity_check(1)`、被动 WAL
 checkpoint 和显式 schema migration。
 
-schema v2 复用同一个 writer channel 写诊断事件，不创建第二个 SQLite
-writer。v1 预留事件表会保存在 `diagnostic_events_v1` 归档表中；迁移不
-静默删除旧数据库。
+schema v3 沿用同一个 writer channel。默认不保存完整快照：`snapshots_raw`
+保存版本化规则回放投影，仅含历史白名单标量、系统卷利用率、所有组的质量
+与观测身份，以及显式 watchlist 的名称 CPU 最大值和实例集合哈希。默认
+watchlist 为空，进程明细、PID、创建时间、路径、硬件 devices/sensors 明细
+均不入库。诊断执行仍在 Diagnostics，存储只调用其共享输入投影入口。
+
+标量使用 Provider 原始观测时间，按实例、组、指标与观测身份去重；不可用、
+预热和陈旧值保留质量而不参加数值统计，缺测不补 0。队列数量上限 256、
+批数量上限 64，同时限制每投影 64 KiB、每事件 128 KiB、待写载荷 8 MiB、
+每批 1 MiB；健康计数提供当前/峰值载荷字节及字节限制丢弃数。这些是 UTF-8 序列化
+载荷预算，不包含托管对象、SQLite 页、索引、WAL 或备份的额外开销。
+
+升级前验证并备份原库，所有跨版本迁移步骤在同一事务内提交，成功后再启用 WAL；
+失败保留原 schema 和 journal mode。旧标量/事件保留可查，
+旧 raw 行及迁移备份可能仍含旧版完整明细，按原保留策略或显式删除处理。
+缺少单调时间的旧数据拒绝诊断回放（`diagnostic_replay_time_unavailable`）。
+回放按数据库接收顺序，不按可能跳变的 UTC 排序；投影策略指纹不匹配时拒绝
+回放，不能把缺失的规则输入判断为正常。未来 schema 以只读预检拒绝写入。
+
+回放帧按实际交付序号 `deliverySequence` 保存，同一 Provider 观测的多次交付
+保留质量变化，标量仍按组观测身份去重。事件查询以接收顺序截取；当前状态
+只依据当前实例的 `observationSequence`，UTC 回拨不把已恢复事件显示成活动。
+旧事件缺少顺序时只作历史证据，截断结果不宣称当前状态完整。
 
 默认保留策略：
 
@@ -324,7 +351,7 @@ Python oracle/测试环境同样只允许 Windows x64 CPython 3.12：
 
 - `test`：为单次运行创建短期自签证书，验证 EXE/MSI/CMS 签名、篡改检测、
   安装/升级/降级/卸载和来源证明机制；产物不可作为正式发布。
-- `production`：只允许从 `main` 或 `v1.0.0` 运行，要求仓库 Secrets 中的
+- `production`：只允许从 `main` 或 `v1.1.0` 运行，要求仓库 Secrets 中的
   真实 PFX、密码、证书主体、SHA-256 指纹和 HTTPS RFC 3161 时间戳 URL；
   自签、主体/指纹不匹配、缺时间戳、dirty source 或非 HTTPS 更新地址均
   fail closed。
@@ -349,7 +376,7 @@ Server Core 冒充 Desktop Experience 都不能得到
 许可接受。通过后会生成：
 
 ```text
-dist/installer/PerfMonitor-1.0.0-win-x64.msi
+dist/installer/PerfMonitor-1.1.0-win-x64.msi
 dist/release/PerfMonitor-sbom.cdx.json
 dist/release/update-manifest-v1.json
 dist/release/update-manifest-v1.json.p7s
@@ -389,8 +416,8 @@ installer/PerfMonitor.Installer/    per-machine x64 MSI 与可选 Broker Feature
 
 ## 回退与已知风险
 
-- v1.0 不改变 v0.7.2 的用户历史 SQLite schema。受控回退时先导出诊断、
-  停止 Agent/Broker、卸载 v1.0，再安装上一份已验证签名的 MSI；默认保留
+- 本次存储升级采用用户历史 SQLite schema v3。受控回退时先导出诊断、
+  停止 Agent/Broker、卸载当前候选，再安装上一份已验证签名的 MSI；默认保留
   LocalAppData 历史和 ProgramData 审计。若未来 migration 已写入新 schema，
   只有管理员明确接受丢弃升级后写入时，才可恢复已验证的 pre-migration
   backup。

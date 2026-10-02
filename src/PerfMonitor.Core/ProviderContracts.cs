@@ -97,7 +97,16 @@ public sealed record ProviderExecution(
     double DurationMilliseconds,
     double JitterMilliseconds,
     long MissedIntervalsTotal,
-    long SkippedBusyIntervalsTotal);
+    long SkippedBusyIntervalsTotal)
+{
+    // Local clock ticks never leave this process. SnapshotAssembler maps them
+    // to the containing Agent instance's portable elapsed-seconds timeline.
+    [JsonIgnore]
+    public long? StartedTimestamp { get; init; }
+
+    [JsonIgnore]
+    public long? CompletedTimestamp { get; init; }
+}
 
 public interface IMetricProvider
 {

@@ -1,0 +1,58 @@
+{
+  "host": "STA LayoutHost; actual MainWindow from bound Release assembly; not DesktopProgram/exe",
+  "shellIntegration": "not registered; explicitly labelled integration host",
+  "uiCommands": "production SelectResource/OpenPanel methods called on Dispatcher; no UIA, click/key injection or synthetic snapshot",
+  "desktopAssembly": "D:\\GitHub\\windows-performance-monitor\\artifacts\\validation\\ui-screenshots\\layout-host\\bin\\Release\\net10.0-windows10.0.17763.0\\win-x64\\perf-monitor-desktop.dll",
+  "desktopAssemblySha256": "6A7285EA01480E475F59F5097B78E996A8B4C0E97A35F31C0C44CFA972BB1BA4",
+  "captures": [
+    {
+      "phase": "host-01-compact",
+      "path": "D:\\GitHub\\windows-performance-monitor\\artifacts\\validation\\ui-screenshots\\final-hud-layout\\host-01-compact.png",
+      "pngSha256": "4FC39A981B2757EF7D1BC46573F2E1863AE92C414E115D2C3058447297049BB3",
+      "capturedUtc": "2026-10-02T12:16:21.5704182+00:00",
+      "pid": 39432,
+      "hwnd": 856544,
+      "dpi": 120,
+      "windowWidthDip": 760,
+      "windowHeightDip": 200,
+      "widthPixels": 950,
+      "heightPixels": 250,
+      "privateBytes": 108191744,
+      "workingSetBytes": 152842240,
+      "cpuMilliseconds": 1828.125
+    },
+    {
+      "phase": "host-02-network-trend",
+      "path": "D:\\GitHub\\windows-performance-monitor\\artifacts\\validation\\ui-screenshots\\final-hud-layout\\host-02-network-trend.png",
+      "pngSha256": "88B363F46679594FF4714A3464FC9DE02A48A36835E418E639EA7E7F4B986163",
+      "capturedUtc": "2026-10-02T12:16:21.9602204+00:00",
+      "pid": 39432,
+      "hwnd": 856544,
+      "dpi": 120,
+      "windowWidthDip": 1000,
+      "windowHeightDip": 680,
+      "widthPixels": 1250,
+      "heightPixels": 850,
+      "privateBytes": 143953920,
+      "workingSetBytes": 161886208,
+      "cpuMilliseconds": 2015.625
+    },
+    {
+      "phase": "host-03-process-drawer",
+      "path": "D:\\GitHub\\windows-performance-monitor\\artifacts\\validation\\ui-screenshots\\final-hud-layout\\host-03-process-drawer.png",
+      "pngSha256": "153AD17DD020EA2EFC734971D9835D8A969B6833C48190420F9E76545FE44AC7",
+      "capturedUtc": "2026-10-02T12:16:22.3110798+00:00",
+      "pid": 39432,
+      "hwnd": 856544,
+      "dpi": 120,
+      "windowWidthDip": 1000,
+      "windowHeightDip": 680,
+      "widthPixels": 1250,
+      "heightPixels": 850,
+      "privateBytes": 148754432,
+      "workingSetBytes": 162951168,
+      "cpuMilliseconds": 2156.25
+    }
+  ],
+  "exitCode": 0
+}

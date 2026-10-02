@@ -1,0 +1,10 @@
+Final package-lock audit vs HEAD (resolved NuGet package ID/version/contentHash).
+ChangedLockFiles=5
+[src/PerfMonitor.Agent/packages.lock.json] baselinePackages=6 currentPackages=6 added=0 removed=0 versionOrHashChanged=0
+[src/PerfMonitor.Storage.Sqlite/packages.lock.json] baselinePackages=6 currentPackages=6 added=0 removed=0 versionOrHashChanged=0
+[src/PerfMonitor.Support/packages.lock.json] baselinePackages=6 currentPackages=6 added=0 removed=0 versionOrHashChanged=0
+[tests/PerfMonitor.AgentTests/packages.lock.json] baselinePackages=22 currentPackages=19 added=0 removed=3 versionOrHashChanged=0
+  removed: System.Collections.Immutable, System.Diagnostics.DiagnosticSource, System.Reflection.Metadata
+[tests/PerfMonitor.ReleaseTests/packages.lock.json] baselinePackages=22 currentPackages=19 added=0 removed=3 versionOrHashChanged=0
+  removed: System.Collections.Immutable, System.Diagnostics.DiagnosticSource, System.Reflection.Metadata
+Conclusion: No new third-party package IDs and no resolved third-party version/contentHash drift. All changes are project-reference/target-graph topology; the two test lockfiles drop System.Collections.Immutable, System.Diagnostics.DiagnosticSource, and System.Reflection.Metadata as no longer reachable for the updated target graph.

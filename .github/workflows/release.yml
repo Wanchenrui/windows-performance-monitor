@@ -18,7 +18,7 @@ on:
       installer_url:
         description: Final MSI URL; production requires HTTPS.
         required: true
-        default: artifact://PerfMonitor-1.0.0-win-x64.msi
+        default: artifact://PerfMonitor-1.1.0-win-x64.msi
         type: string
       sbom_url:
         description: Final CycloneDX SBOM URL; production requires HTTPS.
@@ -76,10 +76,10 @@ jobs:
           if ($env:RELEASE_MODE -eq "production") {
             $AllowedRef = (
               $env:GITHUB_REF -ceq "refs/heads/main" -or
-              $env:GITHUB_REF -ceq "refs/tags/v1.0.0"
+              $env:GITHUB_REF -ceq "refs/tags/v1.1.0"
             )
             if (-not $AllowedRef) {
-              throw "Production candidates may run only from main or v1.0.0."
+              throw "Production candidates may run only from main or v1.1.0."
             }
             foreach ($Name in @(
               "PRODUCTION_SIGN_SUBJECT",

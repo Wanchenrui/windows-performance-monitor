@@ -35,10 +35,7 @@
       "Microsoft.ApplicationInsights": {
         "type": "Transitive",
         "resolved": "2.23.0",
-        "contentHash": "nWArUZTdU7iqZLycLKWe0TDms48KKGE6pONH2terYNa8REXiqixrMOkf1sk5DHGMaUTqONU2YkS4SAXBhLStgw==",
-        "dependencies": {
-          "System.Diagnostics.DiagnosticSource": "5.0.0"
-        }
+        "contentHash": "nWArUZTdU7iqZLycLKWe0TDms48KKGE6pONH2terYNa8REXiqixrMOkf1sk5DHGMaUTqONU2YkS4SAXBhLStgw=="
       },
       "Microsoft.CodeCoverage": {
         "type": "Transitive",
@@ -97,10 +94,7 @@
       "Microsoft.TestPlatform.ObjectModel": {
         "type": "Transitive",
         "resolved": "18.8.1",
-        "contentHash": "qLbktNB1+b1XZLNJBTzaWVVJAd6PEzD7cgD406geMb6PcFZhp3EDNa1tctWx1+mtMU6MP/6ozVvFPC9vs2a9rw==",
-        "dependencies": {
-          "System.Reflection.Metadata": "8.0.0"
-        }
+        "contentHash": "qLbktNB1+b1XZLNJBTzaWVVJAd6PEzD7cgD406geMb6PcFZhp3EDNa1tctWx1+mtMU6MP/6ozVvFPC9vs2a9rw=="
       },
       "Microsoft.TestPlatform.TestHost": {
         "type": "Transitive",
@@ -150,74 +144,56 @@
           "SQLitePCLRaw.core": "3.0.5"
         }
       },
-      "System.Collections.Immutable": {
-        "type": "Transitive",
-        "resolved": "8.0.0",
-        "contentHash": "AurL6Y5BA1WotzlEvVaIDpqzpIPvYnnldxru8oXJU2yFxFUy3+pNXjXd1ymO+RA0rq0+590Q8gaz2l3Sr7fmqg=="
-      },
-      "System.Diagnostics.DiagnosticSource": {
-        "type": "Transitive",
-        "resolved": "5.0.0",
-        "contentHash": "tCQTzPsGZh/A9LhhA6zrqCRV4hOHsK90/G7q3Khxmn6tnB1PuNU0cRaKANP2AWcF9bn0zsuOoZOSrHuJk6oNBA=="
-      },
-      "System.Reflection.Metadata": {
-        "type": "Transitive",
-        "resolved": "8.0.0",
-        "contentHash": "ptvgrFh7PvWI8bcVqG5rsA/weWM09EnthFHR5SCnS6IN+P4mj6rE1lBDC4U8HL9/57htKAqy4KQ3bBj84cfYyQ==",
-        "dependencies": {
-          "System.Collections.Immutable": "8.0.0"
-        }
-      },
       "perf-monitor-agent": {
         "type": "Project",
         "dependencies": {
-          "PerfMonitor.Actions": "[0.7.2, )",
-          "PerfMonitor.Broker.Client": "[0.7.2, )",
-          "PerfMonitor.Collectors.Windows": "[0.7.2, )",
-          "PerfMonitor.Collectors.Worker": "[0.7.2, )",
-          "PerfMonitor.Core": "[0.7.2, )",
-          "PerfMonitor.Diagnostics": "[0.7.2, )",
-          "PerfMonitor.Ipc.NamedPipes": "[0.7.2, )",
-          "PerfMonitor.Storage.Sqlite": "[0.7.2, )"
+          "PerfMonitor.Actions": "[1.0.0, )",
+          "PerfMonitor.Broker.Client": "[1.0.0, )",
+          "PerfMonitor.Collectors.Windows": "[1.0.0, )",
+          "PerfMonitor.Collectors.Worker": "[1.0.0, )",
+          "PerfMonitor.Core": "[1.0.0, )",
+          "PerfMonitor.Diagnostics": "[1.0.0, )",
+          "PerfMonitor.Ipc.NamedPipes": "[1.0.0, )",
+          "PerfMonitor.Storage.Sqlite": "[1.0.0, )"
         }
       },
       "perf-monitor-desktop": {
         "type": "Project",
         "dependencies": {
-          "PerfMonitor.Contracts": "[0.7.2, )",
-          "PerfMonitor.Core": "[0.7.2, )",
-          "PerfMonitor.Ipc.NamedPipes": "[0.7.2, )"
+          "PerfMonitor.Contracts": "[1.0.0, )",
+          "PerfMonitor.Core": "[1.0.0, )",
+          "PerfMonitor.Ipc.NamedPipes": "[1.0.0, )"
         }
       },
       "perfmonitor.actions": {
         "type": "Project",
         "dependencies": {
-          "PerfMonitor.Contracts": "[0.7.2, )"
+          "PerfMonitor.Contracts": "[1.0.0, )"
         }
       },
       "perfmonitor.broker.client": {
         "type": "Project",
         "dependencies": {
-          "PerfMonitor.Broker.Protocol": "[0.7.2, )"
+          "PerfMonitor.Broker.Protocol": "[1.0.0, )"
         }
       },
       "perfmonitor.broker.protocol": {
         "type": "Project",
         "dependencies": {
-          "PerfMonitor.Contracts": "[0.7.2, )"
+          "PerfMonitor.Contracts": "[1.0.0, )"
         }
       },
       "perfmonitor.collectors.windows": {
         "type": "Project",
         "dependencies": {
-          "PerfMonitor.Core": "[0.7.2, )"
+          "PerfMonitor.Core": "[1.0.0, )"
         }
       },
       "perfmonitor.collectors.worker": {
         "type": "Project",
         "dependencies": {
-          "PerfMonitor.Core": "[0.7.2, )",
-          "PerfMonitor.ProviderWorker.Protocol": "[0.7.2, )"
+          "PerfMonitor.Core": "[1.0.0, )",
+          "PerfMonitor.ProviderWorker.Protocol": "[1.0.0, )"
         }
       },
       "perfmonitor.contracts": {
@@ -226,21 +202,21 @@
       "perfmonitor.core": {
         "type": "Project",
         "dependencies": {
-          "PerfMonitor.Contracts": "[0.7.2, )"
+          "PerfMonitor.Contracts": "[1.0.0, )"
         }
       },
       "perfmonitor.diagnostics": {
         "type": "Project",
         "dependencies": {
-          "PerfMonitor.Contracts": "[0.7.2, )",
-          "PerfMonitor.Core": "[0.7.2, )"
+          "PerfMonitor.Contracts": "[1.0.0, )",
+          "PerfMonitor.Core": "[1.0.0, )"
         }
       },
       "perfmonitor.ipc.namedpipes": {
         "type": "Project",
         "dependencies": {
-          "PerfMonitor.Contracts": "[0.7.2, )",
-          "PerfMonitor.Core": "[0.7.2, )"
+          "PerfMonitor.Contracts": "[1.0.0, )",
+          "PerfMonitor.Core": "[1.0.0, )"
         }
       },
       "perfmonitor.providerworker.protocol": {
@@ -250,8 +226,9 @@
         "type": "Project",
         "dependencies": {
           "Microsoft.Data.Sqlite.Core": "[10.0.10, )",
-          "PerfMonitor.Contracts": "[0.7.2, )",
-          "PerfMonitor.Core": "[0.7.2, )",
+          "PerfMonitor.Contracts": "[1.0.0, )",
+          "PerfMonitor.Core": "[1.0.0, )",
+          "PerfMonitor.Diagnostics": "[1.0.0, )",
           "SQLitePCLRaw.bundle_e_sqlite3": "[3.0.5, )"
         }
       }

@@ -32,11 +32,11 @@ jobs:
         run: |
           if (
             $env:GITHUB_REF -cne "refs/heads/main" -and
-            $env:GITHUB_REF -cne "refs/tags/v1.0.0"
+            $env:GITHUB_REF -cne "refs/tags/v1.1.0"
           ) {
             throw (
               "Support-matrix evidence may be generated only from " +
-              "main or v1.0.0."
+              "main or v1.1.0."
             )
           }
           if ($env:WIX_EULA_ID -cne "wix7") {
@@ -406,7 +406,7 @@ jobs:
             Out-Host
           .\scripts\test_support_matrix_evidence.ps1 `
             -EvidencePath $OutputPath `
-            -ExpectedProductVersion 1.0.0 `
+            -ExpectedProductVersion 1.1.0 `
             -ExpectedGitCommit $env:GITHUB_SHA |
             Set-Content `
               -LiteralPath (

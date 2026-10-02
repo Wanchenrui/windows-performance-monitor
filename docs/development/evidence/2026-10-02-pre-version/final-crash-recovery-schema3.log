@@ -1,0 +1,33 @@
+command: scripts/test_crash_recovery.ps1 -AgentPath D:\GitHub\windows-performance-monitor\src\PerfMonitor.Agent\bin\Release\net10.0-windows10.0.17763.0\win-x64\perf-monitor-agent.exe -SupportPath D:\GitHub\windows-performance-monitor\src\PerfMonitor.Support\bin\Release\net10.0-windows10.0.17763.0\win-x64\perf-monitor-support.exe
+agentSha256=1485AB64B79360AE9D6D9181A04E6F9E99F878A2BE746F1758B2C6BD8099F51A
+supportSha256=577DA8FF5E0E097E4481FCFE7876806C2169B423DC01C7C7B9B740F274A28DEF
+
+
+exit_code=
+attempt1_wrapper_error: current shell PSHOME has no powershell.exe; test was not launched. Retrying with Windows PowerShell 5.1 at C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe.
+crash_recovery_agent_exited_early:-2147450730
+At D:\GitHub\windows-performance-monitor\scripts\test_crash_recovery.ps1:115 char:13
++             throw (
++             ~~~~~~~
+    + CategoryInfo          : OperationStopped: (crash_recovery_...rly:-2147450730:String) [], RuntimeException
+    + FullyQualifiedErrorId : crash_recovery_agent_exited_early:-2147450730
+ 
+
+exit_code=1
+retry_with_local_runtime: DOTNET_ROOT=C:\Users\Administrator\AppData\Local\PerfMonitor\dotnet-sdk-10.0.302, DOTNET_ROOT_X64=C:\Users\Administrator\AppData\Local\PerfMonitor\dotnet-sdk-10.0.302; Agent and Support hashes unchanged.
+{
+    "schemaVersion":  "1.0",
+    "productVersion":  "1.0.0",
+    "databaseSchemaVersion":  3,
+    "agentSha256":  "1485AB64B79360AE9D6D9181A04E6F9E99F878A2BE746F1758B2C6BD8099F51A",
+    "supportSha256":  "577DA8FF5E0E097E4481FCFE7876806C2169B423DC01C7C7B9B740F274A28DEF",
+    "passed":  true,
+    "walObservedBeforeTermination":  true,
+    "integrityPassedAfterTermination":  true,
+    "integrityPassedAfterRestart":  true,
+    "committedSnapshotCountBeforeRestart":  5,
+    "snapshotCountAfterRestart":  52,
+    "instanceChanged":  true
+}
+
+exit_code=0

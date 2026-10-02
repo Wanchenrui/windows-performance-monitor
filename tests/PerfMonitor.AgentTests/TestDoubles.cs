@@ -78,6 +78,8 @@ internal sealed class ManualTimeProvider : TimeProvider
 
     public override long GetTimestamp() => _timestamp;
 
+    public void SetUtcNow(DateTimeOffset utcNow) => _utcNow = utcNow;
+
     public void Advance(TimeSpan duration)
     {
         _utcNow += duration;

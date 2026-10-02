@@ -68,7 +68,7 @@ else {
 if (
     $Manifest.schemaVersion -ne "1.0" -or
     $Manifest.product -ne "PerfMonitor" -or
-    [int]$Manifest.databaseSchemaVersion -ne 2 -or
+    [int]$Manifest.databaseSchemaVersion -ne 3 -or
     $Manifest.channel -cne $ExpectedChannel -or
     $Manifest.signer.mode -ne $AllowedMode -or
     $Manifest.signer.subject -cne $ExpectedSubject -or

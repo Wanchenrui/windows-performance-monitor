@@ -417,7 +417,7 @@ $AgentHash = Get-PerfMonitorSha256 -Path $AgentPath
 $SupportHash = Get-PerfMonitorSha256 -Path $SupportPath
 if (
     $CrashRecovery.schemaVersion -cne "1.0" -or
-    [int]$CrashRecovery.databaseSchemaVersion -ne 2 -or
+    [int]$CrashRecovery.databaseSchemaVersion -ne 3 -or
     $CrashRecovery.agentSha256 -cne $AgentHash -or
     $CrashRecovery.supportSha256 -cne $SupportHash
 ) {

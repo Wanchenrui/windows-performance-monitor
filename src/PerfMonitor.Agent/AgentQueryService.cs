@@ -123,17 +123,24 @@ internal sealed class AgentQueryService : IAgentIpcService
             // is unavailable. No action endpoint is exposed.
         }
 
-        var candidates = recent.Events
-            .Concat(persisted?.Events ?? [])
+        var merged = (persisted?.Events ?? [])
+            .Concat(recent.Events)
             .GroupBy(
                 static item => item.EventId,
                 StringComparer.Ordinal)
             .Select(static group => group.First())
-            .OrderByDescending(static item => item.LastSeenUtc)
-            .ThenByDescending(
-                static item => item.EventId,
-                StringComparer.Ordinal)
             .ToArray();
+        // Sources return reception order. Observation sequence is comparable
+        // only within one Agent epoch; never rank a resolved event by UTC.
+        var epochs = merged.Select((item, index) => (item.InstanceId, index))
+            .GroupBy(item => item.InstanceId, StringComparer.Ordinal)
+            .ToDictionary(group => group.Key, group => group.Max(item => item.index), StringComparer.Ordinal);
+        var candidates = merged.Select((item, index) => (item, index))
+            .OrderByDescending(entry => entry.item.InstanceId == InstanceId)
+            .ThenByDescending(entry => epochs[entry.item.InstanceId])
+            .ThenByDescending(entry => entry.item.ObservationSequence ?? 0)
+            .ThenByDescending(entry => entry.index)
+            .Select(entry => entry.item).ToArray();
         var selected = candidates
             .Take(query.MaxEvents)
             .Reverse()

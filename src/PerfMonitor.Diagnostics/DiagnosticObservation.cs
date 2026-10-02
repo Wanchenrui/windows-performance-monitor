@@ -22,6 +22,11 @@ internal sealed record DiagnosticObservation(
     double EvidenceWindowSeconds,
     double MaxObservationGapSeconds)
 {
+    public double ElapsedSeconds { get; init; }
+    public long ObservationSequence { get; init; }
+    public string? ContinuityId { get; init; }
+    public bool IsKnown { get; init; } = true;
+
     public DiagnosticEvidenceContract ToEvidence() =>
         new()
         {

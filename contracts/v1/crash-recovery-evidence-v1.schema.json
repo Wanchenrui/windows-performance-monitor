@@ -24,7 +24,10 @@
       "type": "string",
       "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
     },
-    "databaseSchemaVersion": {"const": 2},
+    "databaseSchemaVersion": {
+      "enum": [2, 3],
+      "description": "Schema 2 evidence remains readable for historical releases. Current release generation and binary-bound validation require schema 3."
+    },
     "agentSha256": {
       "type": "string",
       "pattern": "^[0-9A-F]{64}$"

@@ -1,0 +1,27 @@
+  PerfMonitor.Contracts -> D:\GitHub\windows-performance-monitor\src\PerfMonitor.Contracts\bin\Release\net10.0\PerfMonitor.Contracts.dll
+  PerfMonitor.Actions -> D:\GitHub\windows-performance-monitor\src\PerfMonitor.Actions\bin\Release\net10.0\PerfMonitor.Actions.dll
+  PerfMonitor.Broker.Protocol -> D:\GitHub\windows-performance-monitor\src\PerfMonitor.Broker.Protocol\bin\Release\net10.0\PerfMonitor.Broker.Protocol.dll
+  PerfMonitor.Broker.Client -> D:\GitHub\windows-performance-monitor\src\PerfMonitor.Broker.Client\bin\Release\net10.0-windows10.0.17763.0\PerfMonitor.Broker.Client.dll
+  PerfMonitor.Core -> D:\GitHub\windows-performance-monitor\src\PerfMonitor.Core\bin\Release\net10.0\PerfMonitor.Core.dll
+  PerfMonitor.Collectors.Windows -> D:\GitHub\windows-performance-monitor\src\PerfMonitor.Collectors.Windows\bin\Release\net10.0-windows10.0.17763.0\PerfMonitor.Collectors.Windows.dll
+  PerfMonitor.ProviderWorker.Protocol -> D:\GitHub\windows-performance-monitor\src\PerfMonitor.ProviderWorker.Protocol\bin\Release\net10.0\PerfMonitor.ProviderWorker.Protocol.dll
+  PerfMonitor.Collectors.Worker -> D:\GitHub\windows-performance-monitor\src\PerfMonitor.Collectors.Worker\bin\Release\net10.0-windows10.0.17763.0\PerfMonitor.Collectors.Worker.dll
+  PerfMonitor.Diagnostics -> D:\GitHub\windows-performance-monitor\src\PerfMonitor.Diagnostics\bin\Release\net10.0\PerfMonitor.Diagnostics.dll
+  PerfMonitor.Ipc.NamedPipes -> D:\GitHub\windows-performance-monitor\src\PerfMonitor.Ipc.NamedPipes\bin\Release\net10.0-windows10.0.17763.0\PerfMonitor.Ipc.NamedPipes.dll
+  PerfMonitor.Storage.Sqlite -> D:\GitHub\windows-performance-monitor\src\PerfMonitor.Storage.Sqlite\bin\Release\net10.0\PerfMonitor.Storage.Sqlite.dll
+  PerfMonitor.Agent -> D:\GitHub\windows-performance-monitor\src\PerfMonitor.Agent\bin\Release\net10.0-windows10.0.17763.0\win-x64\perf-monitor-agent.dll
+  PerfMonitor.Broker -> D:\GitHub\windows-performance-monitor\src\PerfMonitor.Broker\bin\Release\net10.0-windows10.0.17763.0\win-x64\perf-monitor-broker.dll
+  PerfMonitor.Desktop -> D:\GitHub\windows-performance-monitor\src\PerfMonitor.Desktop\bin\Release\net10.0-windows10.0.17763.0\win-x64\perf-monitor-desktop.dll
+  PerfMonitor.ProviderWorker -> D:\GitHub\windows-performance-monitor\src\PerfMonitor.ProviderWorker\bin\Release\net10.0-windows10.0.17763.0\win-x64\perf-monitor-provider-worker.dll
+  PerfMonitor.Support -> D:\GitHub\windows-performance-monitor\src\PerfMonitor.Support\bin\Release\net10.0-windows10.0.17763.0\win-x64\perf-monitor-support.dll
+  PerfMonitor.ActionsTests -> D:\GitHub\windows-performance-monitor\tests\PerfMonitor.ActionsTests\bin\Release\net10.0\PerfMonitor.ActionsTests.dll
+  PerfMonitor.AgentTests -> D:\GitHub\windows-performance-monitor\tests\PerfMonitor.AgentTests\bin\Release\net10.0-windows10.0.17763.0\PerfMonitor.AgentTests.dll
+  PerfMonitor.BrokerTests -> D:\GitHub\windows-performance-monitor\tests\PerfMonitor.BrokerTests\bin\Release\net10.0-windows10.0.17763.0\PerfMonitor.BrokerTests.dll
+  PerfMonitor.ContractTests -> D:\GitHub\windows-performance-monitor\tests\PerfMonitor.ContractTests\bin\Release\net10.0\PerfMonitor.ContractTests.dll
+  PerfMonitor.ReleaseTests -> D:\GitHub\windows-performance-monitor\tests\PerfMonitor.ReleaseTests\bin\Release\net10.0-windows10.0.17763.0\win-x64\PerfMonitor.ReleaseTests.dll
+
+已成功生成。
+    0 个警告
+    0 个错误
+
+已用时间 00:00:01.58

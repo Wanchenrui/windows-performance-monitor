@@ -4,7 +4,7 @@ namespace PerfMonitor.Storage.Sqlite;
 
 internal sealed class SqliteDatabase
 {
-    public const int CurrentSchemaVersion = 2;
+    public const int CurrentSchemaVersion = 3;
     private static readonly Lazy<bool> ProviderInitialization = new(
         static () =>
         {
@@ -101,10 +101,6 @@ internal sealed class SqliteDatabase
                 "sqlite_schema_changed_during_initialization");
         }
 
-        await ConfigureConnectionAsync(
-            connection,
-            writable: true,
-            cancellationToken).ConfigureAwait(false);
         await ApplyMigrationsAsync(connection, cancellationToken)
             .ConfigureAwait(false);
         var migratedSchemaVersion = await ReadSchemaVersionAsync(
@@ -118,6 +114,10 @@ internal sealed class SqliteDatabase
         await VerifyIntegrityAsync(connection, cancellationToken)
             .ConfigureAwait(false);
 
+        // Failed upgrades retain their original schema and journal mode.
+        // Enable the persistent WAL setting only after a successful migration.
+        await ConfigureConnectionAsync(connection, writable: true, cancellationToken)
+            .ConfigureAwait(false);
         await using var checkpoint = connection.CreateCommand();
         checkpoint.CommandText = "PRAGMA wal_checkpoint(PASSIVE);";
         _ = await checkpoint.ExecuteNonQueryAsync(cancellationToken)
@@ -192,10 +192,12 @@ internal sealed class SqliteDatabase
             return;
         }
 
+        using var transaction = connection.BeginTransaction();
         if (version < 1)
         {
             await ApplyVersion1Async(
                 connection,
+                transaction,
                 cancellationToken).ConfigureAwait(false);
             version = 1;
         }
@@ -204,8 +206,20 @@ internal sealed class SqliteDatabase
         {
             await ApplyVersion2Async(
                 connection,
+                transaction,
                 cancellationToken).ConfigureAwait(false);
         }
+
+        if (version < 3)
+            await ApplyVersion3Async(connection, transaction, cancellationToken).ConfigureAwait(false);
+
+        await using var verify = connection.CreateCommand();
+        verify.Transaction = transaction;
+        verify.CommandText = "PRAGMA integrity_check(1);";
+        if (!StringComparer.OrdinalIgnoreCase.Equals(
+            await verify.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false) as string, "ok"))
+            throw new InvalidDataException("sqlite_integrity_check_failed");
+        transaction.Commit();
     }
 
     private static async Task<int> ReadSchemaVersionAsync(
@@ -224,9 +238,9 @@ internal sealed class SqliteDatabase
 
     private static async Task ApplyVersion1Async(
         SqliteConnection connection,
+        SqliteTransaction transaction,
         CancellationToken cancellationToken)
     {
-        using var transaction = connection.BeginTransaction();
         await using var command = connection.CreateCommand();
         command.Transaction = transaction;
         command.CommandText = """
@@ -309,14 +323,13 @@ internal sealed class SqliteDatabase
             """;
         _ = await command.ExecuteNonQueryAsync(cancellationToken)
             .ConfigureAwait(false);
-        transaction.Commit();
     }
 
     private static async Task ApplyVersion2Async(
         SqliteConnection connection,
+        SqliteTransaction transaction,
         CancellationToken cancellationToken)
     {
-        using var transaction = connection.BeginTransaction();
         await using var command = connection.CreateCommand();
         command.Transaction = transaction;
         command.CommandText = """
@@ -353,6 +366,63 @@ internal sealed class SqliteDatabase
             """;
         _ = await command.ExecuteNonQueryAsync(cancellationToken)
             .ConfigureAwait(false);
-        transaction.Commit();
+    }
+
+    private static async Task ApplyVersion3Async(SqliteConnection connection, SqliteTransaction transaction, CancellationToken cancellationToken)
+    {
+        // Both table replacements and version publication commit together.
+        // Existing raw data is preserved; legacy replay is explicitly rejected.
+        await using var command = connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandText = """
+            ALTER TABLE snapshots_raw RENAME TO snapshots_raw_v2;
+            CREATE TABLE snapshots_raw (
+                persistence_order INTEGER PRIMARY KEY AUTOINCREMENT,
+                instance_id TEXT NOT NULL,
+                sequence INTEGER NOT NULL,
+                sample_time_ms INTEGER NOT NULL,
+                snapshot_json TEXT NOT NULL,
+                delivery_sequence INTEGER,
+                projection_version INTEGER NOT NULL DEFAULT 0,
+                UNIQUE(instance_id, delivery_sequence)
+            );
+            INSERT INTO snapshots_raw(instance_id, sequence, sample_time_ms, snapshot_json)
+                SELECT instance_id, sequence, sample_time_ms, snapshot_json
+                FROM snapshots_raw_v2 ORDER BY sample_time_ms, instance_id, sequence;
+            DROP TABLE snapshots_raw_v2;
+            CREATE INDEX ix_snapshots_raw_time ON snapshots_raw(sample_time_ms);
+
+            ALTER TABLE metrics_raw RENAME TO metrics_raw_v2;
+            CREATE TABLE metrics_raw (
+                instance_id TEXT NOT NULL,
+                sequence INTEGER NOT NULL,
+                sample_time_ms INTEGER NOT NULL,
+                group_id TEXT NOT NULL,
+                metric_id TEXT NOT NULL,
+                unit TEXT NOT NULL,
+                source_id TEXT NOT NULL,
+                value REAL,
+                availability TEXT NOT NULL,
+                freshness TEXT NOT NULL,
+                coverage_json TEXT NOT NULL,
+                observed_at_utc TEXT,
+                observed_elapsed_seconds REAL,
+                observation_sequence INTEGER,
+                observation_key TEXT NOT NULL,
+                PRIMARY KEY(instance_id, group_id, metric_id, observation_key)
+            ) WITHOUT ROWID;
+            INSERT INTO metrics_raw(instance_id, sequence, sample_time_ms, group_id,
+                metric_id, unit, source_id, value, availability, freshness, coverage_json,
+                observed_at_utc, observation_key)
+                SELECT instance_id, sequence, sample_time_ms, 'legacy', metric_id, unit,
+                    'legacy', value, 'unknown', 'unknown', '{"status":"unknown"}',
+                    NULL, 'legacy:' || sequence FROM metrics_raw_v2;
+            DROP TABLE metrics_raw_v2;
+            CREATE INDEX ix_metrics_raw_metric_time ON metrics_raw(metric_id, sample_time_ms);
+            INSERT INTO schema_migrations(version, applied_at_utc)
+                VALUES(3, strftime('%Y-%m-%dT%H:%M:%fZ', 'now'));
+            PRAGMA user_version=3;
+            """;
+        _ = await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
     }
 }

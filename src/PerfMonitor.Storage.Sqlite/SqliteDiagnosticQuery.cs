@@ -44,7 +44,7 @@ internal static class SqliteDiagnosticQuery
             SELECT payload_json
             FROM diagnostic_events
             WHERE {string.Join(" AND ", clauses)}
-            ORDER BY last_seen_ms DESC, diagnostic_id DESC
+            ORDER BY event_id DESC
             LIMIT $limit;
             """;
 

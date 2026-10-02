@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace PerfMonitor.Contracts;
 
 public static class DiagnosticRuleIds
@@ -105,6 +107,8 @@ public sealed record DiagnosticEventContract
     }
     public required DateTimeOffset FirstSeenUtc { get; init; }
     public required DateTimeOffset LastSeenUtc { get; init; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public long? ObservationSequence { get; init; }
     public double Confidence { get; init; }
     public required IReadOnlyList<DiagnosticEvidenceContract> Evidence
     {

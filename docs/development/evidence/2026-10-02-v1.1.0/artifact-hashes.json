@@ -1,0 +1,161 @@
+{
+  "schemaVersion": 1,
+  "generatedAtUtc": "2026-10-02T13:07:17.4268398Z",
+  "productVersion": "1.1.0",
+  "repositoryHeadAtBuild": "74d29ddfc8a29fac23af5d57068b2aef08c42804",
+  "workingTreeDirtyAtBuild": true,
+  "purpose": "Version 1.1.0 isolated development build/test evidence; not production or post-commit binary verification",
+  "hashAlgorithm": "SHA-256",
+  "productFiles": [
+    {
+      "path": "artifacts/version-1.1.0/bin/PerfMonitor.Agent/release_win-x64/perf-monitor-agent.exe",
+      "sizeBytes": 162816,
+      "sha256": "9A458B21E17FEB9CB0BEB16CCEBFE73104DCF9A99A390E5448753FFE56BD68E3",
+      "fileVersion": "1.1.0.0",
+      "productVersion": "1.1.0+74d29ddfc8a29fac23af5d57068b2aef08c42804"
+    },
+    {
+      "path": "artifacts/version-1.1.0/bin/PerfMonitor.Agent/release_win-x64/perf-monitor-agent.dll",
+      "sizeBytes": 58880,
+      "sha256": "CA9BF5C8BE4F2B9017D9918EBC2420D75F04B143B92B278638A3C7E2D0BD1DE6",
+      "fileVersion": "1.1.0.0",
+      "productVersion": "1.1.0+74d29ddfc8a29fac23af5d57068b2aef08c42804"
+    },
+    {
+      "path": "artifacts/version-1.1.0/bin/PerfMonitor.Broker/release_win-x64/perf-monitor-broker.exe",
+      "sizeBytes": 162816,
+      "sha256": "5778176B556AFF24CEEFF27881E7EBFA76A77A668BF15B4DA9EAA9DD43CB8E3B",
+      "fileVersion": "1.1.0.0",
+      "productVersion": "1.1.0+74d29ddfc8a29fac23af5d57068b2aef08c42804"
+    },
+    {
+      "path": "artifacts/version-1.1.0/bin/PerfMonitor.Broker/release_win-x64/perf-monitor-broker.dll",
+      "sizeBytes": 104448,
+      "sha256": "E9BB4E71754D9A2981FE4B293A2466FD9546B04C5A0423E9873DC934C81F17DA",
+      "fileVersion": "1.1.0.0",
+      "productVersion": "1.1.0+74d29ddfc8a29fac23af5d57068b2aef08c42804"
+    },
+    {
+      "path": "artifacts/version-1.1.0/bin/PerfMonitor.Desktop/release_win-x64/perf-monitor-desktop.exe",
+      "sizeBytes": 170496,
+      "sha256": "A238867494A897F82802E339AEF6C7D580D96B5889F531D56783B254D945749C",
+      "fileVersion": "1.1.0.0",
+      "productVersion": "1.1.0+74d29ddfc8a29fac23af5d57068b2aef08c42804"
+    },
+    {
+      "path": "artifacts/version-1.1.0/bin/PerfMonitor.Desktop/release_win-x64/perf-monitor-desktop.dll",
+      "sizeBytes": 108032,
+      "sha256": "938D1062ADF09ABC004698298FF507E307AF80164C0BFCC1ADF57DEB7BF465FD",
+      "fileVersion": "1.1.0.0",
+      "productVersion": "1.1.0+74d29ddfc8a29fac23af5d57068b2aef08c42804"
+    },
+    {
+      "path": "artifacts/version-1.1.0/bin/PerfMonitor.ProviderWorker/release_win-x64/perf-monitor-provider-worker.exe",
+      "sizeBytes": 162816,
+      "sha256": "DC1ACD2765BB7CC76D3289D28B62FA7DCF5395EC7F04B2EF6FBEE97CE7BC10A0",
+      "fileVersion": "1.1.0.0",
+      "productVersion": "1.1.0+74d29ddfc8a29fac23af5d57068b2aef08c42804"
+    },
+    {
+      "path": "artifacts/version-1.1.0/bin/PerfMonitor.ProviderWorker/release_win-x64/perf-monitor-provider-worker.dll",
+      "sizeBytes": 22016,
+      "sha256": "DB705C8DCF75969C0104A709B6FA5B2A624D0CA7CEE9AF5DA9A23FC2CC762824",
+      "fileVersion": "1.1.0.0",
+      "productVersion": "1.1.0+74d29ddfc8a29fac23af5d57068b2aef08c42804"
+    },
+    {
+      "path": "artifacts/version-1.1.0/bin/PerfMonitor.Support/release_win-x64/perf-monitor-support.exe",
+      "sizeBytes": 162816,
+      "sha256": "069D50CC377AE2CEDCE9B6352339DE9E27CBCC4277243328FEE1BCD7BFF40DC2",
+      "fileVersion": "1.1.0.0",
+      "productVersion": "1.1.0+74d29ddfc8a29fac23af5d57068b2aef08c42804"
+    },
+    {
+      "path": "artifacts/version-1.1.0/bin/PerfMonitor.Support/release_win-x64/perf-monitor-support.dll",
+      "sizeBytes": 78336,
+      "sha256": "7FB7E2A7CB52F78C1B1B76D00C24151D048BC38737C330B3A5F1F11ACE72EBB2",
+      "fileVersion": "1.1.0.0",
+      "productVersion": "1.1.0+74d29ddfc8a29fac23af5d57068b2aef08c42804"
+    }
+  ],
+  "outputDirectoryFingerprints": {
+    "algorithm": "SHA-256 over UTF-8 ordinal-sorted relative-path|UPPERCASE-file-SHA256 lines, LF terminated",
+    "directories": [
+      {
+        "directory": "artifacts/version-1.1.0/bin/PerfMonitor.Agent/release_win-x64",
+        "fileCount": 34,
+        "sha256": "ABF1E2DBCE90C6377BD1B5D42CB551EB73442FA1E7CFB6F8210A1ED8F91F2B0F"
+      },
+      {
+        "directory": "artifacts/version-1.1.0/bin/PerfMonitor.Broker/release_win-x64",
+        "fileCount": 22,
+        "sha256": "C5FCD0654947770907922E90C335B5D9171C9825D56F19CEE7F1722768298EF1"
+      },
+      {
+        "directory": "artifacts/version-1.1.0/bin/PerfMonitor.Desktop/release_win-x64",
+        "fileCount": 13,
+        "sha256": "AA96FB99D576A614398B80DD843480BC3F96B09B93268D07E945ADAB2F9CE42B"
+      },
+      {
+        "directory": "artifacts/version-1.1.0/bin/PerfMonitor.ProviderWorker/release_win-x64",
+        "fileCount": 21,
+        "sha256": "2AD44A8BD75F73E696D6E3C136C22A735DCAD79FF794ECBA31C56B74A33A251E"
+      },
+      {
+        "directory": "artifacts/version-1.1.0/bin/PerfMonitor.Support/release_win-x64",
+        "fileCount": 21,
+        "sha256": "538B9BB78113586DF14A8A5BEAD03F1051344074C075AC757806BEFF937A4392"
+      }
+    ]
+  },
+  "archivedEvidenceFiles": [
+    {
+      "path": "docs/development/evidence/2026-10-02-v1.1.0/logs/build-release.log",
+      "sizeBytes": 3447,
+      "sha256": "E417CF3467D4DD5ADC4FB5E9CC0E135EA947279DE0B7F7D21A95405124456906",
+      "originalPath": "artifacts/version-1.1.0/validation/build-release.log"
+    },
+    {
+      "path": "docs/development/evidence/2026-10-02-v1.1.0/logs/restore-locked.log",
+      "sizeBytes": 2822,
+      "sha256": "5BD9F4D82D8B90319646DC4D928F438C4A7BB6AEED75449422899DD5DADA2B31",
+      "originalPath": "artifacts/version-1.1.0/validation/restore-locked.log"
+    },
+    {
+      "path": "docs/development/evidence/2026-10-02-v1.1.0/logs/test-release.log",
+      "sizeBytes": 5800,
+      "sha256": "B389912F89CF7A58FE60C3F642BD1A4F710166D9F81BBA4D2A31A8D588072732",
+      "originalPath": "artifacts/version-1.1.0/validation/test-release.log"
+    },
+    {
+      "path": "docs/development/evidence/2026-10-02-v1.1.0/test-results/Administrator_HCAIA-WAQHGBEKP_2026-10-02_20_50_10_net10.0.trx",
+      "sizeBytes": 16568,
+      "sha256": "D0E25238A646F74900FED2D4032F0DBBD94A3373997CB8299140AC446FDB2693",
+      "originalPath": "artifacts/version-1.1.0/test-results/Administrator_HCAIA-WAQHGBEKP_2026-10-02_20_50_10_net10.0.trx"
+    },
+    {
+      "path": "docs/development/evidence/2026-10-02-v1.1.0/test-results/Administrator_HCAIA-WAQHGBEKP_2026-10-02_20_50_11_net10.0.trx",
+      "sizeBytes": 44767,
+      "sha256": "0A02FD459AF744C29E8AF90531302C686A4C77E7BED450949F07F8252F7F5C60",
+      "originalPath": "artifacts/version-1.1.0/test-results/Administrator_HCAIA-WAQHGBEKP_2026-10-02_20_50_11_net10.0.trx"
+    },
+    {
+      "path": "docs/development/evidence/2026-10-02-v1.1.0/test-results/Administrator_HCAIA-WAQHGBEKP_2026-10-02_20_50_14_net10.0.trx",
+      "sizeBytes": 14460,
+      "sha256": "6EDADAAAD215CFA424F538DFCC507F06C581E6320FD25684E664EAC729D5FA38",
+      "originalPath": "artifacts/version-1.1.0/test-results/Administrator_HCAIA-WAQHGBEKP_2026-10-02_20_50_14_net10.0.trx"
+    },
+    {
+      "path": "docs/development/evidence/2026-10-02-v1.1.0/test-results/Administrator_HCAIA-WAQHGBEKP_2026-10-02_20_50_14_net10.0[1].trx",
+      "sizeBytes": 36364,
+      "sha256": "99FB9057F341A7C8EDD9422557CFE97F7A90E3199308CA2D5C8650907BB74586",
+      "originalPath": "artifacts/version-1.1.0/test-results/Administrator_HCAIA-WAQHGBEKP_2026-10-02_20_50_14_net10.0[1].trx"
+    },
+    {
+      "path": "docs/development/evidence/2026-10-02-v1.1.0/test-results/Administrator_HCAIA-WAQHGBEKP_2026-10-02_20_50_14_net10.0[2].trx",
+      "sizeBytes": 163684,
+      "sha256": "2CF0286A0619D248E9F5F3656D7726AEE31C0504276AEA233066050BD567FA0B",
+      "originalPath": "artifacts/version-1.1.0/test-results/Administrator_HCAIA-WAQHGBEKP_2026-10-02_20_50_14_net10.0[2].trx"
+    }
+  ]
+}

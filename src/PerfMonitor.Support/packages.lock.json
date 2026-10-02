@@ -54,12 +54,20 @@
           "PerfMonitor.Contracts": "[1.0.0, )"
         }
       },
+      "perfmonitor.diagnostics": {
+        "type": "Project",
+        "dependencies": {
+          "PerfMonitor.Contracts": "[1.0.0, )",
+          "PerfMonitor.Core": "[1.0.0, )"
+        }
+      },
       "perfmonitor.storage.sqlite": {
         "type": "Project",
         "dependencies": {
           "Microsoft.Data.Sqlite.Core": "[10.0.10, )",
           "PerfMonitor.Contracts": "[1.0.0, )",
           "PerfMonitor.Core": "[1.0.0, )",
+          "PerfMonitor.Diagnostics": "[1.0.0, )",
           "SQLitePCLRaw.bundle_e_sqlite3": "[3.0.5, )"
         }
       }

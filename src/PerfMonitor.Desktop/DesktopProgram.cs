@@ -10,10 +10,20 @@ public static class DesktopProgram
     {
         var application = new Application
         {
-            ShutdownMode = ShutdownMode.OnMainWindowClose,
+            ShutdownMode = ShutdownMode.OnExplicitShutdown,
         };
         var window = new MainWindow(
-            PipeEndpoint.ForCurrentUser());
+            PipeEndpoint.ForCurrentUser())
+        {
+            Icon = DesktopAppIcon.LoadWindowImage(),
+        };
+        using var resident = new DesktopResidentController(
+            window,
+            window.StopSessionAsync,
+            () => application.Shutdown(),
+            window.SetResidentStatus);
+        application.SessionEnding += (_, _) => resident.BeginSystemShutdown();
+        application.Exit += (_, _) => resident.Dispose();
         return application.Run(window);
     }
 }

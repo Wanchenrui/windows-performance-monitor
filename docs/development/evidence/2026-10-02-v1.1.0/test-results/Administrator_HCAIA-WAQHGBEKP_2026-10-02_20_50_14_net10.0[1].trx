@@ -1,0 +1,182 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="3ace3d8a-5ee3-4343-acc1-6089bc979431" name="Administrator@HCAIA-WAQHGBEKP 2026-10-02 20:50:14" runUser="HCAIA-WAQHGBEKP\Administrator" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-10-02T20:50:14.0303558+08:00" queuing="2026-10-02T20:50:14.0303564+08:00" start="2026-10-02T20:50:11.8624038+08:00" finish="2026-10-02T20:50:14.5943333+08:00" />
+  <TestSettings name="default" id="4ea64879-5fff-4acf-ab57-e309d22444fe">
+    <Deployment runDeploymentRoot="Administrator_HCAIA-WAQHGBEKP_2026-10-02_20_50_14" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="b585701f-abec-4f12-88ec-1ebca5293ff2" testId="1de21c01-389c-87a3-b655-1c86f3df7f6d" testName="DiagnosticAndPowerUseCompiledIdsOnly" computerName="HCAIA-WAQHGBEKP" duration="00:00:00.0005919" startTime="2026-10-02T20:50:14.5565334+08:00" endTime="2026-10-02T20:50:14.5580072+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="b585701f-abec-4f12-88ec-1ebca5293ff2" />
+    <UnitTestResult executionId="bfbc93b9-b5a8-4dea-abe5-182b1e86c177" testId="1b0305fc-20ff-875b-b31e-02c08cb51398" testName="CriticalAndProductProcessesAreProtected" computerName="HCAIA-WAQHGBEKP" duration="00:00:00.0008675" startTime="2026-10-02T20:50:14.5542070+08:00" endTime="2026-10-02T20:50:14.5551009+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="bfbc93b9-b5a8-4dea-abe5-182b1e86c177" />
+    <UnitTestResult executionId="19c01e5a-62cb-4d0a-9557-2a8d7fb59a91" testId="1994eab3-d14a-8e4a-937e-65b3944ec810" testName="ConsoleModeAllowsBoundedTestOverrides" computerName="HCAIA-WAQHGBEKP" duration="00:00:00.0027660" startTime="2026-10-02T20:50:13.9911834+08:00" endTime="2026-10-02T20:50:13.9939860+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="19c01e5a-62cb-4d0a-9557-2a8d7fb59a91" />
+    <UnitTestResult executionId="2ebd0a7f-906d-4038-92cb-7f883aac5015" testId="15895a75-e004-81a1-a0d5-2c350bfe6f2c" testName="PendingRecoversAsIndeterminateAcrossRestart" computerName="HCAIA-WAQHGBEKP" duration="00:00:00.0151771" startTime="2026-10-02T20:50:13.9296005+08:00" endTime="2026-10-02T20:50:13.9448379+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="2ebd0a7f-906d-4038-92cb-7f883aac5015" />
+    <UnitTestResult executionId="e2f68ec7-7eb3-4ef4-b806-8c62ddbb7446" testId="1105e05e-d882-8ad9-965a-57cc57263d84" testName="SetPriorityOnlyUsesBoundedEnum" computerName="HCAIA-WAQHGBEKP" duration="00:00:00.0004650" startTime="2026-10-02T20:50:14.5560323+08:00" endTime="2026-10-02T20:50:14.5565214+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="e2f68ec7-7eb3-4ef4-b806-8c62ddbb7446" />
+    <UnitTestResult executionId="62bedd37-552d-4eba-85ce-ad5ddd149953" testId="1f8a9214-8445-8ecb-aad9-8ac9d99c24dd" testName="ModeIsRequiredAndExclusive" computerName="HCAIA-WAQHGBEKP" duration="00:00:00.0011479" startTime="2026-10-02T20:50:13.9898856+08:00" endTime="2026-10-02T20:50:13.9911601+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="62bedd37-552d-4eba-85ce-ad5ddd149953" />
+    <UnitTestResult executionId="de13029f-f75d-43ed-8fd4-f90d49fdd330" testId="170a4dbe-9e38-81e5-a47f-b40a9268b0e5" testName="CompletedResultIsReplayedWithoutNewReservation" computerName="HCAIA-WAQHGBEKP" duration="00:00:00.5880102" startTime="2026-10-02T20:50:13.3165583+08:00" endTime="2026-10-02T20:50:13.9145626+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="de13029f-f75d-43ed-8fd4-f90d49fdd330" />
+    <UnitTestResult executionId="308cf2d8-11d9-4ba3-9a56-39268e740962" testId="10a28ddf-09a5-8466-a39e-f99087f04617" testName="PendingAcceptCancellationIsCleanShutdown" computerName="HCAIA-WAQHGBEKP" duration="00:00:00.0092653" startTime="2026-10-02T20:50:14.4645654+08:00" endTime="2026-10-02T20:50:14.4738743+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="308cf2d8-11d9-4ba3-9a56-39268e740962" />
+    <UnitTestResult executionId="8ee83f34-785f-42ca-bdd0-2944f5be3e74" testId="17b80547-ce42-8e4f-a979-f925a901c44d" testName="ConsoleDurationAndPipeNameAreBounded" computerName="HCAIA-WAQHGBEKP" duration="00:00:00.0002828" startTime="2026-10-02T20:50:14.0008179+08:00" endTime="2026-10-02T20:50:14.0011572+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="8ee83f34-785f-42ca-bdd0-2944f5be3e74" />
+    <UnitTestResult executionId="90d2a084-5acb-451b-9b46-21046dda6467" testId="129b67e5-8855-82ea-8c85-d8cc19f12b5e" testName="ServicePolicyRequiresSignedProtectedAgent" computerName="HCAIA-WAQHGBEKP" duration="00:00:00.0018447" startTime="2026-10-02T20:50:14.0011873+08:00" endTime="2026-10-02T20:50:14.0030879+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="90d2a084-5acb-451b-9b46-21046dda6467" />
+    <UnitTestResult executionId="80323301-9d77-4310-9556-e4b0de6069e2" testId="1543f0e3-f0ad-8c3b-8f36-639a0ee3e1b4" testName="ProtectedPathIsExactAndNotPrefixBased" computerName="HCAIA-WAQHGBEKP" duration="00:00:00.0001601" startTime="2026-10-02T20:50:14.4867620+08:00" endTime="2026-10-02T20:50:14.4869990+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="80323301-9d77-4310-9556-e4b0de6069e2" />
+    <UnitTestResult executionId="0b755e7f-8371-4c4e-9a51-4acf048a4862" testId="16282660-4290-8323-aa45-60336ac70ed2" testName="AuthenticodeTrustBindsVerifiedSignerAndContent" computerName="HCAIA-WAQHGBEKP" duration="00:00:00.0643269" startTime="2026-10-02T20:50:14.4870223+08:00" endTime="2026-10-02T20:50:14.5513975+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="0b755e7f-8371-4c4e-9a51-4acf048a4862" />
+    <UnitTestResult executionId="e260011a-b772-4750-88ef-c5815cf8f4ec" testId="1bccaffa-795c-8ba8-b498-ed33c11de2e0" testName="DeterministicMalformedCorpusNeverReachesExecutor" computerName="HCAIA-WAQHGBEKP" duration="00:00:00.1369464" startTime="2026-10-02T20:50:14.2550832+08:00" endTime="2026-10-02T20:50:14.3920992+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="e260011a-b772-4750-88ef-c5815cf8f4ec" />
+    <UnitTestResult executionId="b176053a-bbeb-4ea0-8b0b-8b52d5ee9a75" testId="107a12a3-c356-825c-89b6-cb5bb1e6d4b6" testName="ClientServerDryRunRoundTripNeverMutates" computerName="HCAIA-WAQHGBEKP" duration="00:00:00.0174034" startTime="2026-10-02T20:50:14.4470824+08:00" endTime="2026-10-02T20:50:14.4645307+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="b176053a-bbeb-4ea0-8b0b-8b52d5ee9a75" />
+    <UnitTestResult executionId="97bf736f-f16a-4568-833c-d960a6efd5c7" testId="1bcfdce3-b386-8fd9-841f-e76b8fbc0f9a" testName="OwnerMismatchRejectsOtherUsersProcess" computerName="HCAIA-WAQHGBEKP" duration="00:00:00.0007453" startTime="2026-10-02T20:50:14.5534094+08:00" endTime="2026-10-02T20:50:14.5541894+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="97bf736f-f16a-4568-833c-d960a6efd5c7" />
+    <UnitTestResult executionId="3bc7c082-f20a-4f0d-a498-6c5212f92da9" testId="136a893e-46b6-80a3-96ad-145f045b5854" testName="CorruptAuditDatabaseFailsInitialization" computerName="HCAIA-WAQHGBEKP" duration="00:00:00.0067217" startTime="2026-10-02T20:50:13.9601740+08:00" endTime="2026-10-02T20:50:13.9676846+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="3bc7c082-f20a-4f0d-a498-6c5212f92da9" />
+    <UnitTestResult executionId="deef8233-7ac6-49e4-84b6-e29dc34842e1" testId="150475b2-09c3-80ea-85e6-ecacd18c8618" testName="TerminationPassesExactGuardAndReturnsExited" computerName="HCAIA-WAQHGBEKP" duration="00:00:00.0008878" startTime="2026-10-02T20:50:14.5551135+08:00" endTime="2026-10-02T20:50:14.5560196+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="deef8233-7ac6-49e4-84b6-e29dc34842e1" />
+    <UnitTestResult executionId="a550577b-5dff-4041-a452-3b510542e472" testId="1d2c0116-72ed-823c-8cb6-5b888281d5b1" testName="TransportResolverUsesActualClientSidPidAndImage" computerName="HCAIA-WAQHGBEKP" duration="00:00:00.0336335" startTime="2026-10-02T20:50:14.4133704+08:00" endTime="2026-10-02T20:50:14.4470503+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="a550577b-5dff-4041-a452-3b510542e472" />
+    <UnitTestResult executionId="476e3ae7-5684-47e8-b2cc-e0b1f12eae6e" testId="11dde90f-003d-8579-96d4-2afbf4b564a8" testName="CreationTimeMismatchRejectsPidReuse" computerName="HCAIA-WAQHGBEKP" duration="00:00:00.0018577" startTime="2026-10-02T20:50:14.5514273+08:00" endTime="2026-10-02T20:50:14.5533798+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="476e3ae7-5684-47e8-b2cc-e0b1f12eae6e" />
+    <UnitTestResult executionId="3ac8cd00-cd3c-4338-8cc5-891c8ce80c8a" testId="14ddf7a4-7dcf-8344-acb8-fc06a5d07a83" testName="MalformedClientsAreIsolatedFromListener" computerName="HCAIA-WAQHGBEKP" duration="00:00:00.2517137" startTime="2026-10-02T20:50:14.0031237+08:00" endTime="2026-10-02T20:50:14.2550412+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="3ac8cd00-cd3c-4338-8cc5-891c8ce80c8a" />
+    <UnitTestResult executionId="6451bb73-2c89-46cc-9778-696b4f40ac15" testId="156647f1-f2ae-8abb-ba73-d26d4ee39a48" testName="BrokerPipeAclDeniesNetworkAndLimitsUserRights" computerName="HCAIA-WAQHGBEKP" duration="00:00:00.0007875" startTime="2026-10-02T20:50:14.4124908+08:00" endTime="2026-10-02T20:50:14.4133473+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="6451bb73-2c89-46cc-9778-696b4f40ac15" />
+    <UnitTestResult executionId="7fd5ff6f-4026-426d-9ad3-453441d26463" testId="1d5cee1a-f3ac-8a07-98c8-4c35c161e9fb" testName="DifferentHashForSameCallerAndKeyConflicts" computerName="HCAIA-WAQHGBEKP" duration="00:00:00.0115876" startTime="2026-10-02T20:50:13.9173306+08:00" endTime="2026-10-02T20:50:13.9293522+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="7fd5ff6f-4026-426d-9ad3-453441d26463" />
+    <UnitTestResult executionId="05c160f7-3a8b-42fa-9588-85191d44f2b8" testId="1227651c-bd62-8d12-90d1-e12ac5121436" testName="ClientCloseBeforeAcceptKeepsListenerHealthy" computerName="HCAIA-WAQHGBEKP" duration="00:00:00.0123924" startTime="2026-10-02T20:50:14.4742887+08:00" endTime="2026-10-02T20:50:14.4867343+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="05c160f7-3a8b-42fa-9588-85191d44f2b8" />
+    <UnitTestResult executionId="c2053b07-3a58-406f-9ffb-6645b4cd6197" testId="1b19e01e-1538-87dc-b695-3113bc84447e" testName="ConcurrentDuplicateGetsOneNewReservation" computerName="HCAIA-WAQHGBEKP" duration="00:00:00.0152237" startTime="2026-10-02T20:50:13.9448716+08:00" endTime="2026-10-02T20:50:13.9601432+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="c2053b07-3a58-406f-9ffb-6645b4cd6197" />
+    <UnitTestResult executionId="146563d4-c726-459f-9eed-65f6d6eea108" testId="11043ac7-3610-8aae-ab8c-602145eb2e69" testName="ConcurrentReplayAndConflictNeverDoubleExecute" computerName="HCAIA-WAQHGBEKP" duration="00:00:00.0202739" startTime="2026-10-02T20:50:14.3921304+08:00" endTime="2026-10-02T20:50:14.4124602+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="146563d4-c726-459f-9eed-65f6d6eea108" />
+    <UnitTestResult executionId="dec21af5-d5c5-43c4-8805-4b5e23a21399" testId="14594be2-4833-853e-bb84-982b809539d4" testName="ServiceModeUsesOnlyFixedMachineLocations" computerName="HCAIA-WAQHGBEKP" duration="00:00:00.0003901" startTime="2026-10-02T20:50:13.9940160+08:00" endTime="2026-10-02T20:50:13.9944432+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="dec21af5-d5c5-43c4-8805-4b5e23a21399" />
+    <UnitTestResult executionId="326de14c-af51-4496-9bc8-4677519aa180" testId="1ae2c26d-4766-8614-ab39-615507793ddb" testName="PolicyDenialPersistsActualTransportIdentity" computerName="HCAIA-WAQHGBEKP" duration="00:00:00.0212920" startTime="2026-10-02T20:50:13.9677184+08:00" endTime="2026-10-02T20:50:13.9898431+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="326de14c-af51-4496-9bc8-4677519aa180" />
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="ModeIsRequiredAndExclusive" storage="d:\github\windows-performance-monitor\artifacts\version-1.1.0\bin\perfmonitor.brokertests\release\perfmonitor.brokertests.dll" id="1f8a9214-8445-8ecb-aad9-8ac9d99c24dd">
+      <Execution id="62bedd37-552d-4eba-85ce-ad5ddd149953" />
+      <TestMethod codeBase="D:\GitHub\windows-performance-monitor\artifacts\version-1.1.0\bin\PerfMonitor.BrokerTests\release\PerfMonitor.BrokerTests.dll" adapterTypeName="executor://mstestadapter/v4" className="PerfMonitor.BrokerTests.BrokerOptionsTests" name="ModeIsRequiredAndExclusive" />
+    </UnitTest>
+    <UnitTest name="PendingAcceptCancellationIsCleanShutdown" storage="d:\github\windows-performance-monitor\artifacts\version-1.1.0\bin\perfmonitor.brokertests\release\perfmonitor.brokertests.dll" id="10a28ddf-09a5-8466-a39e-f99087f04617">
+      <Execution id="308cf2d8-11d9-4ba3-9a56-39268e740962" />
+      <TestMethod codeBase="D:\GitHub\windows-performance-monitor\artifacts\version-1.1.0\bin\PerfMonitor.BrokerTests\release\PerfMonitor.BrokerTests.dll" adapterTypeName="executor://mstestadapter/v4" className="PerfMonitor.BrokerTests.BrokerPipeTests" name="PendingAcceptCancellationIsCleanShutdown" />
+    </UnitTest>
+    <UnitTest name="CriticalAndProductProcessesAreProtected" storage="d:\github\windows-performance-monitor\artifacts\version-1.1.0\bin\perfmonitor.brokertests\release\perfmonitor.brokertests.dll" id="1b0305fc-20ff-875b-b31e-02c08cb51398">
+      <Execution id="bfbc93b9-b5a8-4dea-abe5-182b1e86c177" />
+      <TestMethod codeBase="D:\GitHub\windows-performance-monitor\artifacts\version-1.1.0\bin\PerfMonitor.BrokerTests\release\PerfMonitor.BrokerTests.dll" adapterTypeName="executor://mstestadapter/v4" className="PerfMonitor.BrokerTests.WindowsActionExecutorTests" name="CriticalAndProductProcessesAreProtected" />
+    </UnitTest>
+    <UnitTest name="DiagnosticAndPowerUseCompiledIdsOnly" storage="d:\github\windows-performance-monitor\artifacts\version-1.1.0\bin\perfmonitor.brokertests\release\perfmonitor.brokertests.dll" id="1de21c01-389c-87a3-b655-1c86f3df7f6d">
+      <Execution id="b585701f-abec-4f12-88ec-1ebca5293ff2" />
+      <TestMethod codeBase="D:\GitHub\windows-performance-monitor\artifacts\version-1.1.0\bin\PerfMonitor.BrokerTests\release\PerfMonitor.BrokerTests.dll" adapterTypeName="executor://mstestadapter/v4" className="PerfMonitor.BrokerTests.WindowsActionExecutorTests" name="DiagnosticAndPowerUseCompiledIdsOnly" />
+    </UnitTest>
+    <UnitTest name="CorruptAuditDatabaseFailsInitialization" storage="d:\github\windows-performance-monitor\artifacts\version-1.1.0\bin\perfmonitor.brokertests\release\perfmonitor.brokertests.dll" id="136a893e-46b6-80a3-96ad-145f045b5854">
+      <Execution id="3bc7c082-f20a-4f0d-a498-6c5212f92da9" />
+      <TestMethod codeBase="D:\GitHub\windows-performance-monitor\artifacts\version-1.1.0\bin\PerfMonitor.BrokerTests\release\PerfMonitor.BrokerTests.dll" adapterTypeName="executor://mstestadapter/v4" className="PerfMonitor.BrokerTests.BrokerAuditStoreTests" name="CorruptAuditDatabaseFailsInitialization" />
+    </UnitTest>
+    <UnitTest name="DeterministicMalformedCorpusNeverReachesExecutor" storage="d:\github\windows-performance-monitor\artifacts\version-1.1.0\bin\perfmonitor.brokertests\release\perfmonitor.brokertests.dll" id="1bccaffa-795c-8ba8-b498-ed33c11de2e0">
+      <Execution id="e260011a-b772-4750-88ef-c5815cf8f4ec" />
+      <TestMethod codeBase="D:\GitHub\windows-performance-monitor\artifacts\version-1.1.0\bin\PerfMonitor.BrokerTests\release\PerfMonitor.BrokerTests.dll" adapterTypeName="executor://mstestadapter/v4" className="PerfMonitor.BrokerTests.BrokerPenetrationTests" name="DeterministicMalformedCorpusNeverReachesExecutor" />
+    </UnitTest>
+    <UnitTest name="PolicyDenialPersistsActualTransportIdentity" storage="d:\github\windows-performance-monitor\artifacts\version-1.1.0\bin\perfmonitor.brokertests\release\perfmonitor.brokertests.dll" id="1ae2c26d-4766-8614-ab39-615507793ddb">
+      <Execution id="326de14c-af51-4496-9bc8-4677519aa180" />
+      <TestMethod codeBase="D:\GitHub\windows-performance-monitor\artifacts\version-1.1.0\bin\PerfMonitor.BrokerTests\release\PerfMonitor.BrokerTests.dll" adapterTypeName="executor://mstestadapter/v4" className="PerfMonitor.BrokerTests.BrokerAuditStoreTests" name="PolicyDenialPersistsActualTransportIdentity" />
+    </UnitTest>
+    <UnitTest name="ConsoleModeAllowsBoundedTestOverrides" storage="d:\github\windows-performance-monitor\artifacts\version-1.1.0\bin\perfmonitor.brokertests\release\perfmonitor.brokertests.dll" id="1994eab3-d14a-8e4a-937e-65b3944ec810">
+      <Execution id="19c01e5a-62cb-4d0a-9557-2a8d7fb59a91" />
+      <TestMethod codeBase="D:\GitHub\windows-performance-monitor\artifacts\version-1.1.0\bin\PerfMonitor.BrokerTests\release\PerfMonitor.BrokerTests.dll" adapterTypeName="executor://mstestadapter/v4" className="PerfMonitor.BrokerTests.BrokerOptionsTests" name="ConsoleModeAllowsBoundedTestOverrides" />
+    </UnitTest>
+    <UnitTest name="PendingRecoversAsIndeterminateAcrossRestart" storage="d:\github\windows-performance-monitor\artifacts\version-1.1.0\bin\perfmonitor.brokertests\release\perfmonitor.brokertests.dll" id="15895a75-e004-81a1-a0d5-2c350bfe6f2c">
+      <Execution id="2ebd0a7f-906d-4038-92cb-7f883aac5015" />
+      <TestMethod codeBase="D:\GitHub\windows-performance-monitor\artifacts\version-1.1.0\bin\PerfMonitor.BrokerTests\release\PerfMonitor.BrokerTests.dll" adapterTypeName="executor://mstestadapter/v4" className="PerfMonitor.BrokerTests.BrokerAuditStoreTests" name="PendingRecoversAsIndeterminateAcrossRestart" />
+    </UnitTest>
+    <UnitTest name="ConsoleDurationAndPipeNameAreBounded" storage="d:\github\windows-performance-monitor\artifacts\version-1.1.0\bin\perfmonitor.brokertests\release\perfmonitor.brokertests.dll" id="17b80547-ce42-8e4f-a979-f925a901c44d">
+      <Execution id="8ee83f34-785f-42ca-bdd0-2944f5be3e74" />
+      <TestMethod codeBase="D:\GitHub\windows-performance-monitor\artifacts\version-1.1.0\bin\PerfMonitor.BrokerTests\release\PerfMonitor.BrokerTests.dll" adapterTypeName="executor://mstestadapter/v4" className="PerfMonitor.BrokerTests.BrokerOptionsTests" name="ConsoleDurationAndPipeNameAreBounded" />
+    </UnitTest>
+    <UnitTest name="CompletedResultIsReplayedWithoutNewReservation" storage="d:\github\windows-performance-monitor\artifacts\version-1.1.0\bin\perfmonitor.brokertests\release\perfmonitor.brokertests.dll" id="170a4dbe-9e38-81e5-a47f-b40a9268b0e5">
+      <Execution id="de13029f-f75d-43ed-8fd4-f90d49fdd330" />
+      <TestMethod codeBase="D:\GitHub\windows-performance-monitor\artifacts\version-1.1.0\bin\PerfMonitor.BrokerTests\release\PerfMonitor.BrokerTests.dll" adapterTypeName="executor://mstestadapter/v4" className="PerfMonitor.BrokerTests.BrokerAuditStoreTests" name="CompletedResultIsReplayedWithoutNewReservation" />
+    </UnitTest>
+    <UnitTest name="MalformedClientsAreIsolatedFromListener" storage="d:\github\windows-performance-monitor\artifacts\version-1.1.0\bin\perfmonitor.brokertests\release\perfmonitor.brokertests.dll" id="14ddf7a4-7dcf-8344-acb8-fc06a5d07a83">
+      <Execution id="3ac8cd00-cd3c-4338-8cc5-891c8ce80c8a" />
+      <TestMethod codeBase="D:\GitHub\windows-performance-monitor\artifacts\version-1.1.0\bin\PerfMonitor.BrokerTests\release\PerfMonitor.BrokerTests.dll" adapterTypeName="executor://mstestadapter/v4" className="PerfMonitor.BrokerTests.BrokerPenetrationTests" name="MalformedClientsAreIsolatedFromListener" />
+    </UnitTest>
+    <UnitTest name="ClientServerDryRunRoundTripNeverMutates" storage="d:\github\windows-performance-monitor\artifacts\version-1.1.0\bin\perfmonitor.brokertests\release\perfmonitor.brokertests.dll" id="107a12a3-c356-825c-89b6-cb5bb1e6d4b6">
+      <Execution id="b176053a-bbeb-4ea0-8b0b-8b52d5ee9a75" />
+      <TestMethod codeBase="D:\GitHub\windows-performance-monitor\artifacts\version-1.1.0\bin\PerfMonitor.BrokerTests\release\PerfMonitor.BrokerTests.dll" adapterTypeName="executor://mstestadapter/v4" className="PerfMonitor.BrokerTests.BrokerPipeTests" name="ClientServerDryRunRoundTripNeverMutates" />
+    </UnitTest>
+    <UnitTest name="ConcurrentReplayAndConflictNeverDoubleExecute" storage="d:\github\windows-performance-monitor\artifacts\version-1.1.0\bin\perfmonitor.brokertests\release\perfmonitor.brokertests.dll" id="11043ac7-3610-8aae-ab8c-602145eb2e69">
+      <Execution id="146563d4-c726-459f-9eed-65f6d6eea108" />
+      <TestMethod codeBase="D:\GitHub\windows-performance-monitor\artifacts\version-1.1.0\bin\PerfMonitor.BrokerTests\release\PerfMonitor.BrokerTests.dll" adapterTypeName="executor://mstestadapter/v4" className="PerfMonitor.BrokerTests.BrokerPenetrationTests" name="ConcurrentReplayAndConflictNeverDoubleExecute" />
+    </UnitTest>
+    <UnitTest name="AuthenticodeTrustBindsVerifiedSignerAndContent" storage="d:\github\windows-performance-monitor\artifacts\version-1.1.0\bin\perfmonitor.brokertests\release\perfmonitor.brokertests.dll" id="16282660-4290-8323-aa45-60336ac70ed2">
+      <Execution id="0b755e7f-8371-4c4e-9a51-4acf048a4862" />
+      <TestMethod codeBase="D:\GitHub\windows-performance-monitor\artifacts\version-1.1.0\bin\PerfMonitor.BrokerTests\release\PerfMonitor.BrokerTests.dll" adapterTypeName="executor://mstestadapter/v4" className="PerfMonitor.BrokerTests.ClientExecutableTrustTests" name="AuthenticodeTrustBindsVerifiedSignerAndContent" />
+    </UnitTest>
+    <UnitTest name="OwnerMismatchRejectsOtherUsersProcess" storage="d:\github\windows-performance-monitor\artifacts\version-1.1.0\bin\perfmonitor.brokertests\release\perfmonitor.brokertests.dll" id="1bcfdce3-b386-8fd9-841f-e76b8fbc0f9a">
+      <Execution id="97bf736f-f16a-4568-833c-d960a6efd5c7" />
+      <TestMethod codeBase="D:\GitHub\windows-performance-monitor\artifacts\version-1.1.0\bin\PerfMonitor.BrokerTests\release\PerfMonitor.BrokerTests.dll" adapterTypeName="executor://mstestadapter/v4" className="PerfMonitor.BrokerTests.WindowsActionExecutorTests" name="OwnerMismatchRejectsOtherUsersProcess" />
+    </UnitTest>
+    <UnitTest name="DifferentHashForSameCallerAndKeyConflicts" storage="d:\github\windows-performance-monitor\artifacts\version-1.1.0\bin\perfmonitor.brokertests\release\perfmonitor.brokertests.dll" id="1d5cee1a-f3ac-8a07-98c8-4c35c161e9fb">
+      <Execution id="7fd5ff6f-4026-426d-9ad3-453441d26463" />
+      <TestMethod codeBase="D:\GitHub\windows-performance-monitor\artifacts\version-1.1.0\bin\PerfMonitor.BrokerTests\release\PerfMonitor.BrokerTests.dll" adapterTypeName="executor://mstestadapter/v4" className="PerfMonitor.BrokerTests.BrokerAuditStoreTests" name="DifferentHashForSameCallerAndKeyConflicts" />
+    </UnitTest>
+    <UnitTest name="ClientCloseBeforeAcceptKeepsListenerHealthy" storage="d:\github\windows-performance-monitor\artifacts\version-1.1.0\bin\perfmonitor.brokertests\release\perfmonitor.brokertests.dll" id="1227651c-bd62-8d12-90d1-e12ac5121436">
+      <Execution id="05c160f7-3a8b-42fa-9588-85191d44f2b8" />
+      <TestMethod codeBase="D:\GitHub\windows-performance-monitor\artifacts\version-1.1.0\bin\PerfMonitor.BrokerTests\release\PerfMonitor.BrokerTests.dll" adapterTypeName="executor://mstestadapter/v4" className="PerfMonitor.BrokerTests.BrokerPipeTests" name="ClientCloseBeforeAcceptKeepsListenerHealthy" />
+    </UnitTest>
+    <UnitTest name="ServicePolicyRequiresSignedProtectedAgent" storage="d:\github\windows-performance-monitor\artifacts\version-1.1.0\bin\perfmonitor.brokertests\release\perfmonitor.brokertests.dll" id="129b67e5-8855-82ea-8c85-d8cc19f12b5e">
+      <Execution id="90d2a084-5acb-451b-9b46-21046dda6467" />
+      <TestMethod codeBase="D:\GitHub\windows-performance-monitor\artifacts\version-1.1.0\bin\PerfMonitor.BrokerTests\release\PerfMonitor.BrokerTests.dll" adapterTypeName="executor://mstestadapter/v4" className="PerfMonitor.BrokerTests.BrokerOptionsTests" name="ServicePolicyRequiresSignedProtectedAgent" />
+    </UnitTest>
+    <UnitTest name="TerminationPassesExactGuardAndReturnsExited" storage="d:\github\windows-performance-monitor\artifacts\version-1.1.0\bin\perfmonitor.brokertests\release\perfmonitor.brokertests.dll" id="150475b2-09c3-80ea-85e6-ecacd18c8618">
+      <Execution id="deef8233-7ac6-49e4-84b6-e29dc34842e1" />
+      <TestMethod codeBase="D:\GitHub\windows-performance-monitor\artifacts\version-1.1.0\bin\PerfMonitor.BrokerTests\release\PerfMonitor.BrokerTests.dll" adapterTypeName="executor://mstestadapter/v4" className="PerfMonitor.BrokerTests.WindowsActionExecutorTests" name="TerminationPassesExactGuardAndReturnsExited" />
+    </UnitTest>
+    <UnitTest name="ServiceModeUsesOnlyFixedMachineLocations" storage="d:\github\windows-performance-monitor\artifacts\version-1.1.0\bin\perfmonitor.brokertests\release\perfmonitor.brokertests.dll" id="14594be2-4833-853e-bb84-982b809539d4">
+      <Execution id="dec21af5-d5c5-43c4-8805-4b5e23a21399" />
+      <TestMethod codeBase="D:\GitHub\windows-performance-monitor\artifacts\version-1.1.0\bin\PerfMonitor.BrokerTests\release\PerfMonitor.BrokerTests.dll" adapterTypeName="executor://mstestadapter/v4" className="PerfMonitor.BrokerTests.BrokerOptionsTests" name="ServiceModeUsesOnlyFixedMachineLocations" />
+    </UnitTest>
+    <UnitTest name="ConcurrentDuplicateGetsOneNewReservation" storage="d:\github\windows-performance-monitor\artifacts\version-1.1.0\bin\perfmonitor.brokertests\release\perfmonitor.brokertests.dll" id="1b19e01e-1538-87dc-b695-3113bc84447e">
+      <Execution id="c2053b07-3a58-406f-9ffb-6645b4cd6197" />
+      <TestMethod codeBase="D:\GitHub\windows-performance-monitor\artifacts\version-1.1.0\bin\PerfMonitor.BrokerTests\release\PerfMonitor.BrokerTests.dll" adapterTypeName="executor://mstestadapter/v4" className="PerfMonitor.BrokerTests.BrokerAuditStoreTests" name="ConcurrentDuplicateGetsOneNewReservation" />
+    </UnitTest>
+    <UnitTest name="ProtectedPathIsExactAndNotPrefixBased" storage="d:\github\windows-performance-monitor\artifacts\version-1.1.0\bin\perfmonitor.brokertests\release\perfmonitor.brokertests.dll" id="1543f0e3-f0ad-8c3b-8f36-639a0ee3e1b4">
+      <Execution id="80323301-9d77-4310-9556-e4b0de6069e2" />
+      <TestMethod codeBase="D:\GitHub\windows-performance-monitor\artifacts\version-1.1.0\bin\PerfMonitor.BrokerTests\release\PerfMonitor.BrokerTests.dll" adapterTypeName="executor://mstestadapter/v4" className="PerfMonitor.BrokerTests.ClientExecutableTrustTests" name="ProtectedPathIsExactAndNotPrefixBased" />
+    </UnitTest>
+    <UnitTest name="SetPriorityOnlyUsesBoundedEnum" storage="d:\github\windows-performance-monitor\artifacts\version-1.1.0\bin\perfmonitor.brokertests\release\perfmonitor.brokertests.dll" id="1105e05e-d882-8ad9-965a-57cc57263d84">
+      <Execution id="e2f68ec7-7eb3-4ef4-b806-8c62ddbb7446" />
+      <TestMethod codeBase="D:\GitHub\windows-performance-monitor\artifacts\version-1.1.0\bin\PerfMonitor.BrokerTests\release\PerfMonitor.BrokerTests.dll" adapterTypeName="executor://mstestadapter/v4" className="PerfMonitor.BrokerTests.WindowsActionExecutorTests" name="SetPriorityOnlyUsesBoundedEnum" />
+    </UnitTest>
+    <UnitTest name="BrokerPipeAclDeniesNetworkAndLimitsUserRights" storage="d:\github\windows-performance-monitor\artifacts\version-1.1.0\bin\perfmonitor.brokertests\release\perfmonitor.brokertests.dll" id="156647f1-f2ae-8abb-ba73-d26d4ee39a48">
+      <Execution id="6451bb73-2c89-46cc-9778-696b4f40ac15" />
+      <TestMethod codeBase="D:\GitHub\windows-performance-monitor\artifacts\version-1.1.0\bin\PerfMonitor.BrokerTests\release\PerfMonitor.BrokerTests.dll" adapterTypeName="executor://mstestadapter/v4" className="PerfMonitor.BrokerTests.BrokerPipeTests" name="BrokerPipeAclDeniesNetworkAndLimitsUserRights" />
+    </UnitTest>
+    <UnitTest name="TransportResolverUsesActualClientSidPidAndImage" storage="d:\github\windows-performance-monitor\artifacts\version-1.1.0\bin\perfmonitor.brokertests\release\perfmonitor.brokertests.dll" id="1d2c0116-72ed-823c-8cb6-5b888281d5b1">
+      <Execution id="a550577b-5dff-4041-a452-3b510542e472" />
+      <TestMethod codeBase="D:\GitHub\windows-performance-monitor\artifacts\version-1.1.0\bin\PerfMonitor.BrokerTests\release\PerfMonitor.BrokerTests.dll" adapterTypeName="executor://mstestadapter/v4" className="PerfMonitor.BrokerTests.BrokerPipeTests" name="TransportResolverUsesActualClientSidPidAndImage" />
+    </UnitTest>
+    <UnitTest name="CreationTimeMismatchRejectsPidReuse" storage="d:\github\windows-performance-monitor\artifacts\version-1.1.0\bin\perfmonitor.brokertests\release\perfmonitor.brokertests.dll" id="11dde90f-003d-8579-96d4-2afbf4b564a8">
+      <Execution id="476e3ae7-5684-47e8-b2cc-e0b1f12eae6e" />
+      <TestMethod codeBase="D:\GitHub\windows-performance-monitor\artifacts\version-1.1.0\bin\PerfMonitor.BrokerTests\release\PerfMonitor.BrokerTests.dll" adapterTypeName="executor://mstestadapter/v4" className="PerfMonitor.BrokerTests.WindowsActionExecutorTests" name="CreationTimeMismatchRejectsPidReuse" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="1de21c01-389c-87a3-b655-1c86f3df7f6d" executionId="b585701f-abec-4f12-88ec-1ebca5293ff2" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="1b0305fc-20ff-875b-b31e-02c08cb51398" executionId="bfbc93b9-b5a8-4dea-abe5-182b1e86c177" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="1994eab3-d14a-8e4a-937e-65b3944ec810" executionId="19c01e5a-62cb-4d0a-9557-2a8d7fb59a91" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="15895a75-e004-81a1-a0d5-2c350bfe6f2c" executionId="2ebd0a7f-906d-4038-92cb-7f883aac5015" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="1105e05e-d882-8ad9-965a-57cc57263d84" executionId="e2f68ec7-7eb3-4ef4-b806-8c62ddbb7446" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="1f8a9214-8445-8ecb-aad9-8ac9d99c24dd" executionId="62bedd37-552d-4eba-85ce-ad5ddd149953" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="170a4dbe-9e38-81e5-a47f-b40a9268b0e5" executionId="de13029f-f75d-43ed-8fd4-f90d49fdd330" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="10a28ddf-09a5-8466-a39e-f99087f04617" executionId="308cf2d8-11d9-4ba3-9a56-39268e740962" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="17b80547-ce42-8e4f-a979-f925a901c44d" executionId="8ee83f34-785f-42ca-bdd0-2944f5be3e74" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="129b67e5-8855-82ea-8c85-d8cc19f12b5e" executionId="90d2a084-5acb-451b-9b46-21046dda6467" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="1543f0e3-f0ad-8c3b-8f36-639a0ee3e1b4" executionId="80323301-9d77-4310-9556-e4b0de6069e2" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="16282660-4290-8323-aa45-60336ac70ed2" executionId="0b755e7f-8371-4c4e-9a51-4acf048a4862" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="1bccaffa-795c-8ba8-b498-ed33c11de2e0" executionId="e260011a-b772-4750-88ef-c5815cf8f4ec" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="107a12a3-c356-825c-89b6-cb5bb1e6d4b6" executionId="b176053a-bbeb-4ea0-8b0b-8b52d5ee9a75" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="1bcfdce3-b386-8fd9-841f-e76b8fbc0f9a" executionId="97bf736f-f16a-4568-833c-d960a6efd5c7" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="136a893e-46b6-80a3-96ad-145f045b5854" executionId="3bc7c082-f20a-4f0d-a498-6c5212f92da9" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="150475b2-09c3-80ea-85e6-ecacd18c8618" executionId="deef8233-7ac6-49e4-84b6-e29dc34842e1" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="1d2c0116-72ed-823c-8cb6-5b888281d5b1" executionId="a550577b-5dff-4041-a452-3b510542e472" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="11dde90f-003d-8579-96d4-2afbf4b564a8" executionId="476e3ae7-5684-47e8-b2cc-e0b1f12eae6e" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="14ddf7a4-7dcf-8344-acb8-fc06a5d07a83" executionId="3ac8cd00-cd3c-4338-8cc5-891c8ce80c8a" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="156647f1-f2ae-8abb-ba73-d26d4ee39a48" executionId="6451bb73-2c89-46cc-9778-696b4f40ac15" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="1d5cee1a-f3ac-8a07-98c8-4c35c161e9fb" executionId="7fd5ff6f-4026-426d-9ad3-453441d26463" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="1227651c-bd62-8d12-90d1-e12ac5121436" executionId="05c160f7-3a8b-42fa-9588-85191d44f2b8" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="1b19e01e-1538-87dc-b695-3113bc84447e" executionId="c2053b07-3a58-406f-9ffb-6645b4cd6197" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="11043ac7-3610-8aae-ab8c-602145eb2e69" executionId="146563d4-c726-459f-9eed-65f6d6eea108" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="14594be2-4833-853e-bb84-982b809539d4" executionId="dec21af5-d5c5-43c4-8805-4b5e23a21399" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="1ae2c26d-4766-8614-ab39-615507793ddb" executionId="326de14c-af51-4496-9bc8-4677519aa180" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="列表中未列出的结果" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="所有已加载的结果" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Completed">
+    <Counters total="27" executed="27" passed="27" failed="0" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+  </ResultSummary>
+</TestRun>

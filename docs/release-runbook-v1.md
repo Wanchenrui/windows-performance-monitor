@@ -1,5 +1,7 @@
 # PerfMonitor v1.0 发布操作手册
 
+本手册沿用于当前 `1.1.0` 开发/测试候选；生产操作仍须满足下列全部门禁。
+
 ## 结论
 
 `.github/workflows/release.yml` 是 v1.0 唯一的候选打包入口。`test` 模式
@@ -31,7 +33,7 @@ workflow 都要求本次调用显式提供 `wix7`。
 - 私钥可用于 SignTool，但 PFX 不允许作为构建 artifact 导出；
 - Subject 和 SHA-256 pin 同时匹配，不能只依赖 SHA-1 store lookup。
 
-生产 workflow 只允许从 `main` 或精确 `v1.0.0` tag 启动。建议把
+生产 workflow 只允许从 `main` 或精确 `v1.1.0` tag 启动。建议把
 `production` GitHub Environment 设置为至少一名独立审查人，并限制只有
 维护者可读取上述 Secrets。
 
@@ -78,7 +80,7 @@ production PFX 和密码只注入证书导入步骤；完整 Python/.NET 测试�
    指定 signer workflow 和 GitHub attestation；不能上传本地 JSON 代替。
 7. 运行成功后记录 workflow run ID、commit SHA、artifact ID、attestation
    URL/digest、MSI SHA-256、证书 SHA-256 和时间戳验证结果。
-8. 只从该精确 commit 建立 `v1.0.0` annotated tag；不得重建或替换已证明
+8. 只从该精确 commit 建立 `v1.1.0` annotated tag；不得重建或替换已证明
    的文件。
 
 ## 自动门禁顺序
@@ -87,7 +89,7 @@ production PFX 和密码只注入证书导入步骤；完整 Python/.NET 测试�
 locked restore + Python/.NET tests
   -> publish win-x64 payload
   -> sign and verify five executable entry points
-  -> build/sign synthetic 0.9 MSI and current 1.0 MSI
+  -> build/sign synthetic 0.9 MSI and current 1.1 MSI
   -> inspect MSI tables and signer
   -> install/upgrade/downgrade/uninstall/reinstall/rollback
   -> smoke + forced WAL crash + resource budget

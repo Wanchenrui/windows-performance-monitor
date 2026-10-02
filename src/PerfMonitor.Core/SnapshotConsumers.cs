@@ -46,6 +46,7 @@ public sealed class SnapshotFanout
 {
     private readonly IReadOnlyList<ISnapshotConsumer> _consumers;
     private long _consumerFailures;
+    private long _deliverySequence;
 
     public SnapshotFanout(IEnumerable<ISnapshotConsumer> consumers)
     {
@@ -54,13 +55,17 @@ public sealed class SnapshotFanout
 
     public long ConsumerFailures => Interlocked.Read(ref _consumerFailures);
 
-    public void Publish(AgentSnapshot snapshot)
+    public AgentSnapshot Publish(AgentSnapshot snapshot)
     {
+        var delivered = snapshot with
+        {
+            DeliverySequence = Interlocked.Increment(ref _deliverySequence),
+        };
         foreach (var consumer in _consumers)
         {
             try
             {
-                _ = consumer.TryPublish(snapshot);
+                _ = consumer.TryPublish(delivered);
             }
             catch
             {
@@ -69,5 +74,7 @@ public sealed class SnapshotFanout
                 Interlocked.Increment(ref _consumerFailures);
             }
         }
+
+        return delivered;
     }
 }

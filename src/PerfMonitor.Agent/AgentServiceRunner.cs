@@ -59,6 +59,7 @@ public static class AgentServiceRunner
             new SqliteHistoryOptions
             {
                 DatabasePath = databasePath,
+                DiagnosticPolicy = diagnosticPolicy,
             });
         await using var diagnostics = new DiagnosticEngine(
             diagnosticPolicy,
@@ -128,8 +129,7 @@ public static class AgentServiceRunner
             while (true)
             {
                 durationCancellation.Token.ThrowIfCancellationRequested();
-                var snapshot = assembler.Read();
-                fanout.Publish(snapshot);
+                var snapshot = fanout.Publish(assembler.Read());
                 await WriteSnapshotAsync(
                     snapshot,
                     options.Sampling.OutputPath,
@@ -149,8 +149,7 @@ public static class AgentServiceRunner
             if (!cancellationToken.IsCancellationRequested &&
                 options.Sampling.Duration is not null)
             {
-                var snapshot = assembler.Read();
-                fanout.Publish(snapshot);
+                var snapshot = fanout.Publish(assembler.Read());
                 await WriteSnapshotAsync(
                     snapshot,
                     options.Sampling.OutputPath,

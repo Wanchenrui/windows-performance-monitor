@@ -252,7 +252,11 @@ public sealed class ProviderScheduler : IAsyncDisposable
                             nextDeadline,
                             startedTimestamp).TotalMilliseconds),
                     missedTotal,
-                    skippedBusyTotal);
+                    skippedBusyTotal)
+                {
+                    StartedTimestamp = startedTimestamp,
+                    CompletedTimestamp = completedTimestamp,
+                };
                 await _sink.PublishAsync(
                     result,
                     execution,

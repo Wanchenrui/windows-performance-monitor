@@ -82,7 +82,7 @@ function Assert-DatabaseIntegrity {
     if (
         $LASTEXITCODE -ne 0 -or
         -not $Verification.integrityPassed -or
-        [int]$Verification.schemaVersion -ne 2
+        [int]$Verification.schemaVersion -ne 3
     ) {
         throw "crash_recovery_integrity_failed"
     }
@@ -208,7 +208,7 @@ try {
     [ordered]@{
         schemaVersion = "1.0"
         productVersion = $ExpectedProductVersion
-        databaseSchemaVersion = 2
+        databaseSchemaVersion = 3
         agentSha256 = $AgentSha256
         supportSha256 = $SupportSha256
         passed = $true

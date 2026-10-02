@@ -7,7 +7,11 @@ namespace PerfMonitor.Storage.Sqlite;
 internal sealed record PersistedMetric(
     string MetricId,
     string Unit,
-    double Value);
+    double? Value,
+    string GroupId,
+    string SourceId,
+    SnapshotGroup Group,
+    string ObservationKey);
 
 internal static class SnapshotMetricExtractor
 {
@@ -18,9 +22,9 @@ internal static class SnapshotMetricExtractor
         AgentSnapshot snapshot)
     {
         var metrics = new List<PersistedMetric>();
-        foreach (var group in snapshot.Groups.Values)
+        foreach (var (groupId, group) in snapshot.Groups)
         {
-            if (group.Data is not JsonObject data ||
+            if (group.ObservedAtUtc is null || group.Data is not JsonObject data ||
                 data["metrics"] is not JsonObject metricObject)
             {
                 continue;
@@ -32,12 +36,21 @@ internal static class SnapshotMetricExtractor
                     entry.Value is not JsonObject metric ||
                     metric["unit"] is not JsonValue unitNode ||
                     !unitNode.TryGetValue<string>(out var unit) ||
-                    !TryReadFiniteDouble(metric["value"], out var value))
+                    metric["sourceId"] is not JsonValue sourceNode ||
+                    !sourceNode.TryGetValue<string>(out var source))
                 {
                     continue;
                 }
 
-                metrics.Add(new PersistedMetric(entry.Key, unit, value));
+                var usable = group.Availability is (AvailabilityStates.Available or AvailabilityStates.Partial) &&
+                    group.Freshness == FreshnessStates.Fresh &&
+                    !group.Errors.Any(error => error.MetricId == entry.Key) &&
+                    !(data["sampleReady"] is JsonValue ready && ready.TryGetValue<bool>(out var isReady) && !isReady);
+                double? value = usable && TryReadFiniteDouble(metric["value"], out var number) ? number : null;
+                var identity = group.ObservationSequence is { } sequence
+                    ? $"sequence:{sequence}"
+                    : $"utc:{group.ObservedAtUtc.Value.UtcTicks}";
+                metrics.Add(new(entry.Key, unit, value, groupId, source, group, identity));
             }
         }
 

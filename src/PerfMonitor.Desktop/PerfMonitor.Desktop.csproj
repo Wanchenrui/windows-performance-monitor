@@ -4,10 +4,19 @@
     <TargetFramework>net10.0-windows10.0.17763.0</TargetFramework>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ApplicationIcon>Assets/PerfMonitor.ico</ApplicationIcon>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <AssemblyName>perf-monitor-desktop</AssemblyName>
     <StartupObject>PerfMonitor.Desktop.DesktopProgram</StartupObject>
   </PropertyGroup>
+  <ItemGroup>
+    <!-- Keep WPF's explicit imports unambiguous when using only NotifyIcon from Forms. -->
+    <Using Remove="System.Drawing" />
+    <Using Remove="System.Windows.Forms" />
+    <EmbeddedResource Include="Assets/PerfMonitor.ico" LogicalName="PerfMonitor.Desktop.Icon" />
+    <InternalsVisibleTo Include="PerfMonitor.AgentTests" />
+  </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="../PerfMonitor.Contracts/PerfMonitor.Contracts.csproj" />
     <ProjectReference Include="../PerfMonitor.Core/PerfMonitor.Core.csproj" />

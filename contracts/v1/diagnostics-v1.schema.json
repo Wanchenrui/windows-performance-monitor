@@ -109,6 +109,7 @@
         },
         "firstSeenUtc": {"type": "string", "format": "date-time"},
         "lastSeenUtc": {"type": "string", "format": "date-time"},
+        "observationSequence": {"type": "integer", "minimum": 1},
         "confidence": {"type": "number", "minimum": 0, "maximum": 1},
         "evidence": {
           "type": "array",

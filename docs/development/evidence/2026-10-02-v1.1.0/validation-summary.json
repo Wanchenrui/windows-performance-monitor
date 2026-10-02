@@ -1,0 +1,105 @@
+{
+  "schemaVersion": 1,
+  "generatedAtUtc": "2026-10-02T13:07:17.4287698Z",
+  "productVersion": "1.1.0",
+  "repositoryHeadAtBuild": "74d29ddfc8a29fac23af5d57068b2aef08c42804",
+  "workingTreeDirtyAtBuild": true,
+  "sdkVersion": "10.0.302",
+  "environment": "Windows 10 22H2 build 19045 x64 developer machine; outside the four-target support matrix",
+  "artifactPath": "artifacts/version-1.1.0",
+  "commands": [
+    {
+      "commandCore": "dotnet restore PerfMonitor.slnx --locked-mode --artifacts-path artifacts/version-1.1.0",
+      "exitCode": 0,
+      "projects": 21,
+      "log": "docs/development/evidence/2026-10-02-v1.1.0/logs/restore-locked.log"
+    },
+    {
+      "commandCore": "dotnet test PerfMonitor.slnx -c Release --no-restore --artifacts-path artifacts/version-1.1.0",
+      "exitCode": 0,
+      "total": 204,
+      "passed": 204,
+      "failed": 0,
+      "notExecuted": 0,
+      "log": "docs/development/evidence/2026-10-02-v1.1.0/logs/test-release.log",
+      "trxDirectory": "docs/development/evidence/2026-10-02-v1.1.0/test-results"
+    },
+    {
+      "commandCore": "dotnet build PerfMonitor.slnx -c Release --no-restore --artifacts-path artifacts/version-1.1.0 --verbosity minimal",
+      "exitCode": 0,
+      "projects": 21,
+      "warnings": 0,
+      "errors": 0,
+      "log": "docs/development/evidence/2026-10-02-v1.1.0/logs/build-release.log"
+    }
+  ],
+  "testRuns": [
+    {
+      "path": "docs/development/evidence/2026-10-02-v1.1.0/test-results/Administrator_HCAIA-WAQHGBEKP_2026-10-02_20_50_10_net10.0.trx",
+      "testAssembly": "PerfMonitor.ContractTests.dll",
+      "total": 11,
+      "passed": 11,
+      "failed": 0,
+      "notExecuted": 0
+    },
+    {
+      "path": "docs/development/evidence/2026-10-02-v1.1.0/test-results/Administrator_HCAIA-WAQHGBEKP_2026-10-02_20_50_11_net10.0.trx",
+      "testAssembly": "PerfMonitor.ActionsTests.dll",
+      "total": 33,
+      "passed": 33,
+      "failed": 0,
+      "notExecuted": 0
+    },
+    {
+      "path": "docs/development/evidence/2026-10-02-v1.1.0/test-results/Administrator_HCAIA-WAQHGBEKP_2026-10-02_20_50_14_net10.0.trx",
+      "testAssembly": "PerfMonitor.ReleaseTests.dll",
+      "total": 10,
+      "passed": 10,
+      "failed": 0,
+      "notExecuted": 0
+    },
+    {
+      "path": "docs/development/evidence/2026-10-02-v1.1.0/test-results/Administrator_HCAIA-WAQHGBEKP_2026-10-02_20_50_14_net10.0[1].trx",
+      "testAssembly": "PerfMonitor.BrokerTests.dll",
+      "total": 27,
+      "passed": 27,
+      "failed": 0,
+      "notExecuted": 0
+    },
+    {
+      "path": "docs/development/evidence/2026-10-02-v1.1.0/test-results/Administrator_HCAIA-WAQHGBEKP_2026-10-02_20_50_14_net10.0[2].trx",
+      "testAssembly": "PerfMonitor.AgentTests.dll",
+      "total": 123,
+      "passed": 123,
+      "failed": 0,
+      "notExecuted": 0
+    }
+  ],
+  "productFileVersion": "1.1.0.0",
+  "productInformationalVersion": "1.1.0+74d29ddfc8a29fac23af5d57068b2aef08c42804",
+  "artifactHashes": "artifact-hashes.json",
+  "historicalEvidencePreserved": {
+    "originalManifest": {
+      "path": "artifacts/validation/final-artifact-hashes.json",
+      "sizeBytes": 12372,
+      "sha256": "9685F8B82C006A3A3C4C6B74A743079BC6BC155244630ECFC1BF7FB7BAA0C0B1"
+    },
+    "originalValidationText": {
+      "path": "docs/development/2026-10-02-validation.md",
+      "sizeBytes": 13189,
+      "sha256": "4E0A0DC562F83781F476A7A3DB9E17AAD6DE3A6CD55FF80A10CF57B4E25BFA75"
+    },
+    "originalFilesMatched": 47,
+    "originalOutputDirectoriesMatched": 5,
+    "newArchivedLogAndTrxFilesMatched": 8
+  },
+  "notPerformed": [
+    "New-version WAL forced termination/restart",
+    "New-version UI screenshots or physical tray/hotkey/focus/DPI/multiple-monitor acceptance",
+    "Python rerun; historical 76/76 is referenced separately",
+    "MSI build, installation, signing, update publication or attestation",
+    "Windows 11/Server deployment support matrix",
+    "Real 72-hour whole-product soak",
+    "Real privileged actions or action-recovery acceptance"
+  ]
+}

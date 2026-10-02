@@ -1,0 +1,105 @@
+{
+  "startedUtc": "2026-10-02T12:13:20.7875539+00:00",
+  "captureMethod": "Win32 PrintWindow(PW_RENDERFULLCONTENT), actual visible WPF HWND",
+  "noUiInput": true,
+  "agentPath": "D:\\GitHub\\windows-performance-monitor\\src\\PerfMonitor.Agent\\bin\\Release\\net10.0-windows10.0.17763.0\\win-x64\\perf-monitor-agent.exe",
+  "agentSha256": "1485AB64B79360AE9D6D9181A04E6F9E99F878A2BE746F1758B2C6BD8099F51A",
+  "desktopPath": "D:\\GitHub\\windows-performance-monitor\\src\\PerfMonitor.Desktop\\bin\\Release\\net10.0-windows10.0.17763.0\\win-x64\\perf-monitor-desktop.exe",
+  "desktopSha256": "4BCF204CBB28B815E65AA4459EE35098BECA92261EF4658D968C2BE978BB2B04",
+  "desktopAssemblyPath": "D:\\GitHub\\windows-performance-monitor\\src\\PerfMonitor.Desktop\\bin\\Release\\net10.0-windows10.0.17763.0\\win-x64\\perf-monitor-desktop.dll",
+  "desktopAssemblySha256": "6A7285EA01480E475F59F5097B78E996A8B4C0E97A35F31C0C44CFA972BB1BA4",
+  "sdkRoot": "C:\\Users\\Administrator\\AppData\\Local\\PerfMonitor\\dotnet-sdk-10.0.302",
+  "isolatedDataDirectory": "D:\\GitHub\\windows-performance-monitor\\artifacts\\validation\\ui-screenshots\\20261002-201320-final-hud-main\\isolated-data",
+  "processes": [
+    {
+      "kind": "desktop",
+      "pid": 44188,
+      "startedUtc": "2026-10-02T12:13:21.3298826Z"
+    },
+    {
+      "kind": "agent",
+      "pid": 47992,
+      "startedUtc": "2026-10-02T12:13:24.0354239Z"
+    },
+    {
+      "kind": "cleanup",
+      "pid": 44188,
+      "exitedUtc": "2026-10-02T12:13:47.4714885+00:00",
+      "method": "Stop-Process only captured owned PID"
+    }
+  ],
+  "captures": [
+    {
+      "phase": "01-waiting",
+      "expectedState": "No Agent is running; waiting for connection, no live snapshot",
+      "capturedUtc": "2026-10-02T12:13:24.0265635+00:00",
+      "path": "D:\\GitHub\\windows-performance-monitor\\artifacts\\validation\\ui-screenshots\\20261002-201320-final-hud-main\\01-waiting.png",
+      "desktopPid": 44188,
+      "hwnd": 135660,
+      "windowTitle": "PerfMonitor · 性能状态",
+      "rectangle": [
+        805,
+        570,
+        950,
+        250
+      ],
+      "agentRunning": false,
+      "sha256": "C33893CE764DE965DA4EF171E340D246AD8245DB79A05724E840F256E44BD76B"
+    },
+    {
+      "phase": "02-connected",
+      "expectedState": "Real Agent running; CPU/memory/network/disk cards and hardware quality",
+      "capturedUtc": "2026-10-02T12:13:34.0617284+00:00",
+      "path": "D:\\GitHub\\windows-performance-monitor\\artifacts\\validation\\ui-screenshots\\20261002-201320-final-hud-main\\02-connected.png",
+      "desktopPid": 44188,
+      "hwnd": 135660,
+      "windowTitle": "PerfMonitor · 性能状态",
+      "rectangle": [
+        805,
+        570,
+        950,
+        250
+      ],
+      "agentRunning": true,
+      "sha256": "85766082BE00CE0EE9D55FE662450A6B10440943B38ED96FA9FC37D43571839E"
+    },
+    {
+      "phase": "03-disconnected-history",
+      "expectedState": "The same Agent has exited; reconnecting and retained snapshot marked historical",
+      "capturedUtc": "2026-10-02T12:13:47.4322924+00:00",
+      "path": "D:\\GitHub\\windows-performance-monitor\\artifacts\\validation\\ui-screenshots\\20261002-201320-final-hud-main\\03-disconnected-history.png",
+      "desktopPid": 44188,
+      "hwnd": 135660,
+      "windowTitle": "PerfMonitor · 性能状态",
+      "rectangle": [
+        805,
+        570,
+        950,
+        250
+      ],
+      "agentRunning": false,
+      "sha256": "C38C6FD7B7E900BB2BFC6B670AC11E419806E85B41B7912D932B82419E638C12"
+    }
+  ],
+  "agentArguments": [
+    "--quiet",
+    "--warmup-seconds",
+    "0",
+    "--output-period-ms",
+    "500",
+    "--duration-seconds",
+    "20",
+    "--data-directory",
+    "\"D:\\GitHub\\windows-performance-monitor\\artifacts\\validation\\ui-screenshots\\20261002-201320-final-hud-main\\isolated-data\""
+  ],
+  "agentExit": {
+    "pid": 47992,
+    "exitCode": 0,
+    "exitedUtc": "2026-10-02T12:13:44.4052825Z",
+    "wallDurationSeconds": 20.3698586,
+    "method": "configured duration; actual process ExitTime",
+    "exitCodeStatus": "available"
+  },
+  "completed": true,
+  "finishedUtc": "2026-10-02T12:13:47.4715318+00:00"
+}
