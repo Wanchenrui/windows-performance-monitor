@@ -11,11 +11,11 @@ WIX_NS = "http://wixtoolset.org/schemas/v4/wxs"
 NETFX_NS = "http://wixtoolset.org/schemas/v4/wxs/netfx"
 
 
-def test_v10_version_and_release_toolchain_are_pinned():
+def test_current_product_version_and_release_toolchain_are_pinned():
     properties = ET.parse(ROOT / "Directory.Build.props").getroot()
     version = properties.find("./PropertyGroup/Version")
     assert version is not None
-    assert version.text == "1.0.0"
+    assert version.text == "1.1.0"
 
     tools = json.loads(
         (ROOT / ".config" / "dotnet-tools.json").read_text(

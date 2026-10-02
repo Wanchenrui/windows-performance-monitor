@@ -1,0 +1,43 @@
+﻿{
+    "status":  "passed",
+    "powershell":  "5.1.19041.6456",
+    "scriptSha256":  "79CC355428E88A11129C1469603E03C0E5AD573D0BDA229E5881F8ECFB37B22A",
+    "originalEvidenceSha256":  "1CC7992267B87A3C8BCF88CADA02EF97BDE4AE402396583072511F03F35BB3DA",
+    "checks":  [
+                   "fractional CPU",
+                   "negative clamp",
+                   "unknown first interval",
+                   "failed sample resets baseline",
+                   "first recovery sample is unknown",
+                   "next recovery delta is valid",
+                   "worker discovery failure excludes CPU interval",
+                   "process-set sum",
+                   "time-weighted mean",
+                   "machine normalization",
+                   "warmup crossing excluded",
+                   "incomplete interval excluded",
+                   "fractional probe lateness",
+                   "real CSV cumulative difference replay",
+                   "storage sizes",
+                   "default ConvertFrom-Json compatibility",
+                   "original invalid JSON reproduced"
+               ],
+    "offlineReplay":  [
+                          {
+                              "kind":  "agent",
+                              "rows":  70,
+                              "cumulativeDifferenceSeconds":  5.28125,
+                              "correctedDeltaSumSeconds":  5.28125,
+                              "boundary":  "offline numeric regression only; not a replacement measurement"
+                          },
+                          {
+                              "kind":  "worker",
+                              "rows":  69,
+                              "cumulativeDifferenceSeconds":  0.5625,
+                              "correctedDeltaSumSeconds":  0.5625,
+                              "boundary":  "offline numeric regression only; not a replacement measurement"
+                          }
+                      ],
+    "productStarted":  false,
+    "physicalInputUsed":  false
+}

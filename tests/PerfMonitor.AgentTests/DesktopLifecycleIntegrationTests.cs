@@ -15,6 +15,58 @@ namespace PerfMonitor.AgentTests;
 public sealed class DesktopLifecycleIntegrationTests
 {
     [STATestMethod]
+    public void HiddenStartupConnectsOnceAndRestoresLatestThroughExistingTrayPath()
+    {
+        var previousContext = SynchronizationContext.Current;
+        SynchronizationContext.SetSynchronizationContext(new DispatcherSynchronizationContext());
+        var endpoint = PipeEndpoint.ForCurrentUser() with { PipeName = $"PerfMonitor.hidden-start-test.{Guid.NewGuid():N}" };
+        var service = new LifecycleService();
+        var hub = new SnapshotSubscriptionHub();
+        var server = new NamedPipeAgentServer(endpoint, service, hub);
+        var window = new MainWindow(endpoint)
+        {
+            ShowActivated = false, ShowInTaskbar = false,
+            WindowStartupLocation = WindowStartupLocation.Manual, Left = -32000, Top = -32000,
+        };
+        Action? trayToggle = null;
+        var activations = 0;
+        using var controller = new DesktopResidentController(window,
+            window.StopSessionAsync, () => { }, window.SetResidentStatus,
+            (toggle, _) => { trayToggle = toggle; return new Tray(); },
+            (_, _) => new Hotkey(), () => activations++);
+        try
+        {
+            server.Start();
+            Assert.IsTrue(controller.TryStartHidden());
+            window.StartSession();
+            window.StartSession();
+            PumpUntil(() => hub.SubscriberCount == 1);
+            Assert.IsFalse(window.IsVisible);
+            Assert.AreEqual(0, activations);
+            var initialReads = service.SnapshotReads;
+            service.Latest = Snapshot(service.InstanceId, 2, 99, 58);
+            Assert.IsTrue(hub.TryPublish(service.Latest));
+            trayToggle!();
+            PumpUntil(() => HasText(window, "99%"));
+            Assert.AreEqual(1, hub.SubscriberCount);
+            Assert.AreEqual(initialReads, service.SnapshotReads);
+            Assert.AreEqual(1, activations);
+            Wait(controller.ExitAsync());
+            PumpUntil(() => hub.SubscriberCount == 0);
+            Assert.IsFalse(server.Completion.IsCompleted);
+        }
+        finally
+        {
+            Wait(window.StopSessionAsync());
+            controller.Dispose();
+            window.Close();
+            Wait(server.DisposeAsync().AsTask());
+            Wait(hub.DisposeAsync().AsTask());
+            SynchronizationContext.SetSynchronizationContext(previousContext);
+        }
+    }
+
+    [STATestMethod]
     public void MissingTrayHudCloseButtonExitsInsteadOfLosingTheWindow()
     {
         var previousContext = SynchronizationContext.Current;

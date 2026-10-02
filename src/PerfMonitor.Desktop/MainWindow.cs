@@ -74,9 +74,17 @@ public sealed class MainWindow : Window
         WindowStartupLocation = WindowStartupLocation.CenterScreen;
         _expand = Action("趋势与细节  ↗", (_, _) => ToggleDetails());
         Content = BuildContent();
-        Loaded += (_, _) => { if (_stopTask is null) { _renderer.Publish(_session.Current); UpdateVisibility(); _sessionTask ??= _session.RunAsync(_stopping.Token); } };
+        Loaded += (_, _) => StartSession();
         Closed += async (_, _) => await StopSessionAsync();
         StateChanged += (_, _) => UpdateVisibility(); IsVisibleChanged += (_, _) => UpdateVisibility();
+    }
+    internal void StartSession()
+    {
+        Dispatcher.VerifyAccess();
+        if (_stopTask is not null) return;
+        _renderer.Publish(_session.Current);
+        UpdateVisibility();
+        _sessionTask ??= _session.RunAsync(_stopping.Token);
     }
     public void SetResidentStatus(string text)
     {

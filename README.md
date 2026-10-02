@@ -17,6 +17,8 @@ fixture 生成器和差分基线，但不再作为默认或发布版高频 Agent
 `Ctrl+Alt+P` 显隐入口；存储升级到 schema v3，诊断采用单调时间和逻辑
 观测顺序。版本变更、兼容性与新产物验证交接见
 [1.1.0 开发检查点](docs/development/2026-10-02-v1.1.0-checkpoint.md)。
+[本轮后台开发记录](docs/development/2026-10-02-background-baseline.md) 单独
+记录后续隐藏驻留入口、测试与后台短样本，不构成生产发布或完整性能验收。
 [升号前开发验收记录](docs/development/2026-10-02-validation.md) 只绑定
 其中列出的 `1.0.0` 工作树产物；其截图结论仅覆盖 125% 缩放下所列窗口状态。
 
@@ -146,8 +148,24 @@ powershell -ExecutionPolicy Bypass -File .\scripts\build.ps1
 .\启动.bat
 ```
 
-`启动.bat` 默认启动隐藏的 Agent 和 Desktop。Desktop 关闭后 Agent 继续
+`启动.bat` 默认在后台启动 Agent，并显示 Desktop。Desktop 关闭后 Agent 继续
 采样和写历史；再次运行脚本时，Desktop 会连接到现有的当前用户 Agent。
+Desktop 可显式使用 `perf-monitor-desktop.exe --start-hidden` 启动后驻留
+托盘，启动时不显示或激活窗口；通过现有托盘或 `Ctrl+Alt+P` 恢复显示。
+若托盘创建失败，隐藏启动以退出码 3 清理退出，不显示备用窗口。
+开发预览使用 `scripts/start_desktop_preview.ps1 -ArtifactsPath <隔离构建目录>`，
+默认仅检查产物；显式 `-StartHidden -DurationSeconds <秒数>` 才运行有限
+后台预览。提交版本后缀校验不证明未提交源码与二进制完全对应，需一并
+审查实际构建记录及哈希。
+当前 HEAD 的预览产物应单独构建，例如：
+
+```powershell
+$previewRoot = "artifacts/preview-$(& git rev-parse --short HEAD)"
+dotnet restore .\PerfMonitor.slnx --locked-mode --artifacts-path $previewRoot
+dotnet build .\PerfMonitor.slnx --configuration Release --no-restore --artifacts-path $previewRoot
+.\scripts\start_desktop_preview.ps1 -ArtifactsPath $previewRoot -CheckOnly
+```
+
 需要显式停止 Agent 时：
 
 ```powershell

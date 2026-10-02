@@ -1,0 +1,69 @@
+{
+  "status": "passed",
+  "boundary": "Independent CSV recomputation and original-file hashes; short development sample only",
+  "run": "2026-10-02-wave02-agent-worker-hidden-180s",
+  "mode": "desktop-hidden",
+  "files": [
+    {
+      "name": "baseline.json",
+      "sha256": "DCE73B7996B600049FB77DEF4D0FB15C3AF2A36CCEADE8B62ABFFAF04A53666F"
+    },
+    {
+      "name": "process-resources.csv",
+      "sha256": "097AC3A318D32E686458CA2A646A936BC52BC755DD1B3BE286C2E41205899D2E"
+    },
+    {
+      "name": "product-resources.csv",
+      "sha256": "1CBDDC0A5D19469402356145E818B57AD0F6FE8AC1A81A8878854FA5B3C529C4"
+    }
+  ],
+  "recomputedSummary": {
+    "probeSamples": 190,
+    "measurementSamples": 180,
+    "cpuCompleteSamples": 179,
+    "observedCpuDeltaSeconds": 14.03125,
+    "cpuCoveredSeconds": 179.00443860000001,
+    "cpuCoverageFractionOfRequestedMeasurement": 0.9944691033333334,
+    "cpuCoreEquivalentMeanPct": 7.83849278249126,
+    "cpuMachineNormalizedMeanPct": 0.2799461708032593,
+    "maximumProbeIntervalSeconds": 1.0205263999999943,
+    "probeGapSamples": 0,
+    "peakPrivateBytes": 216637440.0,
+    "peakWorkingSetBytes": 339804160.0,
+    "peakHandles": 1616.0,
+    "peakThreads": 76.0,
+    "peakDbBytes": 2789376.0,
+    "peakWalBytes": 4400192.0,
+    "databaseGrowthBeforeShutdownBytes": 2707456,
+    "walGrowthBeforeShutdownBytes": 3629720
+  },
+  "processRows": 569,
+  "processes": [
+    {
+      "kind": "agent",
+      "pid": 51128,
+      "cleanup": "already exited",
+      "exitCode": 0
+    },
+    {
+      "kind": "desktop",
+      "pid": 22440,
+      "cleanup": "already exited",
+      "exitCode": -1
+    },
+    {
+      "kind": "worker",
+      "pid": 11936,
+      "cleanup": "already exited",
+      "exitCode": -1
+    }
+  ],
+  "storageAfterShutdown": {
+    "dbBytes": 3002368,
+    "walBytes": 0,
+    "shmBytes": 0
+  },
+  "persistedSnapshots": 194,
+  "missingPersistedDeliveries": 0,
+  "productStartedByAudit": false
+}

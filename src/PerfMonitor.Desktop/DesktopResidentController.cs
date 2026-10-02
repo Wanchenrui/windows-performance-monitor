@@ -76,6 +76,17 @@ internal sealed class DesktopResidentController : IDisposable
             Show();
     }
 
+    internal bool TryStartHidden()
+    {
+        _window.Dispatcher.VerifyAccess();
+        if (_exiting || _disposed || _tray is null) return false;
+        _window.ShowActivated = false;
+        // Create the real message HWND/shortcut without ever showing the window.
+        _ = new WindowInteropHelper(_window).EnsureHandle();
+        UpdateStatus();
+        return true;
+    }
+
     internal void Show()
     {
         _window.Dispatcher.VerifyAccess();

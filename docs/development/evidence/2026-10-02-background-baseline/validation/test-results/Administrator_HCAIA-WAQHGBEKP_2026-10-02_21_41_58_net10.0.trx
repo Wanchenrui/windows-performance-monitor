@@ -1,0 +1,86 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="cf5a0c11-e6c3-443c-b873-793aab443681" name="Administrator@HCAIA-WAQHGBEKP 2026-10-02 21:41:58" runUser="HCAIA-WAQHGBEKP\Administrator" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-10-02T21:41:58.2570136+08:00" queuing="2026-10-02T21:41:58.2570144+08:00" start="2026-10-02T21:41:56.5002513+08:00" finish="2026-10-02T21:41:58.2907901+08:00" />
+  <TestSettings name="default" id="6f25dee6-93b8-4ddd-95f8-89bef5a2dcce">
+    <Deployment runDeploymentRoot="Administrator_HCAIA-WAQHGBEKP_2026-10-02_21_41_58" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="edbe6ea9-ff4e-471a-b34d-bdce881a993d" testId="15f8efbd-4d16-85d2-b036-f7894342ceb6" testName="ProcessPidReuseKeepsCreationTimeInIdentity" computerName="HCAIA-WAQHGBEKP" duration="00:00:00.0016759" startTime="2026-10-02T21:41:58.2106444+08:00" endTime="2026-10-02T21:41:58.2154140+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="edbe6ea9-ff4e-471a-b34d-bdce881a993d" />
+    <UnitTestResult executionId="62a34160-651a-4585-b7d1-5c4999988ba8" testId="15bdcccd-bafd-80db-99fe-7b6bf7a690ec" testName="PythonGoldenFixtureDeserializes (&quot;capabilities-normal.json&quot;,&quot;capabilities&quot;)" computerName="HCAIA-WAQHGBEKP" duration="00:00:00.0049487" startTime="2026-10-02T21:41:58.1800441+08:00" endTime="2026-10-02T21:41:58.1850914+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="62a34160-651a-4585-b7d1-5c4999988ba8" />
+    <UnitTestResult executionId="05157866-be78-43d6-8380-c04c5302e239" testId="10f880b6-58f2-85da-b181-71bf528fdd8f" testName="PythonGoldenFixtureDeserializes (&quot;diagnostics-normal.json&quot;,&quot;diagnostics&quot;)" computerName="HCAIA-WAQHGBEKP" duration="00:00:00.0086162" startTime="2026-10-02T21:41:58.1861838+08:00" endTime="2026-10-02T21:41:58.1948863+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="05157866-be78-43d6-8380-c04c5302e239" />
+    <UnitTestResult executionId="b7b33374-d00c-4631-83de-69b135a0290e" testId="18b81ab2-5793-899e-803e-cfd5b02965f8" testName="UnknownAdditiveFieldsDoNotBreakOlderClient" computerName="HCAIA-WAQHGBEKP" duration="00:00:00.0035969" startTime="2026-10-02T21:41:58.2065857+08:00" endTime="2026-10-02T21:41:58.2105654+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="b7b33374-d00c-4631-83de-69b135a0290e" />
+    <UnitTestResult executionId="df2b84e4-eb8f-46e4-83f8-aa8a652b771b" testId="1b8168b8-ffac-8f8a-99c4-0ee7dd95ce7b" testName="PythonGoldenFixtureDeserializes (&quot;snapshot-normal.json&quot;,&quot;snapshot&quot;)" computerName="HCAIA-WAQHGBEKP" duration="00:00:00.0318840" startTime="2026-10-02T21:41:58.1099645+08:00" endTime="2026-10-02T21:41:58.1633539+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="df2b84e4-eb8f-46e4-83f8-aa8a652b771b" />
+    <UnitTestResult executionId="04452782-8801-4802-940c-80fc17eb796c" testId="143eb918-3787-83c3-97bf-52b844b34ffa" testName="PythonGoldenFixtureDeserializes (&quot;snapshot-permission-denied.json&quot;,&quot;snapshot&quot;)" computerName="HCAIA-WAQHGBEKP" duration="00:00:00.0006515" startTime="2026-10-02T21:41:58.1695089+08:00" endTime="2026-10-02T21:41:58.1702187+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="04452782-8801-4802-940c-80fc17eb796c" />
+    <UnitTestResult executionId="c813e30d-f67f-4965-aaa5-fcf55ee6137e" testId="1a646201-2097-84a4-b117-cb056f7e636e" testName="PythonGoldenFixtureDeserializes (&quot;snapshot-stale.json&quot;,&quot;snapshot&quot;)" computerName="HCAIA-WAQHGBEKP" duration="00:00:00.0003671" startTime="2026-10-02T21:41:58.1690394+08:00" endTime="2026-10-02T21:41:58.1694726+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="c813e30d-f67f-4965-aaa5-fcf55ee6137e" />
+    <UnitTestResult executionId="93429225-2723-4040-b5fc-5762979e8322" testId="1bb0d74c-ada7-83a3-870d-85bc3daeac26" testName="PythonGoldenFixtureDeserializes (&quot;health-normal.json&quot;,&quot;health&quot;)" computerName="HCAIA-WAQHGBEKP" duration="00:00:00.0009197" startTime="2026-10-02T21:41:58.1851491+08:00" endTime="2026-10-02T21:41:58.1861488+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="93429225-2723-4040-b5fc-5762979e8322" />
+    <UnitTestResult executionId="dfeb340b-9ff7-4d89-a617-8a930d9efc62" testId="1d1bf26b-98e7-89b9-9ef6-a894db9cdb35" testName="PythonGoldenFixtureDeserializes (&quot;history-normal.json&quot;,&quot;history&quot;)" computerName="HCAIA-WAQHGBEKP" duration="00:00:00.0073882" startTime="2026-10-02T21:41:58.1725203+08:00" endTime="2026-10-02T21:41:58.1799823+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="dfeb340b-9ff7-4d89-a617-8a930d9efc62" />
+    <UnitTestResult executionId="44bc6850-eeab-4ca6-b27c-2fb266035dc1" testId="14090ef7-0f29-8982-acdd-2e157b17528a" testName="PythonGoldenFixtureDeserializes (&quot;scenario-process-churn.json&quot;,&quot;scenario&quot;)" computerName="HCAIA-WAQHGBEKP" duration="00:00:00.0021678" startTime="2026-10-02T21:41:58.1702502+08:00" endTime="2026-10-02T21:41:58.1724803+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="44bc6850-eeab-4ca6-b27c-2fb266035dc1" />
+    <UnitTestResult executionId="3ee042a6-c6aa-417d-8ee6-c7dd20add7b0" testId="1c1001d4-fa8c-8543-a80c-5fb0aa59cc9f" testName="PythonGoldenFixtureDeserializes (&quot;snapshot-partial.json&quot;,&quot;snapshot&quot;)" computerName="HCAIA-WAQHGBEKP" duration="00:00:00.0008371" startTime="2026-10-02T21:41:58.1675258+08:00" endTime="2026-10-02T21:41:58.1687750+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="3ee042a6-c6aa-417d-8ee6-c7dd20add7b0" />
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="UnknownAdditiveFieldsDoNotBreakOlderClient" storage="d:\github\windows-performance-monitor\artifacts\development-348a609\bin\perfmonitor.contracttests\release\perfmonitor.contracttests.dll" id="18b81ab2-5793-899e-803e-cfd5b02965f8">
+      <Execution id="b7b33374-d00c-4631-83de-69b135a0290e" />
+      <TestMethod codeBase="D:\GitHub\windows-performance-monitor\artifacts\development-348a609\bin\PerfMonitor.ContractTests\release\PerfMonitor.ContractTests.dll" adapterTypeName="executor://mstestadapter/v4" className="PerfMonitor.ContractTests.FixtureDeserializationTests" name="UnknownAdditiveFieldsDoNotBreakOlderClient" />
+    </UnitTest>
+    <UnitTest name="PythonGoldenFixtureDeserializes (&quot;snapshot-partial.json&quot;,&quot;snapshot&quot;)" storage="d:\github\windows-performance-monitor\artifacts\development-348a609\bin\perfmonitor.contracttests\release\perfmonitor.contracttests.dll" id="1c1001d4-fa8c-8543-a80c-5fb0aa59cc9f">
+      <Execution id="3ee042a6-c6aa-417d-8ee6-c7dd20add7b0" />
+      <TestMethod codeBase="D:\GitHub\windows-performance-monitor\artifacts\development-348a609\bin\PerfMonitor.ContractTests\release\PerfMonitor.ContractTests.dll" adapterTypeName="executor://mstestadapter/v4" className="PerfMonitor.ContractTests.FixtureDeserializationTests" name="PythonGoldenFixtureDeserializes" />
+    </UnitTest>
+    <UnitTest name="PythonGoldenFixtureDeserializes (&quot;health-normal.json&quot;,&quot;health&quot;)" storage="d:\github\windows-performance-monitor\artifacts\development-348a609\bin\perfmonitor.contracttests\release\perfmonitor.contracttests.dll" id="1bb0d74c-ada7-83a3-870d-85bc3daeac26">
+      <Execution id="93429225-2723-4040-b5fc-5762979e8322" />
+      <TestMethod codeBase="D:\GitHub\windows-performance-monitor\artifacts\development-348a609\bin\PerfMonitor.ContractTests\release\PerfMonitor.ContractTests.dll" adapterTypeName="executor://mstestadapter/v4" className="PerfMonitor.ContractTests.FixtureDeserializationTests" name="PythonGoldenFixtureDeserializes" />
+    </UnitTest>
+    <UnitTest name="PythonGoldenFixtureDeserializes (&quot;diagnostics-normal.json&quot;,&quot;diagnostics&quot;)" storage="d:\github\windows-performance-monitor\artifacts\development-348a609\bin\perfmonitor.contracttests\release\perfmonitor.contracttests.dll" id="10f880b6-58f2-85da-b181-71bf528fdd8f">
+      <Execution id="05157866-be78-43d6-8380-c04c5302e239" />
+      <TestMethod codeBase="D:\GitHub\windows-performance-monitor\artifacts\development-348a609\bin\PerfMonitor.ContractTests\release\PerfMonitor.ContractTests.dll" adapterTypeName="executor://mstestadapter/v4" className="PerfMonitor.ContractTests.FixtureDeserializationTests" name="PythonGoldenFixtureDeserializes" />
+    </UnitTest>
+    <UnitTest name="PythonGoldenFixtureDeserializes (&quot;scenario-process-churn.json&quot;,&quot;scenario&quot;)" storage="d:\github\windows-performance-monitor\artifacts\development-348a609\bin\perfmonitor.contracttests\release\perfmonitor.contracttests.dll" id="14090ef7-0f29-8982-acdd-2e157b17528a">
+      <Execution id="44bc6850-eeab-4ca6-b27c-2fb266035dc1" />
+      <TestMethod codeBase="D:\GitHub\windows-performance-monitor\artifacts\development-348a609\bin\PerfMonitor.ContractTests\release\PerfMonitor.ContractTests.dll" adapterTypeName="executor://mstestadapter/v4" className="PerfMonitor.ContractTests.FixtureDeserializationTests" name="PythonGoldenFixtureDeserializes" />
+    </UnitTest>
+    <UnitTest name="PythonGoldenFixtureDeserializes (&quot;snapshot-permission-denied.json&quot;,&quot;snapshot&quot;)" storage="d:\github\windows-performance-monitor\artifacts\development-348a609\bin\perfmonitor.contracttests\release\perfmonitor.contracttests.dll" id="143eb918-3787-83c3-97bf-52b844b34ffa">
+      <Execution id="04452782-8801-4802-940c-80fc17eb796c" />
+      <TestMethod codeBase="D:\GitHub\windows-performance-monitor\artifacts\development-348a609\bin\PerfMonitor.ContractTests\release\PerfMonitor.ContractTests.dll" adapterTypeName="executor://mstestadapter/v4" className="PerfMonitor.ContractTests.FixtureDeserializationTests" name="PythonGoldenFixtureDeserializes" />
+    </UnitTest>
+    <UnitTest name="PythonGoldenFixtureDeserializes (&quot;history-normal.json&quot;,&quot;history&quot;)" storage="d:\github\windows-performance-monitor\artifacts\development-348a609\bin\perfmonitor.contracttests\release\perfmonitor.contracttests.dll" id="1d1bf26b-98e7-89b9-9ef6-a894db9cdb35">
+      <Execution id="dfeb340b-9ff7-4d89-a617-8a930d9efc62" />
+      <TestMethod codeBase="D:\GitHub\windows-performance-monitor\artifacts\development-348a609\bin\PerfMonitor.ContractTests\release\PerfMonitor.ContractTests.dll" adapterTypeName="executor://mstestadapter/v4" className="PerfMonitor.ContractTests.FixtureDeserializationTests" name="PythonGoldenFixtureDeserializes" />
+    </UnitTest>
+    <UnitTest name="PythonGoldenFixtureDeserializes (&quot;snapshot-normal.json&quot;,&quot;snapshot&quot;)" storage="d:\github\windows-performance-monitor\artifacts\development-348a609\bin\perfmonitor.contracttests\release\perfmonitor.contracttests.dll" id="1b8168b8-ffac-8f8a-99c4-0ee7dd95ce7b">
+      <Execution id="df2b84e4-eb8f-46e4-83f8-aa8a652b771b" />
+      <TestMethod codeBase="D:\GitHub\windows-performance-monitor\artifacts\development-348a609\bin\PerfMonitor.ContractTests\release\PerfMonitor.ContractTests.dll" adapterTypeName="executor://mstestadapter/v4" className="PerfMonitor.ContractTests.FixtureDeserializationTests" name="PythonGoldenFixtureDeserializes" />
+    </UnitTest>
+    <UnitTest name="ProcessPidReuseKeepsCreationTimeInIdentity" storage="d:\github\windows-performance-monitor\artifacts\development-348a609\bin\perfmonitor.contracttests\release\perfmonitor.contracttests.dll" id="15f8efbd-4d16-85d2-b036-f7894342ceb6">
+      <Execution id="edbe6ea9-ff4e-471a-b34d-bdce881a993d" />
+      <TestMethod codeBase="D:\GitHub\windows-performance-monitor\artifacts\development-348a609\bin\PerfMonitor.ContractTests\release\PerfMonitor.ContractTests.dll" adapterTypeName="executor://mstestadapter/v4" className="PerfMonitor.ContractTests.FixtureDeserializationTests" name="ProcessPidReuseKeepsCreationTimeInIdentity" />
+    </UnitTest>
+    <UnitTest name="PythonGoldenFixtureDeserializes (&quot;capabilities-normal.json&quot;,&quot;capabilities&quot;)" storage="d:\github\windows-performance-monitor\artifacts\development-348a609\bin\perfmonitor.contracttests\release\perfmonitor.contracttests.dll" id="15bdcccd-bafd-80db-99fe-7b6bf7a690ec">
+      <Execution id="62a34160-651a-4585-b7d1-5c4999988ba8" />
+      <TestMethod codeBase="D:\GitHub\windows-performance-monitor\artifacts\development-348a609\bin\PerfMonitor.ContractTests\release\PerfMonitor.ContractTests.dll" adapterTypeName="executor://mstestadapter/v4" className="PerfMonitor.ContractTests.FixtureDeserializationTests" name="PythonGoldenFixtureDeserializes" />
+    </UnitTest>
+    <UnitTest name="PythonGoldenFixtureDeserializes (&quot;snapshot-stale.json&quot;,&quot;snapshot&quot;)" storage="d:\github\windows-performance-monitor\artifacts\development-348a609\bin\perfmonitor.contracttests\release\perfmonitor.contracttests.dll" id="1a646201-2097-84a4-b117-cb056f7e636e">
+      <Execution id="c813e30d-f67f-4965-aaa5-fcf55ee6137e" />
+      <TestMethod codeBase="D:\GitHub\windows-performance-monitor\artifacts\development-348a609\bin\PerfMonitor.ContractTests\release\PerfMonitor.ContractTests.dll" adapterTypeName="executor://mstestadapter/v4" className="PerfMonitor.ContractTests.FixtureDeserializationTests" name="PythonGoldenFixtureDeserializes" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="15f8efbd-4d16-85d2-b036-f7894342ceb6" executionId="edbe6ea9-ff4e-471a-b34d-bdce881a993d" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="15bdcccd-bafd-80db-99fe-7b6bf7a690ec" executionId="62a34160-651a-4585-b7d1-5c4999988ba8" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="10f880b6-58f2-85da-b181-71bf528fdd8f" executionId="05157866-be78-43d6-8380-c04c5302e239" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="18b81ab2-5793-899e-803e-cfd5b02965f8" executionId="b7b33374-d00c-4631-83de-69b135a0290e" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="1b8168b8-ffac-8f8a-99c4-0ee7dd95ce7b" executionId="df2b84e4-eb8f-46e4-83f8-aa8a652b771b" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="143eb918-3787-83c3-97bf-52b844b34ffa" executionId="04452782-8801-4802-940c-80fc17eb796c" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="1a646201-2097-84a4-b117-cb056f7e636e" executionId="c813e30d-f67f-4965-aaa5-fcf55ee6137e" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="1bb0d74c-ada7-83a3-870d-85bc3daeac26" executionId="93429225-2723-4040-b5fc-5762979e8322" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="1d1bf26b-98e7-89b9-9ef6-a894db9cdb35" executionId="dfeb340b-9ff7-4d89-a617-8a930d9efc62" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="14090ef7-0f29-8982-acdd-2e157b17528a" executionId="44bc6850-eeab-4ca6-b27c-2fb266035dc1" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="1c1001d4-fa8c-8543-a80c-5fb0aa59cc9f" executionId="3ee042a6-c6aa-417d-8ee6-c7dd20add7b0" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="列表中未列出的结果" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="所有已加载的结果" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Completed">
+    <Counters total="11" executed="11" passed="11" failed="0" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+  </ResultSummary>
+</TestRun>

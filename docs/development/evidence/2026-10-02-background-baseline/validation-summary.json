@@ -1,0 +1,1093 @@
+{
+  "schemaVersion": 1,
+  "productVersion": "1.1.0",
+  "status": "background short samples passed; development candidate only",
+  "source": {
+    "head": "348a6091c5eb10b55baa87850263df0eae306634",
+    "workingTreeDirty": true,
+    "status": [
+      " M .gitattributes",
+      " M CHANGELOG.md",
+      " M README.md",
+      " M src/PerfMonitor.Desktop/DesktopProgram.cs",
+      " M src/PerfMonitor.Desktop/DesktopResidentController.cs",
+      " M src/PerfMonitor.Desktop/MainWindow.cs",
+      " M tests/PerfMonitor.AgentTests/DesktopLifecycleIntegrationTests.cs",
+      " M tests/PerfMonitor.AgentTests/DesktopLifecycleTests.cs",
+      " M tests/test_v10_release.py",
+      "?? docs/development/2026-10-02-background-baseline.md",
+      "?? docs/development/2026-10-02-desktop-interaction-plan.md",
+      "?? docs/development/evidence/2026-10-02-background-baseline/",
+      "?? scripts/read_baseline_history.py",
+      "?? scripts/run_product_baseline.ps1",
+      "?? scripts/start_desktop_preview.ps1"
+    ],
+    "inputFileHashes": [
+      {
+        "path": "Directory.Build.props",
+        "sha256": "BFE4484180215C1967B174F15CCD7524AE30CA3ADA62A07D6813934DE9A0CB1E"
+      },
+      {
+        "path": "global.json",
+        "sha256": "B132D105648C7DBE49F2C391FE0B9898027E470DDC7CFD4D7239AF5DF63401FA"
+      },
+      {
+        "path": "src/PerfMonitor.Actions/ActionExecution.cs",
+        "sha256": "15B9A23BE044D7354CFC0BEBA192D96D2BF44232D09B7A9905719C32F44DD032"
+      },
+      {
+        "path": "src/PerfMonitor.Actions/ActionPolicies.cs",
+        "sha256": "40F2B9E872D586700B5F5902308EDC99EBA73A2431D51F31D388549BBA0DC540"
+      },
+      {
+        "path": "src/PerfMonitor.Actions/PerfMonitor.Actions.csproj",
+        "sha256": "423D76282B043D12B589871FD015C1BD509F30568838132A151F5311898A10EF"
+      },
+      {
+        "path": "src/PerfMonitor.Actions/packages.lock.json",
+        "sha256": "908AC5F473AF1DC12E2488E13EF214839CC19C3148868BBCCF8B037A03BEAE02"
+      },
+      {
+        "path": "src/PerfMonitor.Agent/AgentActionGateway.cs",
+        "sha256": "8E76BF7E19BB75092322E11E00427ACA04973B9638E3EBF162EF322C49ECD4D4"
+      },
+      {
+        "path": "src/PerfMonitor.Agent/AgentInstanceLease.cs",
+        "sha256": "1869F98DDE6360354491C32624C0CB48ADD30CD830883166056F69C1119EAC09"
+      },
+      {
+        "path": "src/PerfMonitor.Agent/AgentJson.cs",
+        "sha256": "EEB03BA1FF489351B2D111988441B21E901AD8B2E2CE7A6CC30D539E3C30241F"
+      },
+      {
+        "path": "src/PerfMonitor.Agent/AgentOptions.cs",
+        "sha256": "7577D80FA5FA08805E22E710F489B592825A33E49903B9044A06F60C597855F5"
+      },
+      {
+        "path": "src/PerfMonitor.Agent/AgentProviderFactory.cs",
+        "sha256": "2FCC7D3161AD982771FFBC6F34A393E4E240A2AF33A63BEDC385B73F09871E7F"
+      },
+      {
+        "path": "src/PerfMonitor.Agent/AgentQueryService.cs",
+        "sha256": "0BE7515FE3DD99EE7F31054154FBCA0FAF8F39C35EC12BC0B910685169C14DD3"
+      },
+      {
+        "path": "src/PerfMonitor.Agent/AgentRunner.cs",
+        "sha256": "D2E2C310796E3804F1406C5E2B5FE85B78B0FD8BC06B04F30FADB374496CDD60"
+      },
+      {
+        "path": "src/PerfMonitor.Agent/AgentServiceOptions.cs",
+        "sha256": "E40A1CA0E8953C7D10CDBF63FAB7243FFB76458E31D86C89992000BA66FF2A2B"
+      },
+      {
+        "path": "src/PerfMonitor.Agent/AgentServiceRunner.cs",
+        "sha256": "E3657DE7D9D5F3B576E14F745BC83C57F51A0FBAD2693FC963F04ABDBD7D507F"
+      },
+      {
+        "path": "src/PerfMonitor.Agent/AssemblyInfo.cs",
+        "sha256": "B76D3BC51110E1B2A3A1247E25B62F96A57BCBC15830CC77F53054C916D25981"
+      },
+      {
+        "path": "src/PerfMonitor.Agent/PerfMonitor.Agent.csproj",
+        "sha256": "3D8C52BB0CAA0D0B954724385337C8FDA40CC553BECCC4BEF823443CA0653C5A"
+      },
+      {
+        "path": "src/PerfMonitor.Agent/Program.cs",
+        "sha256": "1605AE36AF8045300EC0B48A9AB76820B295BCA905C8A4642B11BA1B13488898"
+      },
+      {
+        "path": "src/PerfMonitor.Agent/ServiceProgram.cs",
+        "sha256": "EDBCBF082556C6EB3FF4DEC2CF4E0AAF52A9490E00D5AAD20CA65D18637A2546"
+      },
+      {
+        "path": "src/PerfMonitor.Agent/packages.lock.json",
+        "sha256": "23845162A2EEE894EEA06FC071C0E742A899D8413EE877B9F7D44D547848A72F"
+      },
+      {
+        "path": "src/PerfMonitor.Broker.Client/BrokerActionClient.cs",
+        "sha256": "31269AC5F536A9BC3D924041C51CC11E8E2D9653298D861AAE137E011B66F11D"
+      },
+      {
+        "path": "src/PerfMonitor.Broker.Client/PerfMonitor.Broker.Client.csproj",
+        "sha256": "0CDCD54F9576726557220A36E25140B2E6A64E6DF87965FACF8FC62367DA78AF"
+      },
+      {
+        "path": "src/PerfMonitor.Broker.Client/packages.lock.json",
+        "sha256": "2ECC791B6A027677117D91FCAFA1688201F39B6F2770BE52F0AA735C17E6F390"
+      },
+      {
+        "path": "src/PerfMonitor.Broker.Protocol/BrokerProtocol.cs",
+        "sha256": "6AB5D5A9ADB9A06D2C6E9EF352C47FAB040802C75DBDA8684BC746E8D2FAC7DD"
+      },
+      {
+        "path": "src/PerfMonitor.Broker.Protocol/PerfMonitor.Broker.Protocol.csproj",
+        "sha256": "423D76282B043D12B589871FD015C1BD509F30568838132A151F5311898A10EF"
+      },
+      {
+        "path": "src/PerfMonitor.Broker.Protocol/packages.lock.json",
+        "sha256": "908AC5F473AF1DC12E2488E13EF214839CC19C3148868BBCCF8B037A03BEAE02"
+      },
+      {
+        "path": "src/PerfMonitor.Broker/AssemblyInfo.cs",
+        "sha256": "6DF62465EE657837867C5B7C010387F26E654E32B237E658E250BCCEB8640557"
+      },
+      {
+        "path": "src/PerfMonitor.Broker/BrokerAuditStore.cs",
+        "sha256": "ECA0F83B902312FF23ED421F0B30AECF03FB4027F954B64492331B643D4AE310"
+      },
+      {
+        "path": "src/PerfMonitor.Broker/BrokerClientIdentityResolver.cs",
+        "sha256": "210391E94335B4E1D170AF33B7054F9BED446D3A62982A3A21DC66927EB1BA8F"
+      },
+      {
+        "path": "src/PerfMonitor.Broker/BrokerNamedPipeServer.cs",
+        "sha256": "AD08620B09C19AC55B0C87FEC48C5CDA3632B619D4557D7F711286B3B8B2C30D"
+      },
+      {
+        "path": "src/PerfMonitor.Broker/BrokerOptions.cs",
+        "sha256": "F9D44476BB483B84EB5111B081E4000A157B8F01F05BF9D40A42E471DC3C9E71"
+      },
+      {
+        "path": "src/PerfMonitor.Broker/BrokerPipeEndpoint.cs",
+        "sha256": "A9C2CF108EE268B9A65392017D434369A28E47F71104D761FEFFEB6E3EAC9EF0"
+      },
+      {
+        "path": "src/PerfMonitor.Broker/BrokerProgram.cs",
+        "sha256": "585A0C02D3FC6C63BE253A44A52036D130BB73B26052F34161FB9B5085B5470E"
+      },
+      {
+        "path": "src/PerfMonitor.Broker/BrokerRunner.cs",
+        "sha256": "FBC81AFEA412CB2E8F2433419BB0879B54D6BA28807CF21595947A5373C0C888"
+      },
+      {
+        "path": "src/PerfMonitor.Broker/ClientExecutableTrust.cs",
+        "sha256": "8C977E6F11BE16CE8C1CB52DDCA7B8575F2D5A50B6EFCE1CAE98AC57462B0EAB"
+      },
+      {
+        "path": "src/PerfMonitor.Broker/PerfMonitor.Broker.csproj",
+        "sha256": "94E1CBBEE3F5906B6DF093D02CAE6EDFA5006338338254AF192A101DC4B77CA8"
+      },
+      {
+        "path": "src/PerfMonitor.Broker/WindowsPrivilegedActionExecutor.cs",
+        "sha256": "90FE43A8AE312182BE5459632FC9E84E5A29930EE845DE122E3634B8AF3DB632"
+      },
+      {
+        "path": "src/PerfMonitor.Broker/app.manifest",
+        "sha256": "25661B0BC0D1C36F16E4D218A81329AD3B319DE6AE174802243DCF9FFF06AAFF"
+      },
+      {
+        "path": "src/PerfMonitor.Broker/packages.lock.json",
+        "sha256": "AC13836A5E1EBE29EEC1E8E0AE051414FC603C24494DCFA94CE4D48A600D3B5B"
+      },
+      {
+        "path": "src/PerfMonitor.Collectors.Windows/AssemblyInfo.cs",
+        "sha256": "B76D3BC51110E1B2A3A1247E25B62F96A57BCBC15830CC77F53054C916D25981"
+      },
+      {
+        "path": "src/PerfMonitor.Collectors.Windows/DiskIoProvider.cs",
+        "sha256": "B853FF26561A207526C02AAC2BE42F1273A7E0D5A94531C95879721DD4F0B13F"
+      },
+      {
+        "path": "src/PerfMonitor.Collectors.Windows/MemoryProvider.cs",
+        "sha256": "105697871D361A076D4FB97C99F1494C5954B24B170253B30357544A0639A1BC"
+      },
+      {
+        "path": "src/PerfMonitor.Collectors.Windows/NativeMethods.cs",
+        "sha256": "8BF3FD9B9526DD6244CA07BC212E41F378B9B274E3FF84498D03573F11BE8B01"
+      },
+      {
+        "path": "src/PerfMonitor.Collectors.Windows/NetworkThroughputProvider.cs",
+        "sha256": "218C4012D68F1D9EB882A65E73FCFC5AA60DD35642E7EBDDD794DBB369FBDECB"
+      },
+      {
+        "path": "src/PerfMonitor.Collectors.Windows/PerfMonitor.Collectors.Windows.csproj",
+        "sha256": "D9AD93DF3B05322A5EF9D7BE496AF9C8B1FEF406C49C2D1F5F55175C148FA7CE"
+      },
+      {
+        "path": "src/PerfMonitor.Collectors.Windows/PowerStatusProvider.cs",
+        "sha256": "9AB4C17D9136AB8FE088E67194430AEE41F3AC8521619A614F196DD82E4719CF"
+      },
+      {
+        "path": "src/PerfMonitor.Collectors.Windows/ProcessProvider.cs",
+        "sha256": "C057F4B07630AA12B388C76317504411233AC1518E749BC6F3ED43D22CE4A542"
+      },
+      {
+        "path": "src/PerfMonitor.Collectors.Windows/SelfMetricsProvider.cs",
+        "sha256": "3292513C321731AB28D5233ACD51794F07DDF680000141C3A0929BE68A22794E"
+      },
+      {
+        "path": "src/PerfMonitor.Collectors.Windows/SystemCpuProvider.cs",
+        "sha256": "562C348B2075F60F618D86D0CBC0A4EAB8F532C44CED6E350CC384BE112AFA47"
+      },
+      {
+        "path": "src/PerfMonitor.Collectors.Windows/UptimeProvider.cs",
+        "sha256": "F947958BCA9E9D437A5F74DEEC6B4A09C2FC36FDA3D36DA133E75688259CE72A"
+      },
+      {
+        "path": "src/PerfMonitor.Collectors.Windows/VolumeCapacityProvider.cs",
+        "sha256": "63E9EE82B94BDBB5CEA8EB92CC27E04660CAC57C986C965269BC0484A4F33455"
+      },
+      {
+        "path": "src/PerfMonitor.Collectors.Windows/WindowsProviderFactory.cs",
+        "sha256": "C894870AF9B37056028D06A54DC75E62460A8FB7E74552ACD1E5CCD278642710"
+      },
+      {
+        "path": "src/PerfMonitor.Collectors.Windows/packages.lock.json",
+        "sha256": "7E27D6B6B98C9AD5AE03EFE81AD63133BEBD2B2E412A5F460E82095C9840F63C"
+      },
+      {
+        "path": "src/PerfMonitor.Collectors.Worker/AssemblyInfo.cs",
+        "sha256": "B76D3BC51110E1B2A3A1247E25B62F96A57BCBC15830CC77F53054C916D25981"
+      },
+      {
+        "path": "src/PerfMonitor.Collectors.Worker/HardwareWorkerClient.cs",
+        "sha256": "24F8D137EFF9621388D8455F93ADE6F01764BB5353F89E86AF6EB96FC2FF8F6B"
+      },
+      {
+        "path": "src/PerfMonitor.Collectors.Worker/HardwareWorkerCoordinator.cs",
+        "sha256": "346851458136E181A37EBA5E33EA0BF88F95116023258AF06F75451A763D5ECC"
+      },
+      {
+        "path": "src/PerfMonitor.Collectors.Worker/HardwareWorkerOptions.cs",
+        "sha256": "4E1FDFCBF1B5A581E1F29E6AFA0685F8B128825F092E9BB7FB73A9BC13B1C648"
+      },
+      {
+        "path": "src/PerfMonitor.Collectors.Worker/HardwareWorkerProviderFactory.cs",
+        "sha256": "46239A8A7FEB4696413F320C714984C2D5A616796BAA8359190B5DD10202D0F0"
+      },
+      {
+        "path": "src/PerfMonitor.Collectors.Worker/HardwareWorkerProviders.cs",
+        "sha256": "12256F35608F03B73F38767AD65E91A016F5544ED9C6B9B7F9FC8CDF53B8F1F7"
+      },
+      {
+        "path": "src/PerfMonitor.Collectors.Worker/PerfMonitor.Collectors.Worker.csproj",
+        "sha256": "9328B02F9B7FDB8ED7A2D2ACF9A1ABEE8380BACA16704B1F68291D5EA79867EA"
+      },
+      {
+        "path": "src/PerfMonitor.Collectors.Worker/ProcessWorkerSession.cs",
+        "sha256": "F8BD372E421A92A289DB87F6E4B72868C16072E1FD718C41B7B3C8493B42D5FA"
+      },
+      {
+        "path": "src/PerfMonitor.Collectors.Worker/WindowsJobObject.cs",
+        "sha256": "779744D65E0581C7DE307179C35847399E6A98CE96AC4A92EBB37ED8434ACD13"
+      },
+      {
+        "path": "src/PerfMonitor.Collectors.Worker/WorkerResponseValidator.cs",
+        "sha256": "FF013EE5D3E8A094753095C2C635FB8E869007566B73D12930BC97BD9866B139"
+      },
+      {
+        "path": "src/PerfMonitor.Collectors.Worker/packages.lock.json",
+        "sha256": "1FA9FD02EFF934497F016CD4662745E34770136D9F30CB4BD6CDE60E5DB205E7"
+      },
+      {
+        "path": "src/PerfMonitor.Contracts/ActionContracts.cs",
+        "sha256": "9A761044EF72AAB60A25F31CF98078EBB2894D7139021D135F3B999F3FA4DE0E"
+      },
+      {
+        "path": "src/PerfMonitor.Contracts/CatalogIds.cs",
+        "sha256": "42A729A38EE4271A194B23B63027E1244EF2814191F452F4D1670EE6C9D72106"
+      },
+      {
+        "path": "src/PerfMonitor.Contracts/Contracts.cs",
+        "sha256": "B99871058856CA100A4F8D1CF9B869BB19A07A2A23C02C18D4B30E49F839493F"
+      },
+      {
+        "path": "src/PerfMonitor.Contracts/DiagnosticContracts.cs",
+        "sha256": "D58132A54CF3C92E2A46C509D2DA687CADAAABDC6352A49CB1B779B6BB51B898"
+      },
+      {
+        "path": "src/PerfMonitor.Contracts/HistoryPolicy.cs",
+        "sha256": "B421EB13E0AEBC1BC4AD0E5CA702294FF4B464DB0CFC968C04C15C6CE9E59EDB"
+      },
+      {
+        "path": "src/PerfMonitor.Contracts/PerfMonitor.Contracts.csproj",
+        "sha256": "8759C64EE8CF08D92889F45F98C6C504BF0ED8E6F542D6C4F1F7387913D58C32"
+      },
+      {
+        "path": "src/PerfMonitor.Contracts/packages.lock.json",
+        "sha256": "A29C6AA8CFB81874FF8BB78DC369D7416F28C9B8CC47E99592BFC019B20C41EB"
+      },
+      {
+        "path": "src/PerfMonitor.Core/PerfMonitor.Core.csproj",
+        "sha256": "423D76282B043D12B589871FD015C1BD509F30568838132A151F5311898A10EF"
+      },
+      {
+        "path": "src/PerfMonitor.Core/ProviderContracts.cs",
+        "sha256": "D666E81BCB24F252FBE67910AA52E1E4E6EC43FC5D120CFDBDBE3CAC13ABBCCC"
+      },
+      {
+        "path": "src/PerfMonitor.Core/ProviderScheduler.cs",
+        "sha256": "7EDEE041FFAF3C5FEC8480F6963AD364BABFF93B1AFF77A16E41D171CDBA8718"
+      },
+      {
+        "path": "src/PerfMonitor.Core/SchedulerMath.cs",
+        "sha256": "80EE45508C218D58696204871B3EF61C30405CB7CCAE985618157BEBB21B587D"
+      },
+      {
+        "path": "src/PerfMonitor.Core/SnapshotAssembler.cs",
+        "sha256": "72521607C97A9A8E1907AB196BEA9A80AD433E07EC64F4A5E76751B500DA3986"
+      },
+      {
+        "path": "src/PerfMonitor.Core/SnapshotConsumers.cs",
+        "sha256": "736D4A561B6EF12C9D31566ED5B0C854D1C55CAFECC057CB13C1ACE7F7ECF617"
+      },
+      {
+        "path": "src/PerfMonitor.Core/packages.lock.json",
+        "sha256": "908AC5F473AF1DC12E2488E13EF214839CC19C3148868BBCCF8B037A03BEAE02"
+      },
+      {
+        "path": "src/PerfMonitor.Desktop/Assets/GenerateIcon.ps1",
+        "sha256": "CD28BBFC067944E4E1CE574C9315C8EC0D1DC4D2FDF43A778771B800B3C3BEA7"
+      },
+      {
+        "path": "src/PerfMonitor.Desktop/Assets/PerfMonitor.ico",
+        "sha256": "93E562B3F32ACCB2B7A6359DA2CDDFD44B5CAE1D0330C5E7E3F503F78A4C854E"
+      },
+      {
+        "path": "src/PerfMonitor.Desktop/DesktopAgentSession.cs",
+        "sha256": "C1FE32E4E053461A3E4D6A11AEC63DA8142E72D9D967C0C85CCFABFB9A438F09"
+      },
+      {
+        "path": "src/PerfMonitor.Desktop/DesktopAppIcon.cs",
+        "sha256": "C585ECDEA287DE2B29167E490F6137F9E44F1C3D413DE81ED076F0D7B19E877F"
+      },
+      {
+        "path": "src/PerfMonitor.Desktop/DesktopHotkey.cs",
+        "sha256": "DA63701EEBF0F35AF6CA6FA5E26DB3C9D53F55D30CC1568042B0512C39CC9091"
+      },
+      {
+        "path": "src/PerfMonitor.Desktop/DesktopProgram.cs",
+        "sha256": "0C45979805A0D3036AD3036AECC191CE60C312F45B0B1DC4E254716A00C9D8E1"
+      },
+      {
+        "path": "src/PerfMonitor.Desktop/DesktopResidentController.cs",
+        "sha256": "E94C6218689BFDD821569755245EB079E4060B7F4DE3F2399661BFAA0E7594AA"
+      },
+      {
+        "path": "src/PerfMonitor.Desktop/DesktopTrayIcon.cs",
+        "sha256": "C28DEB02E50FBE9E68A391A3F5A72B9DB47DF12EB515F7B6D77CD6ADE4C1A6BE"
+      },
+      {
+        "path": "src/PerfMonitor.Desktop/DesktopTrendBuffer.cs",
+        "sha256": "46DCCCE48565C93345CA073454A007F20B0FDA21E46383AF0F0D7A6132A36F19"
+      },
+      {
+        "path": "src/PerfMonitor.Desktop/LatestStateRenderer.cs",
+        "sha256": "7D4CF6CF75404119DF7042249F6FC66B803E7E531F2268BA72CC453D7711E6DA"
+      },
+      {
+        "path": "src/PerfMonitor.Desktop/MainWindow.cs",
+        "sha256": "50FD800492F48B5CFA3E9E5BB891D5476791C5AC969ED4A7BC6A004686B61103"
+      },
+      {
+        "path": "src/PerfMonitor.Desktop/PerfMonitor.Desktop.csproj",
+        "sha256": "F2477FF278D79D311F50D54093E83AFA31A9B8DF360412988AA52F3BE71EA70B"
+      },
+      {
+        "path": "src/PerfMonitor.Desktop/SnapshotPresentation.cs",
+        "sha256": "96130513639D222C2C504EA0210DB868D8A68F5CC3D4E25269A0A485F934B234"
+      },
+      {
+        "path": "src/PerfMonitor.Desktop/TrendChart.cs",
+        "sha256": "666A302FFE5B0A5C8CD5CCEB52C47A483B0D6DED78DAF216C3A0D572ED7D49B0"
+      },
+      {
+        "path": "src/PerfMonitor.Desktop/packages.lock.json",
+        "sha256": "05DE8CD6AE3658429EEAA09FB80766AD17ECA0F7B42411B5ACAFC322C4B1477E"
+      },
+      {
+        "path": "src/PerfMonitor.Diagnostics/DiagnosticEngine.cs",
+        "sha256": "0A494239FFDB231270967565DE9872293F14C87A4F9D3A277525D6A7B67E8E1E"
+      },
+      {
+        "path": "src/PerfMonitor.Diagnostics/DiagnosticEvaluator.cs",
+        "sha256": "BBBD4D7396DD86E3C3CD183D62DFE7534DE62F630F91FC948DA4F9A8CA5E777A"
+      },
+      {
+        "path": "src/PerfMonitor.Diagnostics/DiagnosticObservation.cs",
+        "sha256": "AA4A1BD423DE6C1218B0CA3FF297667945EEDD343C42AF177477CC6792FE4192"
+      },
+      {
+        "path": "src/PerfMonitor.Diagnostics/DiagnosticPolicy.cs",
+        "sha256": "C4CC5994B4DE5A7A4F90A9257D12E9F58F3D35E7F7BE452366F39AEB0F19D811"
+      },
+      {
+        "path": "src/PerfMonitor.Diagnostics/DiagnosticProcessProjection.cs",
+        "sha256": "A54500A4CB37599D45A09CA27F6586BC49931353BAC1F1D3941D8A0926CE13CA"
+      },
+      {
+        "path": "src/PerfMonitor.Diagnostics/DiagnosticReplay.cs",
+        "sha256": "33C06253ADDEA64324491D926C4E4A7EB58576D9943E873C6C1302817C2C5229"
+      },
+      {
+        "path": "src/PerfMonitor.Diagnostics/DiagnosticSnapshotReader.cs",
+        "sha256": "70C2A0301B6FF9DA7708FD5232DFA244D966BB53914F97DB2E405D10C74120E6"
+      },
+      {
+        "path": "src/PerfMonitor.Diagnostics/PerfMonitor.Diagnostics.csproj",
+        "sha256": "AC2102A00E36FCCD58FB89A52B2A2C74FBCC39092BC00B43AACFE5617E851E6B"
+      },
+      {
+        "path": "src/PerfMonitor.Diagnostics/packages.lock.json",
+        "sha256": "09BCF52E0956C73DDB69465EEEC5BCC5F0A7AA5B3CBF29058D68FAD178D65802"
+      },
+      {
+        "path": "src/PerfMonitor.Ipc.NamedPipes/IAgentIpcService.cs",
+        "sha256": "924EA1D112E2D2291F31BADE0B29817E65CE2843AC8FECC37AEC3E1B5231AA68"
+      },
+      {
+        "path": "src/PerfMonitor.Ipc.NamedPipes/IpcProtocol.cs",
+        "sha256": "D66D38CC65D026DD04C03AF41B134A63BBF44F30A7842A344705E819EA32DB05"
+      },
+      {
+        "path": "src/PerfMonitor.Ipc.NamedPipes/LengthPrefixedJson.cs",
+        "sha256": "8E1F7457F9AAA8065A72C27A7D07A2D0D6C079D42E28BA1BAB8A2DB49A9E51CF"
+      },
+      {
+        "path": "src/PerfMonitor.Ipc.NamedPipes/NamedPipeAgentClient.cs",
+        "sha256": "AF9DE582BDEAA5DC3B0A64AAEB0BA72E003D5D595B1874AA52C6DD30CD97B051"
+      },
+      {
+        "path": "src/PerfMonitor.Ipc.NamedPipes/NamedPipeAgentServer.cs",
+        "sha256": "15EE1E852AA1950818551F11D5E0F4E5CDD55A4E57727DE924129899D48080D6"
+      },
+      {
+        "path": "src/PerfMonitor.Ipc.NamedPipes/PerfMonitor.Ipc.NamedPipes.csproj",
+        "sha256": "EFA9BD80BDDC0B35B48448CF3D5034162A3BEF218E016F80CEDAF55CF84C536C"
+      },
+      {
+        "path": "src/PerfMonitor.Ipc.NamedPipes/PipeEndpoint.cs",
+        "sha256": "689752EEAE0419CF7403B2DB4E6A5CA7DDF8C75081D037C325E28E37BD5909D1"
+      },
+      {
+        "path": "src/PerfMonitor.Ipc.NamedPipes/SnapshotSubscriptionHub.cs",
+        "sha256": "75AF63E9FAB98B40FC48A5CDBD398F3316E75839006681CA36B3475277E2DF8A"
+      },
+      {
+        "path": "src/PerfMonitor.Ipc.NamedPipes/packages.lock.json",
+        "sha256": "7E27D6B6B98C9AD5AE03EFE81AD63133BEBD2B2E412A5F460E82095C9840F63C"
+      },
+      {
+        "path": "src/PerfMonitor.ProviderWorker.Protocol/LengthPrefixedJson.cs",
+        "sha256": "A05CA38BAB2DDD9B3403746077FDE6C1E55EEEDD2411BC0CE933FD377480CE97"
+      },
+      {
+        "path": "src/PerfMonitor.ProviderWorker.Protocol/PerfMonitor.ProviderWorker.Protocol.csproj",
+        "sha256": "8759C64EE8CF08D92889F45F98C6C504BF0ED8E6F542D6C4F1F7387913D58C32"
+      },
+      {
+        "path": "src/PerfMonitor.ProviderWorker.Protocol/ProviderWorkerProtocol.cs",
+        "sha256": "A7E5EDDBC92478DA73CB9022304720362FDA0C433130186030EFEF46FBF9AA68"
+      },
+      {
+        "path": "src/PerfMonitor.ProviderWorker.Protocol/packages.lock.json",
+        "sha256": "A29C6AA8CFB81874FF8BB78DC369D7416F28C9B8CC47E99592BFC019B20C41EB"
+      },
+      {
+        "path": "src/PerfMonitor.ProviderWorker/LibreHardwareMonitorSnapshotSource.cs",
+        "sha256": "63E352B8274F4AF7C33B2E1DEA472F4B046AABBBBC98180E4BF84747887452E8"
+      },
+      {
+        "path": "src/PerfMonitor.ProviderWorker/PerfMonitor.ProviderWorker.csproj",
+        "sha256": "BA3BF9F819670522722EF324E95B5AFBC71CFAD0AA6AEB4D34696AA52D3C1036"
+      },
+      {
+        "path": "src/PerfMonitor.ProviderWorker/Program.cs",
+        "sha256": "20EBA0BF989D49E488A66E2EF5B620AA32A64AFF443801868C9B634CF9ECFF1A"
+      },
+      {
+        "path": "src/PerfMonitor.ProviderWorker/app.manifest",
+        "sha256": "25661B0BC0D1C36F16E4D218A81329AD3B319DE6AE174802243DCF9FFF06AAFF"
+      },
+      {
+        "path": "src/PerfMonitor.ProviderWorker/packages.lock.json",
+        "sha256": "0D71B6A4E7A295A3B3301D4D955B3A4DEDBFA97583BE7F60211CFF2D4463973B"
+      },
+      {
+        "path": "src/PerfMonitor.Storage.Sqlite/PerfMonitor.Storage.Sqlite.csproj",
+        "sha256": "34E93F33BA6AFC0FCA680886C18F05CA0614B238B3ABCA7BE29A6D8C5383D361"
+      },
+      {
+        "path": "src/PerfMonitor.Storage.Sqlite/ReplaySnapshotProjection.cs",
+        "sha256": "AD83759141274001D7D3D4E133C3E8C198CB0C7C03A6A21A8BCECC62220E17AE"
+      },
+      {
+        "path": "src/PerfMonitor.Storage.Sqlite/SnapshotMetricExtractor.cs",
+        "sha256": "9660137A8903C8EB3482C0331344311E8B619FD699532DA4CD10C918E5CFE823"
+      },
+      {
+        "path": "src/PerfMonitor.Storage.Sqlite/SqliteDatabase.cs",
+        "sha256": "EB742238EF2060830EEEB63FA9B4A664513576ADB2C562B38412A9D5C755253C"
+      },
+      {
+        "path": "src/PerfMonitor.Storage.Sqlite/SqliteDiagnosticQuery.cs",
+        "sha256": "AFFD66C7D7AC8BAC6B994D69E5DBF1BE45E0AD6C2D3DE133E7800358947124AB"
+      },
+      {
+        "path": "src/PerfMonitor.Storage.Sqlite/SqliteHistoryOptions.cs",
+        "sha256": "C2FCDBBAAE0D70EBFB2207B77397C0A29C72E933CC91ECDA8D1DEE9A8EF73C86"
+      },
+      {
+        "path": "src/PerfMonitor.Storage.Sqlite/SqliteHistoryQuery.cs",
+        "sha256": "8714250607D35C9EFDEF5AE2F12443E3E52BFC59FADE370F6CB850F88D20BA3A"
+      },
+      {
+        "path": "src/PerfMonitor.Storage.Sqlite/SqliteHistoryStore.cs",
+        "sha256": "FA46FFD4EBBB1166AC3DEF6EFB0DFB1B8EF73E010C112C84D9407AFE78BD748B"
+      },
+      {
+        "path": "src/PerfMonitor.Storage.Sqlite/SqliteRecoveryManager.cs",
+        "sha256": "986B0D44ACD87CD79FBFDA8262690DD3B8BE11B23E92FFAED7E0922F250A3681"
+      },
+      {
+        "path": "src/PerfMonitor.Storage.Sqlite/packages.lock.json",
+        "sha256": "C40DB62D84E2EBECAF37481D9BD435018BFC35A874733BD2D0A24595ECAA191B"
+      },
+      {
+        "path": "src/PerfMonitor.Support/DiagnosticBundleExporter.cs",
+        "sha256": "F3D7FC0B9884EACC487E708C56BB67CDD61640E83BD466533E090908E7E4F300"
+      },
+      {
+        "path": "src/PerfMonitor.Support/PerfMonitor.Support.csproj",
+        "sha256": "566B2F0C3A3ADC1363D5CD4106E76415382FD7330D0897011EFE3F4FBFA94815"
+      },
+      {
+        "path": "src/PerfMonitor.Support/SupportProgram.cs",
+        "sha256": "6BCC55E43F6C493C84902CCA7E2F1FB445DB8240EEC8E0062096D77701AFE712"
+      },
+      {
+        "path": "src/PerfMonitor.Support/packages.lock.json",
+        "sha256": "1AFB0FDC92C4D8A37AAA61EF3A72760359E2D744A2948F8B67AF02AED90E8E75"
+      }
+    ]
+  },
+  "environment": {
+    "os": "Microsoft Windows 10 专业版",
+    "version": "10.0.19045",
+    "build": "19045",
+    "architecture": "64 位",
+    "logicalProcessors": 28,
+    "physicalMemoryBytes": 34104135680,
+    "cpu": [
+      {
+        "Name": "Intel(R) Core(TM) i7-14700KF",
+        "NumberOfCores": 20,
+        "NumberOfLogicalProcessors": 28
+      }
+    ],
+    "powerStatusAvailable": true,
+    "acLineStatus": 1,
+    "batteryFlags": 128,
+    "observer": "PowerShell + CIM + Process counters; observer overhead is excluded from product totals"
+  },
+  "bindingLimit": "PE commit metadata certifies the baseline HEAD metadata only; the frozen dirty product-source hashes, build logs and payload hashes bind this round. These are not binaries rebuilt for a later commit.",
+  "validation": {
+    "dotnetRestore": {
+      "command": "dotnet restore PerfMonitor.slnx --locked-mode --artifacts-path artifacts/development-348a609 --verbosity minimal",
+      "exitCode": 0,
+      "projects": 21
+    },
+    "dotnetTests": {
+      "command": "dotnet test PerfMonitor.slnx --configuration Release --no-restore --artifacts-path artifacts/development-348a609 --logger trx --results-directory artifacts/development-348a609/validation/final-dotnet-trx --verbosity minimal",
+      "exitCode": 0,
+      "total": 208,
+      "passed": 208,
+      "failed": 0,
+      "skipped": 0,
+      "byProject": {
+        "Contract": 11,
+        "Actions": 33,
+        "Broker": 27,
+        "Agent": 127,
+        "Release": 10
+      }
+    },
+    "dotnetBuild": {
+      "command": "dotnet build PerfMonitor.slnx --configuration Release --no-restore --artifacts-path artifacts/development-348a609 --verbosity minimal",
+      "exitCode": 0,
+      "projects": 21,
+      "warnings": 0,
+      "errors": 0
+    },
+    "buildServerShutdown": {
+      "command": "dotnet build-server shutdown",
+      "completed": true
+    },
+    "python": {
+      "runtime": "CPython 3.12.10",
+      "command": "python -m pytest",
+      "exitCode": 0,
+      "passed": 76,
+      "pipCheck": "No broken requirements found",
+      "numericFixInputsUnchangedDuringTests": true
+    },
+    "numericRegression": {
+      "checks": 17,
+      "runtimes": [
+        "PowerShell 7.6.5",
+        "Windows PowerShell 5.1.19041.6456"
+      ],
+      "status": "passed",
+      "productStarted": false
+    }
+  },
+  "toolValidation": {
+    "first60Seconds": {
+      "classification": "invalid toolcheck; excluded from formal metrics",
+      "path": "tool-validation/agent-toolcheck-invalid",
+      "failures": [
+        "Empty JSON storage property names",
+        "Integer Math.Max overload rounded fractional CPU to zero"
+      ]
+    },
+    "second60Seconds": {
+      "classification": "passed toolcheck; excluded from formal metrics",
+      "path": "tool-validation/agent-toolcheck-v2",
+      "summary": {
+        "probeSamples": 70,
+        "measurementSamples": 60,
+        "cpuCompleteSamples": 59,
+        "cpuCoveredSeconds": 59.007326899999995,
+        "observedCpuDeltaSeconds": 4.265625,
+        "cpuCoverageFractionOfRequestedMeasurement": 0.9834554483333332,
+        "cpuCoreEquivalentMeanPct": 7.228975152914443,
+        "cpuMachineNormalizedMeanPct": 0.25817768403265867,
+        "peakPrivateBytes": 106348544.0,
+        "peakWorkingSetBytes": 188960768.0,
+        "peakHandles": 962.0,
+        "peakThreads": 48.0,
+        "peakDbBytes": 1052672.0,
+        "peakWalBytes": 4190072.0,
+        "databaseGrowthBeforeShutdownBytes": 970752,
+        "walGrowthBeforeShutdownBytes": 3419600,
+        "maximumProbeIntervalSeconds": 1.0184753999999998,
+        "probeGapSamples": 0
+      }
+    }
+  },
+  "formalSamples": [
+    {
+      "name": "agent-worker-180s",
+      "classification": "formal short background development sample",
+      "localOriginal": "artifacts/baseline/2026-10-02-wave02-agent-worker-180s",
+      "mode": "agent-only",
+      "wrapperExitCode": 0,
+      "completed": true,
+      "parameters": {
+        "durationSeconds": 180,
+        "warmupSeconds": 10,
+        "probeIntervalMilliseconds": 1000,
+        "dotnetRoot": "C:\\Users\\Administrator\\AppData\\Local\\PerfMonitor\\dotnet-sdk-10.0.302",
+        "outputDirectory": "D:\\GitHub\\windows-performance-monitor\\artifacts\\baseline\\2026-10-02-wave02-agent-worker-180s",
+        "outputSerializationEnabled": false,
+        "ipcEnabled": true
+      },
+      "summary": {
+        "probeSamples": 190,
+        "measurementSamples": 180,
+        "cpuCompleteSamples": 179,
+        "cpuCoveredSeconds": 179.0189323,
+        "observedCpuDeltaSeconds": 12.25,
+        "cpuCoverageFractionOfRequestedMeasurement": 0.9945496238888888,
+        "cpuCoreEquivalentMeanPct": 6.842851670834147,
+        "cpuMachineNormalizedMeanPct": 0.2443875596726481,
+        "peakPrivateBytes": 113082368.0,
+        "peakWorkingSetBytes": 195244032.0,
+        "peakHandles": 971.0,
+        "peakThreads": 49.0,
+        "peakDbBytes": 2764800.0,
+        "peakWalBytes": 4321912.0,
+        "databaseGrowthBeforeShutdownBytes": 2682880,
+        "walGrowthBeforeShutdownBytes": 3522600,
+        "maximumProbeIntervalSeconds": 1.051495199999998,
+        "probeGapSamples": 0
+      },
+      "derivedResourceStatistics": [
+        {
+          "kind": "agent",
+          "measurementSamples": 180,
+          "privateBytesP95": 66220032,
+          "privateBytesPeak": 75595776,
+          "workingSetBytesPeak": 121110528,
+          "observedCpuSecondsInSetEligibleIntervals": 11.0625,
+          "cpuCoreEquivalentMeanPct": 6.179514008865531,
+          "cpuMachineNormalizedMeanPct": 0.22069692888805467
+        },
+        {
+          "kind": "worker",
+          "measurementSamples": 180,
+          "privateBytesP95": 40271872,
+          "privateBytesPeak": 40857600,
+          "workingSetBytesPeak": 78176256,
+          "observedCpuSecondsInSetEligibleIntervals": 1.1875,
+          "cpuCoreEquivalentMeanPct": 0.6633376619686163,
+          "cpuMachineNormalizedMeanPct": 0.02369063078459344
+        },
+        {
+          "kind": "product-set",
+          "measurementSamples": 180,
+          "privateBytesP95": 103206912,
+          "privateBytesPeak": 113082368,
+          "workingSetBytesPeak": 195244032,
+          "observedCpuSecondsInSetEligibleIntervals": 12.25,
+          "cpuCoreEquivalentMeanPct": 6.842851670834147,
+          "cpuMachineNormalizedMeanPct": 0.2443875596726481
+        }
+      ],
+      "processes": [
+        {
+          "kind": "agent",
+          "pid": 23560,
+          "startedUtc": "2026-10-02T14:10:53.3075920Z",
+          "path": "D:\\GitHub\\windows-performance-monitor\\artifacts\\baseline\\2026-10-02-wave02-agent-worker-180s\\payload\\agent\\perf-monitor-agent.exe",
+          "rootProcess": true,
+          "cleanup": "already exited",
+          "arguments": [
+            "--quiet",
+            "--warmup-seconds",
+            "0",
+            "--duration-seconds",
+            "195",
+            "--data-directory",
+            "D:\\GitHub\\windows-performance-monitor\\artifacts\\baseline\\2026-10-02-wave02-agent-worker-180s\\data"
+          ],
+          "lastObservedCpuSeconds": 13.015625,
+          "exitCode": 0,
+          "finalCpuSeconds": 13.453125
+        },
+        {
+          "kind": "worker",
+          "pid": 27452,
+          "startedUtc": "2026-10-02T14:10:53.4651906Z",
+          "path": "D:\\GitHub\\windows-performance-monitor\\artifacts\\baseline\\2026-10-02-wave02-agent-worker-180s\\payload\\agent\\provider-worker\\perf-monitor-provider-worker.exe",
+          "rootProcess": false,
+          "cleanup": "already exited",
+          "lastObservedCpuSeconds": 1.765625,
+          "exitCode": -1,
+          "finalCpuSeconds": 1.796875
+        }
+      ],
+      "history": {
+        "schemaVersion": 3,
+        "integrityCheck": "ok",
+        "persistedSnapshots": 194,
+        "instanceCount": 1,
+        "missingDeliverySequencesBetweenPersistedRows": 0,
+        "invalidTimeOrDeliveryMetadataRows": 0,
+        "firstElapsedSeconds": 0.285976,
+        "lastElapsedSeconds": 195.2991284,
+        "maximumPersistedElapsedGapSeconds": 1.0414452,
+        "groupQualityCounts": {
+          "systemCpu": {
+            "availability:available": 194,
+            "freshness:fresh": 194
+          },
+          "memory": {
+            "availability:available": 194,
+            "freshness:fresh": 194
+          },
+          "network": {
+            "availability:available": 194,
+            "freshness:fresh": 194
+          },
+          "diskIo": {
+            "availability:available": 194,
+            "freshness:fresh": 194
+          },
+          "power": {
+            "availability:available": 194,
+            "freshness:fresh": 194
+          },
+          "volumes": {
+            "availability:available": 194,
+            "freshness:fresh": 194
+          },
+          "uptime": {
+            "availability:available": 194,
+            "freshness:fresh": 194
+          },
+          "processes": {
+            "availability:available": 194,
+            "freshness:fresh": 194
+          },
+          "self": {
+            "availability:available": 194,
+            "freshness:fresh": 194
+          },
+          "gpu": {
+            "availability:unavailable": 1,
+            "freshness:warming_up": 1,
+            "availability:available": 193,
+            "freshness:fresh": 193
+          },
+          "sensors": {
+            "availability:unavailable": 1,
+            "freshness:warming_up": 1,
+            "availability:partial": 193,
+            "freshness:fresh": 193
+          },
+          "sampler": {
+            "availability:available": 194,
+            "freshness:fresh": 194
+          }
+        },
+        "boundary": "Persisted coverage only; rows before the first or after the last persisted delivery and all transient fanout/provider events are not proven."
+      },
+      "storageAtFirstMeasurementProbe": {
+        "dbBytes": 81920,
+        "walBytes": 799312,
+        "shmBytes": 32768
+      },
+      "storageBeforeShutdown": {
+        "dbBytes": 2764800,
+        "walBytes": 4321912,
+        "shmBytes": 32768
+      },
+      "storageAfterShutdown": {
+        "dbBytes": 2994176,
+        "walBytes": 0,
+        "shmBytes": 0
+      },
+      "workerDiscoveryErrors": 0,
+      "skippedProbeSlots": 0,
+      "windowStateMismatchSamples": 0,
+      "visibleWindowProbeSamples": 0,
+      "independentAudit": "passed"
+    },
+    {
+      "name": "agent-worker-hidden-180s",
+      "classification": "formal short background development sample",
+      "localOriginal": "artifacts/baseline/2026-10-02-wave02-agent-worker-hidden-180s",
+      "mode": "desktop-hidden",
+      "wrapperExitCode": 0,
+      "completed": true,
+      "parameters": {
+        "durationSeconds": 180,
+        "warmupSeconds": 10,
+        "probeIntervalMilliseconds": 1000,
+        "dotnetRoot": "C:\\Users\\Administrator\\AppData\\Local\\PerfMonitor\\dotnet-sdk-10.0.302",
+        "outputDirectory": "D:\\GitHub\\windows-performance-monitor\\artifacts\\baseline\\2026-10-02-wave02-agent-worker-hidden-180s",
+        "outputSerializationEnabled": false,
+        "ipcEnabled": true
+      },
+      "summary": {
+        "probeSamples": 190,
+        "measurementSamples": 180,
+        "cpuCompleteSamples": 179,
+        "cpuCoveredSeconds": 179.0044386,
+        "observedCpuDeltaSeconds": 14.03125,
+        "cpuCoverageFractionOfRequestedMeasurement": 0.9944691033333333,
+        "cpuCoreEquivalentMeanPct": 7.838492782491262,
+        "cpuMachineNormalizedMeanPct": 0.27994617080325934,
+        "peakPrivateBytes": 216637440.0,
+        "peakWorkingSetBytes": 339804160.0,
+        "peakHandles": 1616.0,
+        "peakThreads": 76.0,
+        "peakDbBytes": 2789376.0,
+        "peakWalBytes": 4400192.0,
+        "databaseGrowthBeforeShutdownBytes": 2707456,
+        "walGrowthBeforeShutdownBytes": 3629720,
+        "maximumProbeIntervalSeconds": 1.0205263999999943,
+        "probeGapSamples": 0
+      },
+      "derivedResourceStatistics": [
+        {
+          "kind": "agent",
+          "measurementSamples": 180,
+          "privateBytesP95": 75825152,
+          "privateBytesPeak": 83206144,
+          "workingSetBytesPeak": 129347584,
+          "observedCpuSecondsInSetEligibleIntervals": 12.296875,
+          "cpuCoreEquivalentMeanPct": 6.86959222697174,
+          "cpuMachineNormalizedMeanPct": 0.245342579534705
+        },
+        {
+          "kind": "desktop",
+          "measurementSamples": 180,
+          "privateBytesP95": 95969280,
+          "privateBytesPeak": 99897344,
+          "workingSetBytesPeak": 139190272,
+          "observedCpuSecondsInSetEligibleIntervals": 0.546875,
+          "cpuCoreEquivalentMeanPct": 0.30550918417282197,
+          "cpuMachineNormalizedMeanPct": 0.010911042291886499
+        },
+        {
+          "kind": "worker",
+          "measurementSamples": 180,
+          "privateBytesP95": 40009728,
+          "privateBytesPeak": 40660992,
+          "workingSetBytesPeak": 78024704,
+          "observedCpuSecondsInSetEligibleIntervals": 1.1875,
+          "cpuCoreEquivalentMeanPct": 0.6633913713466991,
+          "cpuMachineNormalizedMeanPct": 0.023692548976667827
+        },
+        {
+          "kind": "product-set",
+          "measurementSamples": 180,
+          "privateBytesP95": 209362944,
+          "privateBytesPeak": 216637440,
+          "workingSetBytesPeak": 339804160,
+          "observedCpuSecondsInSetEligibleIntervals": 14.03125,
+          "cpuCoreEquivalentMeanPct": 7.838492782491262,
+          "cpuMachineNormalizedMeanPct": 0.27994617080325934
+        }
+      ],
+      "processes": [
+        {
+          "kind": "agent",
+          "pid": 51128,
+          "startedUtc": "2026-10-02T14:15:32.2880781Z",
+          "path": "D:\\GitHub\\windows-performance-monitor\\artifacts\\baseline\\2026-10-02-wave02-agent-worker-hidden-180s\\payload\\agent\\perf-monitor-agent.exe",
+          "rootProcess": true,
+          "cleanup": "already exited",
+          "arguments": [
+            "--quiet",
+            "--warmup-seconds",
+            "0",
+            "--duration-seconds",
+            "195",
+            "--data-directory",
+            "D:\\GitHub\\windows-performance-monitor\\artifacts\\baseline\\2026-10-02-wave02-agent-worker-hidden-180s\\data"
+          ],
+          "lastObservedCpuSeconds": 14.546875,
+          "exitCode": 0,
+          "finalCpuSeconds": 14.921875
+        },
+        {
+          "kind": "desktop",
+          "pid": 22440,
+          "startedUtc": "2026-10-02T14:15:32.3280705Z",
+          "path": "D:\\GitHub\\windows-performance-monitor\\artifacts\\baseline\\2026-10-02-wave02-agent-worker-hidden-180s\\payload\\desktop\\perf-monitor-desktop.exe",
+          "rootProcess": true,
+          "cleanup": "already exited",
+          "arguments": [
+            "--start-hidden"
+          ],
+          "lastObservedCpuSeconds": 1.609375,
+          "exitCode": -1,
+          "finalCpuSeconds": 1.625
+        },
+        {
+          "kind": "worker",
+          "pid": 11936,
+          "startedUtc": "2026-10-02T14:15:32.4434606Z",
+          "path": "D:\\GitHub\\windows-performance-monitor\\artifacts\\baseline\\2026-10-02-wave02-agent-worker-hidden-180s\\payload\\agent\\provider-worker\\perf-monitor-provider-worker.exe",
+          "rootProcess": false,
+          "cleanup": "already exited",
+          "lastObservedCpuSeconds": 1.796875,
+          "exitCode": -1,
+          "finalCpuSeconds": 1.8125
+        }
+      ],
+      "history": {
+        "schemaVersion": 3,
+        "integrityCheck": "ok",
+        "persistedSnapshots": 194,
+        "instanceCount": 1,
+        "missingDeliverySequencesBetweenPersistedRows": 0,
+        "invalidTimeOrDeliveryMetadataRows": 0,
+        "firstElapsedSeconds": 0.2811656,
+        "lastElapsedSeconds": 195.2853265,
+        "maximumPersistedElapsedGapSeconds": 1.0378684,
+        "groupQualityCounts": {
+          "systemCpu": {
+            "availability:available": 194,
+            "freshness:fresh": 194
+          },
+          "memory": {
+            "availability:available": 194,
+            "freshness:fresh": 194
+          },
+          "network": {
+            "availability:available": 194,
+            "freshness:fresh": 194
+          },
+          "diskIo": {
+            "availability:available": 194,
+            "freshness:fresh": 194
+          },
+          "power": {
+            "availability:available": 194,
+            "freshness:fresh": 194
+          },
+          "volumes": {
+            "availability:available": 194,
+            "freshness:fresh": 194
+          },
+          "uptime": {
+            "availability:available": 194,
+            "freshness:fresh": 194
+          },
+          "processes": {
+            "availability:available": 194,
+            "freshness:fresh": 194
+          },
+          "self": {
+            "availability:available": 194,
+            "freshness:fresh": 194
+          },
+          "gpu": {
+            "availability:unavailable": 1,
+            "freshness:warming_up": 1,
+            "availability:available": 193,
+            "freshness:fresh": 193
+          },
+          "sensors": {
+            "availability:unavailable": 1,
+            "freshness:warming_up": 1,
+            "availability:partial": 193,
+            "freshness:fresh": 193
+          },
+          "sampler": {
+            "availability:available": 194,
+            "freshness:fresh": 194
+          }
+        },
+        "boundary": "Persisted coverage only; rows before the first or after the last persisted delivery and all transient fanout/provider events are not proven."
+      },
+      "storageAtFirstMeasurementProbe": {
+        "dbBytes": 81920,
+        "walBytes": 770472,
+        "shmBytes": 32768
+      },
+      "storageBeforeShutdown": {
+        "dbBytes": 2789376,
+        "walBytes": 4400192,
+        "shmBytes": 32768
+      },
+      "storageAfterShutdown": {
+        "dbBytes": 3002368,
+        "walBytes": 0,
+        "shmBytes": 0
+      },
+      "workerDiscoveryErrors": 0,
+      "skippedProbeSlots": 0,
+      "windowStateMismatchSamples": 0,
+      "visibleWindowProbeSamples": 0,
+      "independentAudit": "passed"
+    }
+  ],
+  "memoryQuantileMethod": "Nearest-rank ceil(0.95*n) over measurement-phase sampled privateBytes; empirical point distribution, not a duration-weighted or steady-state guarantee. Peaks are recorded separately.",
+  "termination": "Desktop is terminated by the wrapper after measurement; Worker is terminated by the finite-duration Agent's existing disposal chain. OS exit -1 and cleanup=already exited do not mean natural successful exit.",
+  "safetyBoundary": {
+    "brokerStarted": false,
+    "actionsEnabled": false,
+    "physicalInputUsed": false,
+    "externalWindowManipulationUsed": false,
+    "visibleModeRun": false,
+    "residualProductProcessesAfterBothRuns": 0
+  },
+  "notVerified": [
+    "Controlled ambient load or paired causal Desktop increment",
+    "Visible Desktop mode",
+    "Physical tray/hotkey/focus",
+    "Mixed-DPI and multi-screen physical behavior",
+    "100/500/1000 real process scenarios",
+    "Task comparisons and optimization benefits",
+    "Steady-state resource budgets",
+    "Real 72-hour wall-clock run",
+    "Windows 11/Server full support matrix",
+    "Install/signing/tag/release/attestation",
+    "Actual privileged actions or recovery"
+  ]
+}

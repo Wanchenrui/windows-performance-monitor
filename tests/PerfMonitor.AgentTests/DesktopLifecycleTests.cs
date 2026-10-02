@@ -11,6 +11,54 @@ namespace PerfMonitor.AgentTests;
 [TestClass]
 public sealed class DesktopLifecycleTests
 {
+    [TestMethod]
+    public void StartupArgumentsKeepVisibleDefaultAndRejectUnknownOrDuplicateOptions()
+    {
+        Assert.IsTrue(DesktopProgram.TryParseArguments([], out var hidden));
+        Assert.IsFalse(hidden);
+        Assert.IsTrue(DesktopProgram.TryParseArguments(["--start-hidden"], out hidden));
+        Assert.IsTrue(hidden);
+        Assert.IsFalse(DesktopProgram.TryParseArguments(["--unknown"], out _));
+        Assert.IsFalse(DesktopProgram.TryParseArguments(["--start-hidden", "--start-hidden"], out _));
+    }
+
+    [STATestMethod]
+    public void HiddenStartupCreatesEntryPointsWithoutVisibilityOrActivation()
+    {
+        using var fixture = new Fixture();
+        var visibilityChanges = 0;
+        fixture.Window.IsVisibleChanged += (_, _) => visibilityChanges++;
+        Assert.IsTrue(fixture.Controller.TryStartHidden());
+        var handle = new WindowInteropHelper(fixture.Window).Handle;
+        Assert.AreNotEqual(IntPtr.Zero, handle);
+        Assert.IsFalse(fixture.Window.IsVisible);
+        Assert.IsFalse(IsWindowVisible(handle));
+        Assert.AreEqual(0, visibilityChanges, "Hidden startup must not show then hide.");
+        Assert.AreEqual(0, fixture.ActivateCalls);
+        Assert.AreEqual(1, fixture.HotkeyRegistrations);
+        Assert.IsFalse(fixture.Tray.WindowVisible);
+        Assert.IsTrue(fixture.Controller.TryStartHidden());
+        Assert.AreEqual(1, fixture.HotkeyRegistrations);
+    }
+
+    [STATestMethod]
+    public void HiddenStartupRejectsMissingOrFailedTrayAndCanCleanUpWithoutShowing()
+    {
+        foreach (var throws in new[] { false, true })
+        {
+            using var fixture = new Fixture(trayAvailable: false, trayThrows: throws);
+            var visibilityChanges = 0;
+            fixture.Window.IsVisibleChanged += (_, _) => visibilityChanges++;
+            Assert.IsFalse(fixture.Controller.TryStartHidden());
+            PumpUntil(fixture.Controller.ExitAsync());
+            Assert.IsFalse(fixture.Window.IsVisible);
+            Assert.AreEqual(0, visibilityChanges);
+            Assert.AreEqual(0, fixture.ActivateCalls);
+            Assert.AreEqual(1, fixture.StopCalls);
+            Assert.AreEqual(1, fixture.ShutdownCalls);
+        }
+    }
+
     [STATestMethod]
     public void CloseAndEscapeHideWithoutStoppingSessionAndTrayRestoresSameWindow()
     {
@@ -210,6 +258,10 @@ public sealed class DesktopLifecycleTests
         Width = 0,
         Height = 0,
     });
+
+    [System.Runtime.InteropServices.DllImport("user32.dll")]
+    [return: System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.Bool)]
+    private static extern bool IsWindowVisible(IntPtr handle);
 
     private static void PumpUntil(Task task)
     {

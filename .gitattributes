@@ -22,4 +22,5 @@ docs/development/2026-10-02-validation.md -text -whitespace
 docs/development/2026-10-02-pre-version-artifact-hashes.json -text -whitespace
 docs/development/evidence/2026-10-02-pre-version/** -text -whitespace
 docs/development/evidence/2026-10-02-v1.1.0/** -text -whitespace
+docs/development/evidence/2026-10-02-background-baseline/** -text -whitespace
 

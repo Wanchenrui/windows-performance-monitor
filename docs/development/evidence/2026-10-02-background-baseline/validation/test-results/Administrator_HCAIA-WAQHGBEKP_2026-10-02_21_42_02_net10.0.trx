@@ -1,0 +1,80 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="6e6f4c0f-5dad-4dfd-854f-fe146b6c0b4d" name="Administrator@HCAIA-WAQHGBEKP 2026-10-02 21:42:02" runUser="HCAIA-WAQHGBEKP\Administrator" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-10-02T21:42:02.2211766+08:00" queuing="2026-10-02T21:42:02.2211769+08:00" start="2026-10-02T21:41:59.2840264+08:00" finish="2026-10-02T21:42:02.2462657+08:00" />
+  <TestSettings name="default" id="c950063c-ef02-4561-a8c4-47d3a4de4675">
+    <Deployment runDeploymentRoot="Administrator_HCAIA-WAQHGBEKP_2026-10-02_21_42_02" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="af3f2a93-2c3e-42cf-8a78-cec291ed9f51" testId="1f1830c8-4454-8753-9939-93ea770cbe37" testName="RestoreRejectsTamperedBackup" computerName="HCAIA-WAQHGBEKP" duration="00:00:00.0214602" startTime="2026-10-02T21:42:01.8021456+08:00" endTime="2026-10-02T21:42:01.8240705+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="af3f2a93-2c3e-42cf-8a78-cec291ed9f51" />
+    <UnitTestResult executionId="c28580e7-391b-4920-8ee5-fa8401aa18dc" testId="1290ef96-89ea-854d-8bb8-5e0316f4b2dc" testName="NewerSchemaIsNeverWrittenByOlderStore" computerName="HCAIA-WAQHGBEKP" duration="00:00:00.0149946" startTime="2026-10-02T21:42:02.1164481+08:00" endTime="2026-10-02T21:42:02.1314920+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="c28580e7-391b-4920-8ee5-fa8401aa18dc" />
+    <UnitTestResult executionId="50ca2fe5-3ebc-4df6-a1a0-292f539f3a21" testId="1bcab826-e1ea-870f-8efe-09851393d16e" testName="RestoreRejectsActiveAgentLease" computerName="HCAIA-WAQHGBEKP" duration="00:00:00.0187488" startTime="2026-10-02T21:42:01.9101267+08:00" endTime="2026-10-02T21:42:01.9289363+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="50ca2fe5-3ebc-4df6-a1a0-292f539f3a21" />
+    <UnitTestResult executionId="89454fbd-84c9-4150-bc18-9100519e9342" testId="1bc2b934-12be-8c1f-9250-2286e3999368" testName="RestoreRejectsBackupForDifferentDatabaseName" computerName="HCAIA-WAQHGBEKP" duration="00:00:00.0208960" startTime="2026-10-02T21:42:01.8891386+08:00" endTime="2026-10-02T21:42:01.9100850+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="89454fbd-84c9-4150-bc18-9100519e9342" />
+    <UnitTestResult executionId="ddbe6368-99c5-449d-a900-7bb79a42238f" testId="161b33c1-dac5-8b38-baae-f58d5dc63105" testName="MigrationBackupCanBeVerifiedAndRestored" computerName="HCAIA-WAQHGBEKP" duration="00:00:00.6361301" startTime="2026-10-02T21:42:01.1492462+08:00" endTime="2026-10-02T21:42:01.7980977+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="ddbe6368-99c5-449d-a900-7bb79a42238f" />
+    <UnitTestResult executionId="7d9c7573-81f0-42e8-9566-432d13540fee" testId="16171b96-9b25-8ad9-abdb-680f7ee0448c" testName="DiagnosticExportRejectsSensitiveAllowlistedField" computerName="HCAIA-WAQHGBEKP" duration="00:00:00.0109538" startTime="2026-10-02T21:42:02.1897370+08:00" endTime="2026-10-02T21:42:02.2032335+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="7d9c7573-81f0-42e8-9566-432d13540fee" />
+    <UnitTestResult executionId="6d31b3d9-759d-4ef4-8a6f-a844086e259b" testId="1670fea1-b9bd-800f-9784-770edc8b82ec" testName="DiagnosticExportExcludesRawSensitivePayload" computerName="HCAIA-WAQHGBEKP" duration="00:00:00.0515203" startTime="2026-10-02T21:42:02.1315294+08:00" endTime="2026-10-02T21:42:02.1831192+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="6d31b3d9-759d-4ef4-8a6f-a844086e259b" />
+    <UnitTestResult executionId="caca4c45-1138-42ea-89d9-c4b99b1cb5a3" testId="1e3d539d-81f1-8746-9714-8e1403112c78" testName="ExistingVersionZeroDatabaseGetsMigrationBackup" computerName="HCAIA-WAQHGBEKP" duration="00:00:00.1873410" startTime="2026-10-02T21:42:01.9289849+08:00" endTime="2026-10-02T21:42:02.1163984+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="caca4c45-1138-42ea-89d9-c4b99b1cb5a3" />
+    <UnitTestResult executionId="603884d6-f534-41ef-b8fb-2bce7880b0af" testId="1423f3ec-de19-879b-b64a-f3bae5851c4f" testName="MigrationFailureLeavesVersionOneAndBackup" computerName="HCAIA-WAQHGBEKP" duration="00:00:00.0357725" startTime="2026-10-02T21:42:01.8243379+08:00" endTime="2026-10-02T21:42:01.8601749+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="603884d6-f534-41ef-b8fb-2bce7880b0af" />
+    <UnitTestResult executionId="94d91331-3d47-47e4-b9f3-dfa5738cb9d9" testId="101bf233-778d-8248-99a1-0a0ab1211c3c" testName="RestoreRejectsSpoofedSourceSchema" computerName="HCAIA-WAQHGBEKP" duration="00:00:00.0288274" startTime="2026-10-02T21:42:01.8602147+08:00" endTime="2026-10-02T21:42:01.8890991+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="94d91331-3d47-47e4-b9f3-dfa5738cb9d9" />
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="NewerSchemaIsNeverWrittenByOlderStore" storage="d:\github\windows-performance-monitor\artifacts\development-348a609\bin\perfmonitor.releasetests\release_win-x64\perfmonitor.releasetests.dll" id="1290ef96-89ea-854d-8bb8-5e0316f4b2dc">
+      <Execution id="c28580e7-391b-4920-8ee5-fa8401aa18dc" />
+      <TestMethod codeBase="D:\GitHub\windows-performance-monitor\artifacts\development-348a609\bin\PerfMonitor.ReleaseTests\release_win-x64\PerfMonitor.ReleaseTests.dll" adapterTypeName="executor://mstestadapter/v4" className="PerfMonitor.ReleaseTests.RecoveryAndPrivacyTests" name="NewerSchemaIsNeverWrittenByOlderStore" />
+    </UnitTest>
+    <UnitTest name="RestoreRejectsActiveAgentLease" storage="d:\github\windows-performance-monitor\artifacts\development-348a609\bin\perfmonitor.releasetests\release_win-x64\perfmonitor.releasetests.dll" id="1bcab826-e1ea-870f-8efe-09851393d16e">
+      <Execution id="50ca2fe5-3ebc-4df6-a1a0-292f539f3a21" />
+      <TestMethod codeBase="D:\GitHub\windows-performance-monitor\artifacts\development-348a609\bin\PerfMonitor.ReleaseTests\release_win-x64\PerfMonitor.ReleaseTests.dll" adapterTypeName="executor://mstestadapter/v4" className="PerfMonitor.ReleaseTests.RecoveryAndPrivacyTests" name="RestoreRejectsActiveAgentLease" />
+    </UnitTest>
+    <UnitTest name="ExistingVersionZeroDatabaseGetsMigrationBackup" storage="d:\github\windows-performance-monitor\artifacts\development-348a609\bin\perfmonitor.releasetests\release_win-x64\perfmonitor.releasetests.dll" id="1e3d539d-81f1-8746-9714-8e1403112c78">
+      <Execution id="caca4c45-1138-42ea-89d9-c4b99b1cb5a3" />
+      <TestMethod codeBase="D:\GitHub\windows-performance-monitor\artifacts\development-348a609\bin\PerfMonitor.ReleaseTests\release_win-x64\PerfMonitor.ReleaseTests.dll" adapterTypeName="executor://mstestadapter/v4" className="PerfMonitor.ReleaseTests.RecoveryAndPrivacyTests" name="ExistingVersionZeroDatabaseGetsMigrationBackup" />
+    </UnitTest>
+    <UnitTest name="RestoreRejectsTamperedBackup" storage="d:\github\windows-performance-monitor\artifacts\development-348a609\bin\perfmonitor.releasetests\release_win-x64\perfmonitor.releasetests.dll" id="1f1830c8-4454-8753-9939-93ea770cbe37">
+      <Execution id="af3f2a93-2c3e-42cf-8a78-cec291ed9f51" />
+      <TestMethod codeBase="D:\GitHub\windows-performance-monitor\artifacts\development-348a609\bin\PerfMonitor.ReleaseTests\release_win-x64\PerfMonitor.ReleaseTests.dll" adapterTypeName="executor://mstestadapter/v4" className="PerfMonitor.ReleaseTests.RecoveryAndPrivacyTests" name="RestoreRejectsTamperedBackup" />
+    </UnitTest>
+    <UnitTest name="DiagnosticExportExcludesRawSensitivePayload" storage="d:\github\windows-performance-monitor\artifacts\development-348a609\bin\perfmonitor.releasetests\release_win-x64\perfmonitor.releasetests.dll" id="1670fea1-b9bd-800f-9784-770edc8b82ec">
+      <Execution id="6d31b3d9-759d-4ef4-8a6f-a844086e259b" />
+      <TestMethod codeBase="D:\GitHub\windows-performance-monitor\artifacts\development-348a609\bin\PerfMonitor.ReleaseTests\release_win-x64\PerfMonitor.ReleaseTests.dll" adapterTypeName="executor://mstestadapter/v4" className="PerfMonitor.ReleaseTests.RecoveryAndPrivacyTests" name="DiagnosticExportExcludesRawSensitivePayload" />
+    </UnitTest>
+    <UnitTest name="MigrationBackupCanBeVerifiedAndRestored" storage="d:\github\windows-performance-monitor\artifacts\development-348a609\bin\perfmonitor.releasetests\release_win-x64\perfmonitor.releasetests.dll" id="161b33c1-dac5-8b38-baae-f58d5dc63105">
+      <Execution id="ddbe6368-99c5-449d-a900-7bb79a42238f" />
+      <TestMethod codeBase="D:\GitHub\windows-performance-monitor\artifacts\development-348a609\bin\PerfMonitor.ReleaseTests\release_win-x64\PerfMonitor.ReleaseTests.dll" adapterTypeName="executor://mstestadapter/v4" className="PerfMonitor.ReleaseTests.RecoveryAndPrivacyTests" name="MigrationBackupCanBeVerifiedAndRestored" />
+    </UnitTest>
+    <UnitTest name="RestoreRejectsSpoofedSourceSchema" storage="d:\github\windows-performance-monitor\artifacts\development-348a609\bin\perfmonitor.releasetests\release_win-x64\perfmonitor.releasetests.dll" id="101bf233-778d-8248-99a1-0a0ab1211c3c">
+      <Execution id="94d91331-3d47-47e4-b9f3-dfa5738cb9d9" />
+      <TestMethod codeBase="D:\GitHub\windows-performance-monitor\artifacts\development-348a609\bin\PerfMonitor.ReleaseTests\release_win-x64\PerfMonitor.ReleaseTests.dll" adapterTypeName="executor://mstestadapter/v4" className="PerfMonitor.ReleaseTests.RecoveryAndPrivacyTests" name="RestoreRejectsSpoofedSourceSchema" />
+    </UnitTest>
+    <UnitTest name="RestoreRejectsBackupForDifferentDatabaseName" storage="d:\github\windows-performance-monitor\artifacts\development-348a609\bin\perfmonitor.releasetests\release_win-x64\perfmonitor.releasetests.dll" id="1bc2b934-12be-8c1f-9250-2286e3999368">
+      <Execution id="89454fbd-84c9-4150-bc18-9100519e9342" />
+      <TestMethod codeBase="D:\GitHub\windows-performance-monitor\artifacts\development-348a609\bin\PerfMonitor.ReleaseTests\release_win-x64\PerfMonitor.ReleaseTests.dll" adapterTypeName="executor://mstestadapter/v4" className="PerfMonitor.ReleaseTests.RecoveryAndPrivacyTests" name="RestoreRejectsBackupForDifferentDatabaseName" />
+    </UnitTest>
+    <UnitTest name="MigrationFailureLeavesVersionOneAndBackup" storage="d:\github\windows-performance-monitor\artifacts\development-348a609\bin\perfmonitor.releasetests\release_win-x64\perfmonitor.releasetests.dll" id="1423f3ec-de19-879b-b64a-f3bae5851c4f">
+      <Execution id="603884d6-f534-41ef-b8fb-2bce7880b0af" />
+      <TestMethod codeBase="D:\GitHub\windows-performance-monitor\artifacts\development-348a609\bin\PerfMonitor.ReleaseTests\release_win-x64\PerfMonitor.ReleaseTests.dll" adapterTypeName="executor://mstestadapter/v4" className="PerfMonitor.ReleaseTests.RecoveryAndPrivacyTests" name="MigrationFailureLeavesVersionOneAndBackup" />
+    </UnitTest>
+    <UnitTest name="DiagnosticExportRejectsSensitiveAllowlistedField" storage="d:\github\windows-performance-monitor\artifacts\development-348a609\bin\perfmonitor.releasetests\release_win-x64\perfmonitor.releasetests.dll" id="16171b96-9b25-8ad9-abdb-680f7ee0448c">
+      <Execution id="7d9c7573-81f0-42e8-9566-432d13540fee" />
+      <TestMethod codeBase="D:\GitHub\windows-performance-monitor\artifacts\development-348a609\bin\PerfMonitor.ReleaseTests\release_win-x64\PerfMonitor.ReleaseTests.dll" adapterTypeName="executor://mstestadapter/v4" className="PerfMonitor.ReleaseTests.RecoveryAndPrivacyTests" name="DiagnosticExportRejectsSensitiveAllowlistedField" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="1f1830c8-4454-8753-9939-93ea770cbe37" executionId="af3f2a93-2c3e-42cf-8a78-cec291ed9f51" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="1290ef96-89ea-854d-8bb8-5e0316f4b2dc" executionId="c28580e7-391b-4920-8ee5-fa8401aa18dc" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="1bcab826-e1ea-870f-8efe-09851393d16e" executionId="50ca2fe5-3ebc-4df6-a1a0-292f539f3a21" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="1bc2b934-12be-8c1f-9250-2286e3999368" executionId="89454fbd-84c9-4150-bc18-9100519e9342" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="161b33c1-dac5-8b38-baae-f58d5dc63105" executionId="ddbe6368-99c5-449d-a900-7bb79a42238f" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="16171b96-9b25-8ad9-abdb-680f7ee0448c" executionId="7d9c7573-81f0-42e8-9566-432d13540fee" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="1670fea1-b9bd-800f-9784-770edc8b82ec" executionId="6d31b3d9-759d-4ef4-8a6f-a844086e259b" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="1e3d539d-81f1-8746-9714-8e1403112c78" executionId="caca4c45-1138-42ea-89d9-c4b99b1cb5a3" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="1423f3ec-de19-879b-b64a-f3bae5851c4f" executionId="603884d6-f534-41ef-b8fb-2bce7880b0af" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="101bf233-778d-8248-99a1-0a0ab1211c3c" executionId="94d91331-3d47-47e4-b9f3-dfa5738cb9d9" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="列表中未列出的结果" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="所有已加载的结果" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Completed">
+    <Counters total="10" executed="10" passed="10" failed="0" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+  </ResultSummary>
+</TestRun>
