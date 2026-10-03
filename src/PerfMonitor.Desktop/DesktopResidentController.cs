@@ -16,6 +16,7 @@ internal sealed class DesktopResidentController : IDisposable
     private readonly Action<string> _setStatus;
     private readonly Func<HwndSource, Action, IDesktopHotkey> _registerHotkey;
     private readonly Action _activateWindow;
+    private readonly MainWindow? _monitor;
     private IDesktopTray? _tray;
     private IDesktopHotkey? _hotkey;
     private WindowState _restoreState;
@@ -35,6 +36,7 @@ internal sealed class DesktopResidentController : IDisposable
     {
         window.Dispatcher.VerifyAccess();
         _window = window;
+        _monitor = window as MainWindow;
         _stopSession = stopSession;
         _shutdown = shutdown;
         _setStatus = setStatus;
@@ -53,6 +55,18 @@ internal sealed class DesktopResidentController : IDisposable
         {
             // An ordinary closable window is safer than hiding without a usable tray entry.
             Trace.TraceWarning("Desktop tray unavailable: {0}", exception.GetType().Name);
+        }
+
+        if (_monitor is not null)
+        {
+            _monitor.DiagnosticNotifications.StateChanged += OnNotificationStateChanged;
+            _tray?.ConfigureNotifications(
+                () => Dispatch(() => { Show(); _monitor.OpenPanel(DashboardPanel.Diagnostics); }),
+                () => Dispatch(() => _monitor.DiagnosticNotifications.SetEnabled(!_monitor.DiagnosticNotifications.Current.Enabled)),
+                duration => Dispatch(() => _monitor.DiagnosticNotifications.SetDoNotDisturb(duration)),
+                () => Dispatch(_monitor.DiagnosticNotifications.EndDoNotDisturb));
+            _monitor.AttachNotificationTray(_tray);
+            _tray?.UpdateNotifications(_monitor.DiagnosticNotifications.Current);
         }
 
         window.SourceInitialized += OnSourceInitialized;
@@ -215,6 +229,9 @@ internal sealed class DesktopResidentController : IDisposable
 
     private void OnVisibilityChanged(object sender, DependencyPropertyChangedEventArgs args) => UpdateTray();
 
+    private void OnNotificationStateChanged(DesktopNotificationState state) =>
+        Dispatch(() => _tray?.UpdateNotifications(_monitor!.DiagnosticNotifications.Current));
+
     private void UpdateStatus()
     {
         var status = _tray is null
@@ -246,12 +263,14 @@ internal sealed class DesktopResidentController : IDisposable
         var tray = _tray;
         _hotkey = null;
         _tray = null;
+        _monitor?.AttachNotificationTray(null);
         try { hotkey?.Dispose(); }
         finally { tray?.Dispose(); }
     }
 
     private void DetachWindowEvents()
     {
+        if (_monitor is not null) _monitor.DiagnosticNotifications.StateChanged -= OnNotificationStateChanged;
         _window.SourceInitialized -= OnSourceInitialized;
         _window.Closing -= OnClosing;
         _window.Closed -= OnClosed;

@@ -50,6 +50,7 @@ public sealed partial class MainWindow
             : "尚未查询";
         view.QueryStatus.Text = _diagnosticQueryError ?? "";
         view.QueryStatus.Visibility = _diagnosticQueryError is null ? Visibility.Collapsed : Visibility.Visible;
+        UpdateNotificationControls();
         UpdateExportControls();
         // Export controls keep their identity and focus while received snapshots refresh the drawer.
         var selectedEvent = _diagnostics?.Events.FirstOrDefault(item => item.EventId == _diagnosticEventId);
@@ -239,6 +240,7 @@ public sealed partial class MainWindow
         public (DiagnosticsContract?, string?, DesktopConnectionStatus, string?, string?)? Rendered { get; set; }
         public DiagnosticsDrawerView(MainWindow owner)
         {
+            Root.Children.Add(owner.BuildNotificationControls());
             Root.Children.Add(Text("按事件最后观测时间筛选", 11, Muted));
             var ranges = new WrapPanel { Margin = new Thickness(0, 4, 0, 7) };
             foreach (var item in new[] { (60, "60 秒"), (300, "5 分钟"), (3600, "1 小时"), (86400, "24 小时") })

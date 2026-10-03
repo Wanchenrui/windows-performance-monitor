@@ -78,6 +78,8 @@ public sealed partial class MainWindow : Window
     public MainWindow(PipeEndpoint endpoint)
     {
         _endpoint = endpoint; _session = new(endpoint); _state = _session.Current;
+        _notifications = new(endpoint, ShowDiagnosticNotificationAsync);
+        _notifications.StateChanged += OnNotificationStateChanged;
         _renderer = new(callback => { _ = Dispatcher.InvokeAsync(callback, DispatcherPriority.Background); }, RenderState);
         _session.StateChanged += OnStateChanged;
         Title = "PerfMonitor · 性能状态"; Width = 760; Height = 200; MinWidth = 680; MinHeight = 190;
@@ -103,6 +105,7 @@ public sealed partial class MainWindow : Window
         _renderer.Publish(_session.Current);
         UpdateVisibility();
         _sessionTask ??= _session.RunAsync(_stopping.Token);
+        _notificationTask ??= _notifications.RunAsync(_stopping.Token);
     }
     public void SetResidentStatus(string text)
     {
@@ -114,8 +117,11 @@ public sealed partial class MainWindow : Window
     private async Task StopSessionCoreAsync()
     {
         _renderer.Close(); _session.StateChanged -= OnStateChanged; _stopping.Cancel();
-        try { await Task.WhenAll(_sessionTask ?? Task.CompletedTask, _queryTask ?? Task.CompletedTask, _lightTask ?? Task.CompletedTask, _exportTask ?? Task.CompletedTask); }
+        _notifications.StateChanged -= OnNotificationStateChanged;
+        await _notifications.StopAsync();
+        try { await Task.WhenAll(_sessionTask ?? Task.CompletedTask, _queryTask ?? Task.CompletedTask, _lightTask ?? Task.CompletedTask, _exportTask ?? Task.CompletedTask, _notificationTask ?? Task.CompletedTask); }
         catch (OperationCanceledException) { }
+        await _notifications.DisposeAsync();
         _stopping.Dispose();
     }
     public void ToggleDetails()
@@ -224,6 +230,8 @@ public sealed partial class MainWindow : Window
     }
     private void OnStateChanged(DesktopConnectionState state)
     {
+        // Track the raw session even while hidden; renderer updates pause with window visibility.
+        _notifications.UpdateConnection(state);
         TrackExportConnection(state);
         _renderer.Publish(state);
     }
