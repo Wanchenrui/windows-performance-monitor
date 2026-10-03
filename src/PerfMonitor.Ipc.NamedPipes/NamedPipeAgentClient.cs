@@ -174,6 +174,39 @@ public sealed class NamedPipeAgentClient : IAsyncDisposable
                 LightModeEnabled = enabled,
             }, "lightMode", cancellationToken);
 
+    public Task<AdaptiveSchedulingContract> GetAdaptiveSchedulingAsync(CancellationToken cancellationToken) =>
+        !Capabilities.Endpoints.ContainsKey("adaptiveScheduling")
+            ? Task.FromResult(AdaptiveSchedulingContract.Unsupported(InstanceId))
+            : RequestAdaptiveSchedulingAsync(new IpcRequestMessage
+            {
+                Type = "getAdaptiveScheduling", RequestId = Guid.NewGuid().ToString("N"),
+            }, cancellationToken);
+
+    public Task<AdaptiveSchedulingContract> SetAdaptiveSchedulingAsync(AdaptiveSchedulingRequestContract request, CancellationToken cancellationToken) =>
+        !Capabilities.Endpoints.ContainsKey("adaptiveScheduling")
+            ? Task.FromResult(AdaptiveSchedulingContract.Unsupported(InstanceId))
+            : RequestAdaptiveSchedulingAsync(new IpcRequestMessage
+            {
+                Type = "setAdaptiveScheduling", RequestId = Guid.NewGuid().ToString("N"),
+                AdaptiveScheduling = JsonSerializer.SerializeToElement(request, IpcJson.Options),
+            }, cancellationToken);
+
+    private async Task<AdaptiveSchedulingContract> RequestAdaptiveSchedulingAsync(IpcRequestMessage request, CancellationToken token)
+    {
+        try
+        {
+            var response = await RequestAsync<AdaptiveSchedulingContract>(request, "adaptiveScheduling", token).ConfigureAwait(false);
+            if (!StringComparer.Ordinal.Equals(response.InstanceId, InstanceId))
+                throw new IpcProtocolException(IpcErrorCodes.InvalidRequest);
+            return response;
+        }
+        catch (JsonException)
+        {
+            // A malformed response is unconfirmed state, never an applied setting.
+            throw new IpcProtocolException(IpcErrorCodes.InvalidRequest);
+        }
+    }
+
     public Task<HistoryContract> QueryHistoryAsync(
         HistoryQueryContract query,
         CancellationToken cancellationToken) =>

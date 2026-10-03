@@ -139,10 +139,9 @@ public sealed class ProviderScheduler : IAsyncDisposable
         CancellationToken stoppingToken)
     {
         var descriptor = provider.Descriptor;
-        var basePeriodTicks = SchedulerMath.ToTimestampTicks(
-            _timeProvider,
-            descriptor.DefaultPeriod);
         var nextDeadline = _timeProvider.GetTimestamp();
+        var previousDeadline = nextDeadline;
+        var waitingPeriodTicks = PeriodTicks(descriptor, 0);
         long missedTotal = 0;
         long skippedBusyTotal = 0;
         var consecutiveFailures = 0;
@@ -156,14 +155,16 @@ public sealed class ProviderScheduler : IAsyncDisposable
         {
             while (!stoppingToken.IsCancellationRequested)
             {
-                await DelayUntilAsync(nextDeadline, stoppingToken)
-                    .ConfigureAwait(false);
+                (nextDeadline, waitingPeriodTicks) = await DelayUntilAsync(
+                    nextDeadline, previousDeadline, waitingPeriodTicks, descriptor,
+                    consecutiveFailures, stoppingToken).ConfigureAwait(false);
 
                 var wakeTimestamp = _timeProvider.GetTimestamp();
                 var wakeUtc = _timeProvider.GetUtcNow();
                 var scheduledAtUtc = wakeUtc - _timeProvider.GetElapsedTime(
                     nextDeadline,
                     wakeTimestamp);
+                var expectedPeriodSeconds = _timeProvider.GetElapsedTime(0, waitingPeriodTicks).TotalSeconds;
 
                 if (SamplingMode?.IsPaused(descriptor.GroupId) == true)
                 {
@@ -186,12 +187,14 @@ public sealed class ProviderScheduler : IAsyncDisposable
                         missedTotal, skippedBusyTotal)
                     {
                         CompletedTimestamp = wakeTimestamp,
+                        ExpectedPeriodSeconds = expectedPeriodSeconds,
                     };
                     await _sink.PublishAsync(ProviderResult.Paused(descriptor), pausedExecution,
                         stoppingToken).ConfigureAwait(false);
                     consecutiveFailures = 0;
-                    nextDeadline = AdvanceDeadline(nextDeadline, basePeriodTicks, 0,
-                        wakeTimestamp, ref missedTotal);
+                    previousDeadline = nextDeadline;
+                    nextDeadline = AdvanceDeadline(nextDeadline, descriptor, 0,
+                        wakeTimestamp, ref missedTotal, out waitingPeriodTicks);
                     continue;
                 }
 
@@ -216,16 +219,22 @@ public sealed class ProviderScheduler : IAsyncDisposable
                                     wakeTimestamp).TotalMilliseconds),
                             missedTotal,
                             skippedBusyTotal);
+                        busyExecution = busyExecution with
+                        {
+                            CompletedTimestamp = wakeTimestamp,
+                            ExpectedPeriodSeconds = expectedPeriodSeconds,
+                        };
                         await _sink.PublishAsync(
                             timeoutResult,
                             busyExecution,
                             stoppingToken).ConfigureAwait(false);
+                        previousDeadline = nextDeadline;
                         nextDeadline = AdvanceDeadline(
                             nextDeadline,
-                            basePeriodTicks,
+                            descriptor,
                             consecutiveFailures,
                             wakeTimestamp,
-                            ref missedTotal);
+                            ref missedTotal, out waitingPeriodTicks);
                         continue;
                     }
 
@@ -259,11 +268,13 @@ public sealed class ProviderScheduler : IAsyncDisposable
                         missedTotal, skippedBusyTotal)
                     {
                         CompletedTimestamp = capacityTimestamp,
+                        ExpectedPeriodSeconds = expectedPeriodSeconds,
                     };
                     await _sink.PublishAsync(capacityResult, capacityExecution, stoppingToken)
                         .ConfigureAwait(false);
-                    nextDeadline = AdvanceDeadline(nextDeadline, basePeriodTicks,
-                        consecutiveFailures, capacityTimestamp, ref missedTotal);
+                    previousDeadline = nextDeadline;
+                    nextDeadline = AdvanceDeadline(nextDeadline, descriptor,
+                        consecutiveFailures, capacityTimestamp, ref missedTotal, out waitingPeriodTicks);
                     continue;
                 }
                 if (SamplingMode?.IsPaused(descriptor.GroupId) == true)
@@ -339,6 +350,7 @@ public sealed class ProviderScheduler : IAsyncDisposable
                 {
                     StartedTimestamp = startedTimestamp,
                     CompletedTimestamp = completedTimestamp,
+                    ExpectedPeriodSeconds = expectedPeriodSeconds,
                 };
                 result = result with { CollectionRevision = inFlightRevision };
                 await _sink.PublishAsync(
@@ -346,12 +358,13 @@ public sealed class ProviderScheduler : IAsyncDisposable
                     execution,
                     stoppingToken).ConfigureAwait(false);
 
+                previousDeadline = nextDeadline;
                 nextDeadline = AdvanceDeadline(
                     nextDeadline,
-                    basePeriodTicks,
+                    descriptor,
                     consecutiveFailures,
                     completedTimestamp,
-                    ref missedTotal);
+                    ref missedTotal, out waitingPeriodTicks);
             }
         }
         finally
@@ -432,14 +445,13 @@ public sealed class ProviderScheduler : IAsyncDisposable
 
     private long AdvanceDeadline(
         long previousDeadline,
-        long basePeriodTicks,
+        ProviderDescriptor descriptor,
         int consecutiveFailures,
         long now,
-        ref long missedTotal)
+        ref long missedTotal,
+        out long effectivePeriod)
     {
-        var effectivePeriod = checked(
-            basePeriodTicks *
-            SchedulerMath.BackoffMultiplier(consecutiveFailures));
+        effectivePeriod = PeriodTicks(descriptor, consecutiveFailures);
         var next = SchedulerMath.AdvanceAbsoluteDeadline(
             previousDeadline,
             effectivePeriod,
@@ -449,20 +461,41 @@ public sealed class ProviderScheduler : IAsyncDisposable
         return next;
     }
 
-    private async Task DelayUntilAsync(
+    private long PeriodTicks(ProviderDescriptor descriptor, int consecutiveFailures) =>
+        checked(SchedulerMath.ToTimestampTicks(_timeProvider,
+                SamplingMode?.GetEffectivePeriod(descriptor) ?? descriptor.DefaultPeriod) *
+            SchedulerMath.BackoffMultiplier(consecutiveFailures));
+
+    private async Task<(long Deadline, long PeriodTicks)> DelayUntilAsync(
         long deadline,
+        long previousDeadline,
+        long waitingPeriodTicks,
+        ProviderDescriptor descriptor,
+        int consecutiveFailures,
         CancellationToken cancellationToken)
     {
-        var now = _timeProvider.GetTimestamp();
-        if (deadline <= now)
+        var dynamicHardware = SamplingMode is not null &&
+            descriptor.GroupId is GroupIds.Gpu or GroupIds.Sensors;
+        while (true)
         {
-            return;
+            var now = _timeProvider.GetTimestamp();
+            if (dynamicHardware)
+            {
+                var currentPeriod = PeriodTicks(descriptor, consecutiveFailures);
+                if (currentPeriod != waitingPeriodTicks)
+                {
+                    // A policy change rebases the pending deadline, without
+                    // counting intentionally removed intervals as missed work.
+                    deadline = Math.Max(now, checked(previousDeadline + currentPeriod));
+                    waitingPeriodTicks = currentPeriod;
+                }
+            }
+            if (deadline <= now) return (deadline, waitingPeriodTicks);
+            var delay = _timeProvider.GetElapsedTime(now, deadline);
+            if (dynamicHardware && delay > descriptor.DefaultPeriod)
+                delay = descriptor.DefaultPeriod;
+            await Task.Delay(delay, _timeProvider, cancellationToken).ConfigureAwait(false);
         }
-
-        await Task.Delay(
-            _timeProvider.GetElapsedTime(now, deadline),
-            _timeProvider,
-            cancellationToken).ConfigureAwait(false);
     }
 
     private static async Task<ProviderResult> CollectIsolatedAsync(

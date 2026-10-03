@@ -63,7 +63,13 @@ public sealed partial class MainWindow
         view.EndPause.Visibility = state.DoNotDisturb ? Visibility.Visible : Visibility.Collapsed;
         view.EndPause.IsEnabled = _stopTask is null;
         view.Detail.Text = "默认关闭 · 仅本次 Desktop 运行有效\n只读取现有诊断，不改变采集或执行动作\n不自动打开窗口 · 显示受 Windows 设置影响" +
-            (state.QueryError is null ? "" : "\n诊断通知查询暂不可用，等待自动重试");
+            (state.QueryError switch
+            {
+                null => "",
+                "notification_capacity_reached" => "\n本次运行的通知记录已满；重启界面后可重新开启通知，诊断仍可查看。",
+                "notification_display_unavailable" => "\n本次提醒未能请求显示；可打开诊断查看，后续新提醒仍会尝试。",
+                _ => "\n诊断通知查询暂不可用，等待自动重试",
+            });
         view.Root.ToolTip = status + " · 设置仅本次 Desktop 运行有效";
     }
 

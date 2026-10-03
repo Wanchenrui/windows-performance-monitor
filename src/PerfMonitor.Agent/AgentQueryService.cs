@@ -14,6 +14,7 @@ internal sealed class AgentQueryService : IAgentIpcService
     private readonly AgentActionGateway _actions;
     private readonly CapabilitiesContract _capabilities;
     private readonly AgentLightModeController? _lightMode;
+    private readonly AgentAdaptiveSchedulingController? _adaptiveScheduling;
 
     public AgentQueryService(
         SnapshotAssembler assembler,
@@ -25,7 +26,8 @@ internal sealed class AgentQueryService : IAgentIpcService
         IEnumerable<ProviderDescriptor> descriptors,
         PipeEndpoint endpoint,
         TimeSpan snapshotPeriod,
-        AgentLightModeController? lightMode = null)
+        AgentLightModeController? lightMode = null,
+        AgentAdaptiveSchedulingController? adaptiveScheduling = null)
     {
         _assembler = assembler;
         _history = history;
@@ -33,13 +35,15 @@ internal sealed class AgentQueryService : IAgentIpcService
         _recentDiagnostics = recentDiagnostics;
         _actions = actions;
         _lightMode = lightMode;
+        _adaptiveScheduling = adaptiveScheduling;
         _capabilities = BuildCapabilities(
             assembler.InstanceId,
             diagnosticsCapabilities,
             descriptors,
             endpoint,
             snapshotPeriod,
-            lightMode is not null);
+            lightMode is not null,
+            adaptiveScheduling is not null);
     }
 
     public string InstanceId => _assembler.InstanceId;
@@ -51,6 +55,12 @@ internal sealed class AgentQueryService : IAgentIpcService
 
     public LightModeContract SetLightMode(bool enabled, CancellationToken cancellationToken) =>
         _lightMode?.Set(enabled, cancellationToken) ?? LightModeContract.Unsupported(InstanceId);
+
+    public AdaptiveSchedulingContract ReadAdaptiveScheduling() =>
+        _adaptiveScheduling?.Read() ?? AdaptiveSchedulingContract.Unsupported(InstanceId);
+
+    public AdaptiveSchedulingContract SetAdaptiveScheduling(AdaptiveSchedulingRequestContract request, CancellationToken cancellationToken) =>
+        _adaptiveScheduling?.Set(request, cancellationToken) ?? AdaptiveSchedulingContract.Unsupported(InstanceId);
 
     public HealthContract ReadHealth()
     {
@@ -175,7 +185,8 @@ internal sealed class AgentQueryService : IAgentIpcService
         IEnumerable<ProviderDescriptor> descriptors,
         PipeEndpoint endpoint,
         TimeSpan snapshotPeriod,
-        bool lightModeSupported)
+        bool lightModeSupported,
+        bool adaptiveSchedulingSupported)
     {
         var groups = descriptors
             .Select(descriptor => new ProviderCapabilityContract
@@ -220,6 +231,7 @@ internal sealed class AgentQueryService : IAgentIpcService
             ["subscribe"] = $"{baseEndpoint}/subscribe",
         };
         if (lightModeSupported) endpoints["lightMode"] = $"{baseEndpoint}/light-mode";
+        if (adaptiveSchedulingSupported) endpoints["adaptiveScheduling"] = $"{baseEndpoint}/adaptive-scheduling";
         return new CapabilitiesContract
         {
             ContractVersion = ContractVersions.V1,

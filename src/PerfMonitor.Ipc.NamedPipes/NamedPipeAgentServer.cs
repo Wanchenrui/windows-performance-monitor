@@ -261,6 +261,12 @@ public sealed class NamedPipeAgentServer : IAsyncDisposable
                             clientStopping.Token).ConfigureAwait(false);
                         break;
 
+                    case "getAdaptiveScheduling":
+                    case "setAdaptiveScheduling":
+                        await HandleAdaptiveSchedulingAsync(pipe, writeGate, request,
+                            negotiation.MaxMessageSize, clientStopping.Token).ConfigureAwait(false);
+                        break;
+
                     case "queryHistory":
                         await HandleHistoryAsync(
                             pipe,
@@ -488,6 +494,54 @@ public sealed class NamedPipeAgentServer : IAsyncDisposable
         return new Negotiation(
             hello.RequestId,
             negotiatedMaximum);
+    }
+
+    private async Task HandleAdaptiveSchedulingAsync(Stream pipe, SemaphoreSlim writeGate,
+        IpcRequestMessage request, int maxMessageSize, CancellationToken cancellationToken)
+    {
+        using var requestCancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        requestCancellation.CancelAfter(IpcProtocol.RequestTimeout);
+        try
+        {
+            AdaptiveSchedulingContract state;
+            if (request.Type == "getAdaptiveScheduling") state = _service.ReadAdaptiveScheduling();
+            else
+            {
+                if (request.AdaptiveScheduling is not { ValueKind: JsonValueKind.Object } payload ||
+                    !payload.TryGetProperty("enabled", out var enabled) || enabled.ValueKind is not (JsonValueKind.True or JsonValueKind.False) ||
+                    !payload.TryGetProperty("durationSeconds", out var duration) || duration.ValueKind != JsonValueKind.Number || !duration.TryGetInt32(out var seconds) ||
+                    !AdaptiveSchedulingLimits.DurationSeconds.Contains(seconds))
+                    throw new ArgumentException("adaptive_scheduling_invalid_request");
+                var command = payload.Deserialize<AdaptiveSchedulingRequestContract>(IpcJson.Options)
+                    ?? throw new ArgumentException("adaptive_scheduling_request_missing");
+                if (!StringComparer.Ordinal.Equals(command.InstanceId, _service.InstanceId) ||
+                    !AdaptiveSchedulingPreferences.All.Contains(command.Preference))
+                    throw new ArgumentException("adaptive_scheduling_invalid_request");
+                requestCancellation.Token.ThrowIfCancellationRequested();
+                state = _service.SetAdaptiveScheduling(command, requestCancellation.Token);
+            }
+            requestCancellation.Token.ThrowIfCancellationRequested();
+            if (!StringComparer.Ordinal.Equals(state.InstanceId, _service.InstanceId))
+                throw new IpcServiceUnavailableException(IpcErrorCodes.ServiceUnavailable);
+            await WritePayloadAsync(pipe, writeGate, "adaptiveScheduling", request.RequestId, state,
+                maxMessageSize, cancellationToken).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) when (requestCancellation.IsCancellationRequested && !cancellationToken.IsCancellationRequested)
+        {
+            await WriteErrorAsync(pipe, writeGate, request.RequestId, IpcErrorCodes.RequestTimedOut,
+                maxMessageSize, cancellationToken).ConfigureAwait(false);
+        }
+        catch (Exception exception) when (exception is ArgumentException or OverflowException or JsonException)
+        {
+            await WriteErrorAsync(pipe, writeGate, request.RequestId, IpcErrorCodes.InvalidRequest,
+                maxMessageSize, cancellationToken).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { throw; }
+        catch (Exception exception) when (exception is not OutOfMemoryException and not StackOverflowException)
+        {
+            await WriteErrorAsync(pipe, writeGate, request.RequestId, IpcErrorCodes.ServiceUnavailable,
+                maxMessageSize, cancellationToken).ConfigureAwait(false);
+        }
     }
 
     private async Task HandleHistoryAsync(

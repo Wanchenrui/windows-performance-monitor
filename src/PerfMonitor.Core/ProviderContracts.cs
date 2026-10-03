@@ -113,6 +113,11 @@ public sealed record ProviderExecution(
     long MissedIntervalsTotal,
     long SkippedBusyIntervalsTotal)
 {
+    // Planned collection interval, including the existing failure backoff.
+    // This is internal scheduling metadata, not an added snapshot-group field.
+    [JsonIgnore]
+    public double? ExpectedPeriodSeconds { get; init; }
+
     // Local clock ticks never leave this process. SnapshotAssembler maps them
     // to the containing Agent instance's portable elapsed-seconds timeline.
     [JsonIgnore]

@@ -29,6 +29,8 @@ public static class AgentServiceRunner
             providers.Select(provider => provider.Descriptor)) { SamplingMode = samplingMode };
         var lightMode = new AgentLightModeController(samplingMode, assembler,
             providers.Select(provider => provider.Descriptor));
+        using var adaptiveScheduling = new AgentAdaptiveSchedulingController(samplingMode, assembler,
+            providers.Select(provider => provider.Descriptor));
         var endpoint = PipeEndpoint.ForCurrentUser();
         var databasePath = Path.Combine(
             options.DataDirectory,
@@ -78,7 +80,8 @@ public static class AgentServiceRunner
             providers.Select(provider => provider.Descriptor),
             endpoint,
             options.Sampling.OutputPeriod,
-            lightMode);
+            lightMode,
+            adaptiveScheduling);
         await using var server = options.EnableIpc
             ? new NamedPipeAgentServer(
                 endpoint,
@@ -138,6 +141,7 @@ public static class AgentServiceRunner
             while (true)
             {
                 durationCancellation.Token.ThrowIfCancellationRequested();
+                adaptiveScheduling.Observe(assembler.Read());
                 var snapshot = fanout.Publish(assembler.Read());
                 await WriteSnapshotAsync(
                     snapshot,

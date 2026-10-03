@@ -18,6 +18,11 @@ public interface IAgentIpcService
     LightModeContract SetLightMode(bool enabled, CancellationToken cancellationToken) =>
         LightModeContract.Unsupported(InstanceId);
 
+    AdaptiveSchedulingContract ReadAdaptiveScheduling() => AdaptiveSchedulingContract.Unsupported(InstanceId);
+
+    AdaptiveSchedulingContract SetAdaptiveScheduling(AdaptiveSchedulingRequestContract request, CancellationToken cancellationToken) =>
+        AdaptiveSchedulingContract.Unsupported(InstanceId);
+
     ValueTask<HistoryContract> QueryHistoryAsync(
         HistoryQueryContract query,
         CancellationToken cancellationToken);

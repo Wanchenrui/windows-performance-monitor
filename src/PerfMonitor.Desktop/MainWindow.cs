@@ -19,7 +19,7 @@ using PerfMonitor.Ipc.NamedPipes;
 namespace PerfMonitor.Desktop;
 
 public enum ResourceView { Cpu, Memory, Network, Disk }
-public enum DashboardPanel { Processes, Diagnostics, Quality, LightMode }
+public enum DashboardPanel { Processes, Diagnostics, Quality, LightMode, AdaptiveScheduling }
 
 public sealed partial class MainWindow : Window
 {
@@ -75,11 +75,14 @@ public sealed partial class MainWindow : Window
     private bool _queryBusy, _lightBusy, _expanded;
     private Task? _sessionTask, _stopTask, _queryTask, _lightTask;
 
-    public MainWindow(PipeEndpoint endpoint)
+    public MainWindow(PipeEndpoint endpoint) : this(endpoint, null) { }
+    internal MainWindow(PipeEndpoint endpoint, DesktopAdaptiveSchedulingSession? adaptiveScheduling)
     {
         _endpoint = endpoint; _session = new(endpoint); _state = _session.Current;
         _notifications = new(endpoint, ShowDiagnosticNotificationAsync);
         _notifications.StateChanged += OnNotificationStateChanged;
+        _adaptiveScheduling = adaptiveScheduling ?? new(endpoint);
+        _adaptiveScheduling.StateChanged += OnAdaptiveSchedulingStateChanged;
         _renderer = new(callback => { _ = Dispatcher.InvokeAsync(callback, DispatcherPriority.Background); }, RenderState);
         _session.StateChanged += OnStateChanged;
         Title = "PerfMonitor · 性能状态"; Width = 760; Height = 200; MinWidth = 680; MinHeight = 190;
@@ -118,6 +121,9 @@ public sealed partial class MainWindow : Window
     {
         _renderer.Close(); _session.StateChanged -= OnStateChanged; _stopping.Cancel();
         _notifications.StateChanged -= OnNotificationStateChanged;
+        _adaptiveScheduling.StateChanged -= OnAdaptiveSchedulingStateChanged;
+        _adaptiveRefreshTimer?.Stop();
+        await _adaptiveScheduling.StopAsync();
         await _notifications.StopAsync();
         try { await Task.WhenAll(_sessionTask ?? Task.CompletedTask, _queryTask ?? Task.CompletedTask, _lightTask ?? Task.CompletedTask, _exportTask ?? Task.CompletedTask, _notificationTask ?? Task.CompletedTask); }
         catch (OperationCanceledException) { }
@@ -145,6 +151,7 @@ public sealed partial class MainWindow : Window
         if (!_expanded) ToggleDetails(); _panel = panel; _drawer.Visibility = Visibility.Visible;
         RenderState(_state); Reveal(_drawer); if (panel == DashboardPanel.Diagnostics) _ = QueryDiagnosticsAsync();
         if (panel == DashboardPanel.LightMode) _ = QueryLightModeAsync();
+        if (panel == DashboardPanel.AdaptiveScheduling) _ = _adaptiveScheduling.QueryAsync();
     }
     private UIElement BuildContent()
     {
@@ -218,6 +225,7 @@ public sealed partial class MainWindow : Window
         navigation.Children.Add(ranges); var panels = new WrapPanel();
         panels.Children.Add(Action("进程", (_, _) => OpenPanel(DashboardPanel.Processes))); panels.Children.Add(Action("诊断", (_, _) => OpenPanel(DashboardPanel.Diagnostics))); panels.Children.Add(Action("质量", (_, _) => OpenPanel(DashboardPanel.Quality)));
         panels.Children.Add(Action("轻量模式", (_, _) => OpenPanel(DashboardPanel.LightMode)));
+        panels.Children.Add(Action("智能调度", (_, _) => OpenPanel(DashboardPanel.AdaptiveScheduling)));
         navigation.Children.Add(panels); footer.Children.Add(navigation); footer.Children.Add(BuildTrendExportControls());
         Grid.SetRow(footer, 2); body.Children.Add(footer); surface.Child = body; _details.Children.Add(surface);
         var drawerRoot = new Grid(); drawerRoot.RowDefinitions.Add(new() { Height = GridLength.Auto }); drawerRoot.RowDefinitions.Add(new() { Height = new GridLength(1, GridUnitType.Star) });
@@ -232,6 +240,7 @@ public sealed partial class MainWindow : Window
     {
         // Track the raw session even while hidden; renderer updates pause with window visibility.
         _notifications.UpdateConnection(state);
+        _adaptiveScheduling.UpdateConnection(state);
         TrackExportConnection(state);
         _renderer.Publish(state);
     }
@@ -318,6 +327,7 @@ public sealed partial class MainWindow : Window
         if (_panel == DashboardPanel.Processes) { PopulateProcessDrawer(); return; }
         if (_panel == DashboardPanel.Quality) { PopulateQualityDrawer(); return; }
         if (_panel == DashboardPanel.Diagnostics) { PopulateDiagnosticsDrawer(); return; }
+        if (_panel == DashboardPanel.AdaptiveScheduling) { PopulateAdaptiveSchedulingDrawer(); return; }
         _drawerRows.Children.Clear();
         if (_panel == DashboardPanel.LightMode)
         {

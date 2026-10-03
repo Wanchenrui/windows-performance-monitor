@@ -37,6 +37,9 @@ public sealed record IpcRequestMessage
     public bool? DryRun { get; init; }
     public ActionRequestContract? Action { get; init; }
     public bool? LightModeEnabled { get; init; }
+    // Keep the nested request raw until its per-request handler validates it.
+    // Missing required DTO fields must produce invalid_request, not end the pipe session.
+    public JsonElement? AdaptiveScheduling { get; init; }
 }
 
 public sealed record IpcErrorPayload

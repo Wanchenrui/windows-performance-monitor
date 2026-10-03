@@ -92,6 +92,11 @@ public sealed record SnapshotGroup(
     // than the mutable latest execution belonging to a later publication.
     internal double SamplerPeriodSeconds { get; init; }
 
+    // Each real observation receives its own budget. Later period changes may
+    // only tighten that budget; another slow setting cannot revive old data.
+    [JsonIgnore]
+    internal double ObservationPeriodBudgetSeconds { get; init; }
+
     internal static SnapshotGroup FromJson(
         string providerId,
         DateTimeOffset? observedAtUtc,
@@ -261,6 +266,7 @@ public sealed class SnapshotAssembler : IProviderResultSink
     private ProviderExecution? _latestExecution;
     private double _latestExecutionElapsedSeconds;
     private SnapshotGroup? _latestSampler;
+    private int _lastPeriodMultiplier = 1;
 
     public SnapshotAssembler(
         IEnumerable<ProviderDescriptor> descriptors,
@@ -289,6 +295,16 @@ public sealed class SnapshotAssembler : IProviderResultSink
 
     public AgentSnapshot Read()
     {
+        if (SamplingMode is not null && SamplingMode.HardwarePeriodMultiplier !=
+            Volatile.Read(ref _lastPeriodMultiplier))
+        {
+            lock (_gate)
+            {
+                var multiplier = SamplingMode.HardwarePeriodMultiplier;
+                _lastPeriodMultiplier = multiplier;
+                _cache.Publish(BuildSnapshot(GetElapsedSeconds(), multiplier));
+            }
+        }
         // One atomic version is captured before reading the clock. Its groups,
         // execution metadata and sequence always belong to that same version.
         var snapshot = _cache.Read();
@@ -339,11 +355,13 @@ public sealed class SnapshotAssembler : IProviderResultSink
                     : execution.StartedTimestamp is { } started
                         ? ElapsedSecondsAt(started)
                         : (double?)Math.Max(0, elapsedSeconds - durationSeconds);
+            var observationPeriod = Math.Min(ExpectedPeriodSeconds(descriptor, execution.ExpectedPeriodSeconds),
+                SamplingMode?.GetEffectivePeriod(descriptor).TotalSeconds ?? descriptor.DefaultPeriod.TotalSeconds);
             _latestGroups[result.GroupId] = new SnapshotGroup(
                 result.ProviderId,
                 result.ObservedAtUtc,
                 result.Availability,
-                Freshness(descriptor.DefaultPeriod.TotalSeconds, observedElapsedSeconds, elapsedSeconds),
+                Freshness(observationPeriod, observedElapsedSeconds, elapsedSeconds),
                 result.Coverage,
                 result.Errors,
                 result.Data)
@@ -351,6 +369,7 @@ public sealed class SnapshotAssembler : IProviderResultSink
                 ObservationSequence = _sequence,
                 ObservedElapsedSeconds = observedElapsedSeconds,
                 CollectionState = result.CollectionState,
+                ObservationPeriodBudgetSeconds = observationPeriod,
             };
             _latestExecution = execution;
             _latestExecutionElapsedSeconds = execution.CompletedTimestamp is { } completed
@@ -363,8 +382,9 @@ public sealed class SnapshotAssembler : IProviderResultSink
         return ValueTask.CompletedTask;
     }
 
-    private AgentSnapshot BuildSnapshot(double elapsedSeconds)
+    private AgentSnapshot BuildSnapshot(double elapsedSeconds, int? periodMultiplier = null)
     {
+        var multiplier = periodMultiplier ?? SamplingMode?.HardwarePeriodMultiplier ?? 1;
         var groups = new Dictionary<string, SnapshotGroup>(
             StringComparer.Ordinal);
         foreach (var descriptor in _descriptors.Values)
@@ -373,7 +393,15 @@ public sealed class SnapshotAssembler : IProviderResultSink
                     descriptor.GroupId,
                     out var group))
             {
-                var freshness = Freshness(descriptor.DefaultPeriod.TotalSeconds,
+                var currentPeriod = descriptor.DefaultPeriod.TotalSeconds *
+                    (descriptor.GroupId is GroupIds.Gpu or GroupIds.Sensors ? multiplier : 1);
+                var budget = Math.Min(FreshnessPeriodSeconds(descriptor, group), currentPeriod);
+                if (budget != group.ObservationPeriodBudgetSeconds)
+                {
+                    group = group with { ObservationPeriodBudgetSeconds = budget };
+                    _latestGroups[descriptor.GroupId] = group;
+                }
+                var freshness = Freshness(budget,
                     group.ObservedElapsedSeconds, elapsedSeconds);
                 groups[descriptor.GroupId] = freshness == group.Freshness
                     ? group
@@ -442,7 +470,7 @@ public sealed class SnapshotAssembler : IProviderResultSink
             ["metrics"] = new JsonObject
             {
                 [MetricIds.SamplerIntervalSeconds] = MetricJson.Value(
-                    execution.Descriptor.DefaultPeriod.TotalSeconds,
+                    ExpectedPeriodSeconds(execution.Descriptor, execution.ExpectedPeriodSeconds),
                     Units.Second,
                     SourceIds.Scheduler),
                 [MetricIds.SamplerDurationMilliseconds] = MetricJson.Value(
@@ -464,7 +492,7 @@ public sealed class SnapshotAssembler : IProviderResultSink
             },
         };
         var stale = elapsedSeconds - _latestExecutionElapsedSeconds >
-            execution.Descriptor.DefaultPeriod.TotalSeconds * 3;
+            ExpectedPeriodSeconds(execution.Descriptor, execution.ExpectedPeriodSeconds) * 3;
         return new SnapshotGroup(
             ProviderIds.Sampler,
             execution.CompletedAtUtc,
@@ -476,7 +504,7 @@ public sealed class SnapshotAssembler : IProviderResultSink
         {
             ObservationSequence = _sequence,
             ObservedElapsedSeconds = _latestExecutionElapsedSeconds,
-            SamplerPeriodSeconds = execution.Descriptor.DefaultPeriod.TotalSeconds,
+            SamplerPeriodSeconds = ExpectedPeriodSeconds(execution.Descriptor, execution.ExpectedPeriodSeconds),
         };
     }
 
@@ -517,7 +545,7 @@ public sealed class SnapshotAssembler : IProviderResultSink
         {
             var periodSeconds = groupId == GroupIds.Sampler
                 ? group.SamplerPeriodSeconds
-                : _descriptors[groupId].DefaultPeriod.TotalSeconds;
+                : FreshnessPeriodSeconds(_descriptors[groupId], group);
             var freshness = Freshness(periodSeconds, group.ObservedElapsedSeconds, elapsedSeconds);
             if (freshness != group.Freshness)
             {
@@ -545,6 +573,14 @@ public sealed class SnapshotAssembler : IProviderResultSink
             : elapsedSeconds - observedElapsedSeconds.Value > periodSeconds * 3
                 ? FreshnessStates.Stale
                 : FreshnessStates.Fresh;
+
+    private static double ExpectedPeriodSeconds(ProviderDescriptor descriptor, double? executionPeriod) =>
+        executionPeriod is { } value && double.IsFinite(value) && value > 0
+            ? value : descriptor.DefaultPeriod.TotalSeconds;
+
+    private static double FreshnessPeriodSeconds(ProviderDescriptor descriptor, SnapshotGroup group) =>
+        group.ObservationPeriodBudgetSeconds > 0
+            ? group.ObservationPeriodBudgetSeconds : descriptor.DefaultPeriod.TotalSeconds;
 
     private double GetElapsedSeconds() => ElapsedSecondsAt(_timeProvider.GetTimestamp());
 
