@@ -64,7 +64,7 @@ public sealed partial class MainWindow
                 DiagnosticRow(item, view.Events);
     }
 
-    private int SelectedDiagnosticSeconds() => (_diagnosticsView?.Range.SelectedItem as ComboBoxItem)?.Tag is int seconds ? seconds : 86400;
+    private int SelectedDiagnosticSeconds() => _diagnosticsView?.SelectedSeconds ?? 86400;
     private static DiagnosticQueryContract CreateDiagnosticRange(int seconds)
     {
         var now = DateTimeOffset.UtcNow;
@@ -181,7 +181,7 @@ public sealed partial class MainWindow
         }
         if (_trendExportCancel is not null) _trendExportCancel.Visibility = _exportBusy ? Visibility.Visible : Visibility.Collapsed;
         if (_diagnosticsView is not { } view) return;
-        view.Range.IsEnabled = !_exportBusy && !_queryBusy;
+        foreach (var button in view.RangeButtons.Values) button.IsEnabled = !_exportBusy && !_queryBusy && _stopTask is null;
         view.Refresh.IsEnabled = !_exportBusy && !_queryBusy && _stopTask is null;
         view.Refresh.Content = _queryBusy ? "查询中…" : "刷新列表";
         view.Export.IsEnabled = !_exportBusy && !_queryBusy && _stopTask is null;
@@ -227,7 +227,8 @@ public sealed partial class MainWindow
     {
         public StackPanel Root { get; } = new();
         public StackPanel Events { get; } = new();
-        public ComboBox Range { get; } = new() { MinWidth = 128, FontSize = 11, Foreground = Primary, Background = Raised, Margin = new Thickness(0, 4, 0, 7) };
+        public Dictionary<int, Button> RangeButtons { get; } = [];
+        public int SelectedSeconds { get; private set; } = 86400;
         public Button Refresh { get; }
         public Button Export { get; }
         public Button Cancel { get; }
@@ -239,9 +240,14 @@ public sealed partial class MainWindow
         public DiagnosticsDrawerView(MainWindow owner)
         {
             Root.Children.Add(Text("按事件最后观测时间筛选", 11, Muted));
-            foreach (var item in new[] { (60, "最近 60 秒"), (300, "最近 5 分钟"), (3600, "最近 1 小时"), (86400, "最近 24 小时") })
-                Range.Items.Add(new ComboBoxItem { Content = item.Item2, Tag = item.Item1, Foreground = Primary, Background = Raised });
-            Range.SelectedIndex = 3; AutomationProperties.SetName(Range, "诊断查询与导出范围"); Root.Children.Add(Range);
+            var ranges = new WrapPanel { Margin = new Thickness(0, 4, 0, 7) };
+            foreach (var item in new[] { (60, "60 秒"), (300, "5 分钟"), (3600, "1 小时"), (86400, "24 小时") })
+            {
+                var button = Action(item.Item2, (_, _) => SelectRange(item.Item1));
+                AutomationProperties.SetName(button, "诊断查询与导出范围 · 最近 " + item.Item2);
+                RangeButtons.Add(item.Item1, button); ranges.Children.Add(button);
+            }
+            SelectRange(SelectedSeconds); Root.Children.Add(ranges);
             var commands = new WrapPanel();
             Refresh = Action("刷新列表", async (_, _) => await owner.QueryDiagnosticsAsync());
             Export = Action("导出 JSON", async (_, _) => await owner.ExportRangeAsync(true));
@@ -253,6 +259,16 @@ public sealed partial class MainWindow
             Root.Children.Add(Text("闭区间 · 最多 2000 条\n记录不代表当前状态或完整生命周期\n存储覆盖未知，空结果不代表没有诊断", 10, Muted));
             QueryRange.Margin = new Thickness(0, 8, 0, 3); Root.Children.Add(QueryRange); Root.Children.Add(QueryStatus); Root.Children.Add(Summary);
             Events.Margin = new Thickness(0, 8, 0, 0); Root.Children.Add(Events);
+        }
+        private void SelectRange(int seconds)
+        {
+            SelectedSeconds = seconds;
+            foreach (var (range, button) in RangeButtons)
+            {
+                var selected = range == seconds;
+                MarkSelected(button, selected);
+                AutomationProperties.SetItemStatus(button, selected ? "已选中" : "未选中");
+            }
         }
     }
 }
