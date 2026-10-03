@@ -30,8 +30,23 @@ coverage:
 
 快照同时记录 `scheduledAtUtc`、`startedAtUtc`、`completedAtUtc` 和每个
 Provider 的 `observedAtUtc`。调度仍使用单调时钟；UTC 用于跨进程展示、
-持久化和查询。睡眠恢复、时钟调整和 Provider 超时在后续调度器中以显式
-`gapReason` 表达，不用普通 overrun 代替。
+持久化和查询。
+
+2026-10-02 的 WP-03 以兼容字段补齐实例内时间：快照 `elapsedSeconds`
+为从 Assembler 创建起点计量的单调经过秒数；组 `observedElapsedSeconds`
+使用同一起点，`observationSequence` 是该组新观测发布时的全局快照序号。
+保持值沿用原观测身份，其他 Provider 发布新帧不会增加该组的独立证据。
+Scheduler 的本地开始/完成 timestamp 只在进程内传递，不持久化成跨实例
+可比较的时钟值。
+
+快照 `sequence` 计 Provider 更新，不能据其跳号推断丢帧。
+`deliverySequence` 由现有 SnapshotFanout 在每次实际交付时赋值，所有
+消费者收到同一 envelope；其缺口才表示该消费者漏掉了交付。
+年龄、新鲜度、诊断持续时间、冷却与证据窗口只使用实例内单调时间。
+`instanceId` 变更重置观察状态，交付缺口或超过规则上限的观测时间缺口
+打断连续证据。UTC 前后跳不会改变状态转换；UTC 的 first/last 标签仍
+表示逻辑先后，墙上时钟回拨时数值不一定递增。睡眠恢复以单调观察缺口
+处理，本轮不新增自动动作或通用 `gapReason` 状态。
 
 ## 错误
 

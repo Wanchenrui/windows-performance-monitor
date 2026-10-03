@@ -10,7 +10,9 @@ htmlcov/
 # PyInstaller 与发布产物
 build/
 dist/
+artifacts/
 *.manifest
+!src/**/app.manifest
 
 # 本地运行文件
 *.log

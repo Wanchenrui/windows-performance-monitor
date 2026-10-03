@@ -1,0 +1,255 @@
+{
+  "schemaVersion": 1,
+  "createdUtc": "2026-10-02T16:57:53.425034+00:00",
+  "productVersion": "1.1.0",
+  "status": "passed development verification composed from original commands and separate CheckOnly continuation",
+  "source": {
+    "head": "73ec33fd5c27e2658d5ce2c514388b71eb9a406b",
+    "workingTreeDirty": true,
+    "commitCreated": false,
+    "pushPerformed": false,
+    "tagCreated": false,
+    "validationCohort": "artifacts/wave03-final-v3-73ec33f",
+    "recordedStableDuringValidation": true,
+    "recordedInputCount": 300,
+    "currentFileSizeMatches": 300,
+    "newContentVerificationPerformed": false
+  },
+  "verificationPolicy": "After the user prohibited new SHA-256 calculations, only existing logs, exit codes, counts, file sizes and Git differences were used; no new digest was calculated or copied into this summary/index.",
+  "commands": [
+    {
+      "name": "restore-locked",
+      "exitCode": 0,
+      "arguments": [
+        "restore",
+        "PerfMonitor.slnx",
+        "--locked-mode",
+        "--artifacts-path",
+        "artifacts\\wave03-final-v3-73ec33f",
+        "--verbosity",
+        "minimal"
+      ]
+    },
+    {
+      "name": "dotnet-tests",
+      "exitCode": 0,
+      "arguments": [
+        "test",
+        "PerfMonitor.slnx",
+        "--configuration",
+        "Release",
+        "--no-restore",
+        "--artifacts-path",
+        "artifacts\\wave03-final-v3-73ec33f",
+        "--logger",
+        "trx",
+        "--results-directory",
+        "artifacts\\wave03-final-v3-73ec33f/validation/final-dotnet-trx",
+        "--verbosity",
+        "minimal"
+      ]
+    },
+    {
+      "name": "release-build",
+      "exitCode": 0,
+      "arguments": [
+        "build",
+        "PerfMonitor.slnx",
+        "--configuration",
+        "Release",
+        "--no-restore",
+        "--artifacts-path",
+        "artifacts\\wave03-final-v3-73ec33f",
+        "--verbosity",
+        "minimal"
+      ]
+    },
+    {
+      "name": "pip-check",
+      "exitCode": 0,
+      "arguments": [
+        "-m",
+        "pip",
+        "check"
+      ]
+    },
+    {
+      "name": "python-tests",
+      "exitCode": 0,
+      "arguments": [
+        "-m",
+        "pytest"
+      ]
+    },
+    {
+      "name": "build-server-shutdown",
+      "exitCode": 0,
+      "arguments": [
+        "build-server",
+        "shutdown"
+      ]
+    }
+  ],
+  "dotnet": {
+    "total": 224,
+    "executed": 224,
+    "passed": 224,
+    "failed": 0,
+    "notExecuted": 0,
+    "error": 0,
+    "timeout": 0,
+    "aborted": 0,
+    "trxFileCount": 5,
+    "files": [
+      {
+        "path": "artifacts/wave03-final-v3-73ec33f/validation/final-dotnet-trx/Administrator_HCAIA-WAQHGBEKP_2026-10-03_00_37_41_net10.0.trx",
+        "total": 11,
+        "executed": 11,
+        "passed": 11,
+        "failed": 0,
+        "notExecuted": 0,
+        "error": 0,
+        "timeout": 0,
+        "aborted": 0
+      },
+      {
+        "path": "artifacts/wave03-final-v3-73ec33f/validation/final-dotnet-trx/Administrator_HCAIA-WAQHGBEKP_2026-10-03_00_37_42_net10.0.trx",
+        "total": 33,
+        "executed": 33,
+        "passed": 33,
+        "failed": 0,
+        "notExecuted": 0,
+        "error": 0,
+        "timeout": 0,
+        "aborted": 0
+      },
+      {
+        "path": "artifacts/wave03-final-v3-73ec33f/validation/final-dotnet-trx/Administrator_HCAIA-WAQHGBEKP_2026-10-03_00_37_44_net10.0.trx",
+        "total": 27,
+        "executed": 27,
+        "passed": 27,
+        "failed": 0,
+        "notExecuted": 0,
+        "error": 0,
+        "timeout": 0,
+        "aborted": 0
+      },
+      {
+        "path": "artifacts/wave03-final-v3-73ec33f/validation/final-dotnet-trx/Administrator_HCAIA-WAQHGBEKP_2026-10-03_00_37_45_net10.0.trx",
+        "total": 10,
+        "executed": 10,
+        "passed": 10,
+        "failed": 0,
+        "notExecuted": 0,
+        "error": 0,
+        "timeout": 0,
+        "aborted": 0
+      },
+      {
+        "path": "artifacts/wave03-final-v3-73ec33f/validation/final-dotnet-trx/Administrator_HCAIA-WAQHGBEKP_2026-10-03_00_37_45_net10.0[1].trx",
+        "total": 143,
+        "executed": 143,
+        "passed": 143,
+        "failed": 0,
+        "notExecuted": 0,
+        "error": 0,
+        "timeout": 0,
+        "aborted": 0
+      }
+    ]
+  },
+  "releaseBuild": {
+    "exitCode": 0,
+    "warnings": 0,
+    "errors": 0
+  },
+  "python": {
+    "exitCode": 0,
+    "passed": 76,
+    "failed": 0,
+    "skipped": 0,
+    "summaryLine": "76 passed in 3.46s",
+    "originalLog": "artifacts/wave03-final-v3-73ec33f/validation/python-tests.log"
+  },
+  "pipCheck": {
+    "exitCode": 0,
+    "result": "No broken requirements found."
+  },
+  "checkOnly": {
+    "exitCode": 0,
+    "mode": "check-only",
+    "canLaunch": true,
+    "productLaunched": false,
+    "existingProductProcessCount": 0,
+    "pipePresent": false,
+    "runtimeRoot": "C:\\Users\\Administrator\\AppData\\Local\\PerfMonitor\\dotnet-sdk-10.0.302",
+    "originalStdout": "artifacts/wave03-final-v3-73ec33f/validation/continuation/checkonly-command.log",
+    "continuation": "artifacts/wave03-final-v3-73ec33f/validation/continuation/checkonly-continuation-v2.json",
+    "productVersions": [
+      {
+        "path": "D:\\GitHub\\windows-performance-monitor\\artifacts\\wave03-final-v3-73ec33f\\bin\\PerfMonitor.Agent\\release_win-x64\\perf-monitor-agent.exe",
+        "fileVersion": "1.1.0.0",
+        "productVersion": "1.1.0+73ec33fd5c27e2658d5ce2c514388b71eb9a406b"
+      },
+      {
+        "path": "D:\\GitHub\\windows-performance-monitor\\artifacts\\wave03-final-v3-73ec33f\\bin\\PerfMonitor.Agent\\release_win-x64\\perf-monitor-agent.dll",
+        "fileVersion": "1.1.0.0",
+        "productVersion": "1.1.0+73ec33fd5c27e2658d5ce2c514388b71eb9a406b"
+      },
+      {
+        "path": "D:\\GitHub\\windows-performance-monitor\\artifacts\\wave03-final-v3-73ec33f\\bin\\PerfMonitor.Desktop\\release_win-x64\\perf-monitor-desktop.exe",
+        "fileVersion": "1.1.0.0",
+        "productVersion": "1.1.0+73ec33fd5c27e2658d5ce2c514388b71eb9a406b"
+      },
+      {
+        "path": "D:\\GitHub\\windows-performance-monitor\\artifacts\\wave03-final-v3-73ec33f\\bin\\PerfMonitor.Desktop\\release_win-x64\\perf-monitor-desktop.dll",
+        "fileVersion": "1.1.0.0",
+        "productVersion": "1.1.0+73ec33fd5c27e2658d5ce2c514388b71eb9a406b"
+      }
+    ]
+  },
+  "preservedFailures": [
+    {
+      "classification": "FailedUnifiedBomGate",
+      "cohort": "artifacts/wave03-final-v2-73ec33f",
+      "pythonPassed": 75,
+      "pythonFailed": 1,
+      "reason": "PowerShell probe wrapper lacked repository-required UTF-8 BOM; later BOM-only repair followed by actual v3 Python rerun.",
+      "originalFinalRecordExists": false
+    },
+    {
+      "classification": "DriverSummaryFailure",
+      "originalRecord": "artifacts/wave03-final-v3-73ec33f/validation/final-verification-record.json",
+      "originalStatus": "failed",
+      "reason": "CRLF pytest summary parsing failed after all six validation commands exited 0; original failed record is unchanged."
+    },
+    {
+      "classification": "RejectedArtifactWriter",
+      "path": "artifacts/wave03-final-v3-73ec33f/validation/continuation/checkonly-continuation.json",
+      "sizeBytes": 5,
+      "reason": "Invalid null metadata write; retained and excluded from successful verification evidence."
+    },
+    {
+      "classification": "ContractInvalidIntermediateCandidate",
+      "cohort": "artifacts/wave03-wp04-after",
+      "reason": "Initial scheduler capacity error code violated frozen v1 enum; final candidate reuses timeout and actual schema verification passed."
+    }
+  ],
+  "parserSupplement": {
+    "path": "artifacts/wave03-validation-driver/sourcehash-actual-log-self-check-20261002T164045632Z.log",
+    "scope": "Metadata self-check only; no product/test commands repeated; LF/CRLF parsing supported."
+  },
+  "measurements": {
+    "document": "docs/development/2026-10-02-wave03-measurements.md",
+    "wp01": "Four synthetic snapshot cohorts, 324000 raw samples, final offline recalculation retained.",
+    "wp04": "Paired synthetic scheduler fault: old 0 samples per basic group; final 31 per group with maximum gaps 110.6631-110.8236ms against 250ms budget; total concurrency remains 5.",
+    "ownershipAndContractReview": "WP01/WP04 cross-review and actual capacity schema issue closed; no open P1/P2 reported."
+  },
+  "acceptanceLimits": [
+    "Synthetic measurements do not establish whole-product resource budgets or real hardware/process-scale behavior.",
+    "CheckOnly verifies artifact readiness and does not exercise Desktop windows, tray, hotkeys or physical input.",
+    "Permanent basic-provider stalls, blocked sinks and thread-pool exhaustion remain scheduler progress limits; maxConcurrency=1 has no isolation guarantee.",
+    "72-hour stability, target platform matrix, controlled whole-product workloads, real hardware/Worker failures and action recovery remain unverified.",
+    "This final index records paths, sizes and classifications only; it does not claim a new content-integrity verification."
+  ]
+}

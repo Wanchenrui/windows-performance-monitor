@@ -1,0 +1,22 @@
+============================= test session starts =============================
+platform win32 -- Python 3.12.10, pytest-9.0.3, pluggy-1.6.0
+rootdir: D:\GitHub\windows-performance-monitor
+configfile: pyproject.toml
+testpaths: tests
+collected 76 items
+
+tests\test_app.py ......                                                 [  7%]
+tests\test_collector.py .......                                          [ 17%]
+tests\test_contract_v1.py ................                               [ 38%]
+tests\test_evidence_contract.py ...                                      [ 42%]
+tests\test_sampling.py ...                                               [ 46%]
+tests\test_scripts.py ...                                                [ 50%]
+tests\test_server.py ....                                                [ 55%]
+tests\test_store.py .........                                            [ 67%]
+tests\test_v06_diagnostics.py ...                                        [ 71%]
+tests\test_v071_worker.py ....                                           [ 76%]
+tests\test_v072_broker.py .....                                          [ 82%]
+tests\test_v07_telemetry.py ...                                          [ 86%]
+tests\test_v10_release.py ..........                                     [100%]
+
+============================= 76 passed in 3.17s ==============================

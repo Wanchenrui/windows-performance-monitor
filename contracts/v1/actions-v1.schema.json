@@ -1,0 +1,237 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.perfmonitor.local/v1/actions-v1.schema.json",
+  "title": "PerfMonitor Action Result Contract v1",
+  "$ref": "#/$defs/actionResult",
+  "$defs": {
+    "token": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9._:-]+$"
+    },
+    "approvedId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[a-z0-9][a-z0-9._-]*$"
+    },
+    "processTarget": {
+      "type": "object",
+      "required": [
+        "actionType",
+        "pid",
+        "creationTimeTicks"
+      ],
+      "properties": {
+        "actionType": {
+          "const": "terminate_process"
+        },
+        "pid": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2147483647
+        },
+        "creationTimeTicks": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "setProcessPriority": {
+      "type": "object",
+      "required": [
+        "actionType",
+        "pid",
+        "creationTimeTicks",
+        "priority"
+      ],
+      "properties": {
+        "actionType": {
+          "const": "set_process_priority"
+        },
+        "pid": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2147483647
+        },
+        "creationTimeTicks": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "priority": {
+          "enum": [
+            "idle",
+            "below_normal",
+            "normal",
+            "above_normal"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "startApprovedDiagnostic": {
+      "type": "object",
+      "required": [
+        "actionType",
+        "diagnosticId"
+      ],
+      "properties": {
+        "actionType": {
+          "const": "start_approved_diagnostic"
+        },
+        "diagnosticId": {
+          "$ref": "#/$defs/approvedId"
+        }
+      },
+      "additionalProperties": false
+    },
+    "applyApprovedPowerProfile": {
+      "type": "object",
+      "required": [
+        "actionType",
+        "powerProfileId"
+      ],
+      "properties": {
+        "actionType": {
+          "const": "apply_approved_power_profile"
+        },
+        "powerProfileId": {
+          "$ref": "#/$defs/approvedId"
+        }
+      },
+      "additionalProperties": false
+    },
+    "actionRequest": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/setProcessPriority"
+        },
+        {
+          "$ref": "#/$defs/processTarget"
+        },
+        {
+          "$ref": "#/$defs/startApprovedDiagnostic"
+        },
+        {
+          "$ref": "#/$defs/applyApprovedPowerProfile"
+        }
+      ]
+    },
+    "userActionRequest": {
+      "type": "object",
+      "required": [
+        "idempotencyKey",
+        "deadlineUtc",
+        "dryRun",
+        "action"
+      ],
+      "properties": {
+        "idempotencyKey": {
+          "$ref": "#/$defs/token"
+        },
+        "deadlineUtc": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "dryRun": {
+          "type": "boolean"
+        },
+        "action": {
+          "$ref": "#/$defs/actionRequest"
+        }
+      },
+      "additionalProperties": false
+    },
+    "actionState": {
+      "type": "object",
+      "properties": {
+        "pid": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2147483647
+        },
+        "creationTimeTicks": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "isRunning": {
+          "type": "boolean"
+        },
+        "priority": {
+          "enum": [
+            "idle",
+            "below_normal",
+            "normal",
+            "above_normal"
+          ]
+        },
+        "diagnosticId": {
+          "$ref": "#/$defs/approvedId"
+        },
+        "diagnosticRunId": {
+          "$ref": "#/$defs/token"
+        },
+        "powerProfileId": {
+          "$ref": "#/$defs/approvedId"
+        }
+      },
+      "additionalProperties": true
+    },
+    "actionResult": {
+      "type": "object",
+      "required": [
+        "actionId",
+        "idempotencyKey",
+        "status",
+        "receivedAtUtc",
+        "completedAtUtc"
+      ],
+      "properties": {
+        "actionId": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{32}$"
+        },
+        "idempotencyKey": {
+          "$ref": "#/$defs/token"
+        },
+        "status": {
+          "enum": [
+            "succeeded",
+            "dry_run",
+            "denied",
+            "rejected",
+            "failed",
+            "indeterminate",
+            "idempotency_conflict"
+          ]
+        },
+        "errorCode": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "receivedAtUtc": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "startedAtUtc": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "completedAtUtc": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "before": {
+          "$ref": "#/$defs/actionState"
+        },
+        "after": {
+          "$ref": "#/$defs/actionState"
+        }
+      },
+      "additionalProperties": true
+    }
+  }
+}

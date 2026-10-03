@@ -1,0 +1,27 @@
+  PerfMonitor.Contracts -> D:\GitHub\windows-performance-monitor\artifacts\development-348a609\bin\PerfMonitor.Contracts\release\PerfMonitor.Contracts.dll
+  PerfMonitor.ProviderWorker.Protocol -> D:\GitHub\windows-performance-monitor\artifacts\development-348a609\bin\PerfMonitor.ProviderWorker.Protocol\release\PerfMonitor.ProviderWorker.Protocol.dll
+  PerfMonitor.Core -> D:\GitHub\windows-performance-monitor\artifacts\development-348a609\bin\PerfMonitor.Core\release\PerfMonitor.Core.dll
+  PerfMonitor.Actions -> D:\GitHub\windows-performance-monitor\artifacts\development-348a609\bin\PerfMonitor.Actions\release\PerfMonitor.Actions.dll
+  PerfMonitor.Broker.Protocol -> D:\GitHub\windows-performance-monitor\artifacts\development-348a609\bin\PerfMonitor.Broker.Protocol\release\PerfMonitor.Broker.Protocol.dll
+  PerfMonitor.Collectors.Windows -> D:\GitHub\windows-performance-monitor\artifacts\development-348a609\bin\PerfMonitor.Collectors.Windows\release\PerfMonitor.Collectors.Windows.dll
+  PerfMonitor.Ipc.NamedPipes -> D:\GitHub\windows-performance-monitor\artifacts\development-348a609\bin\PerfMonitor.Ipc.NamedPipes\release\PerfMonitor.Ipc.NamedPipes.dll
+  PerfMonitor.ContractTests -> D:\GitHub\windows-performance-monitor\artifacts\development-348a609\bin\PerfMonitor.ContractTests\release\PerfMonitor.ContractTests.dll
+  PerfMonitor.Collectors.Worker -> D:\GitHub\windows-performance-monitor\artifacts\development-348a609\bin\PerfMonitor.Collectors.Worker\release\PerfMonitor.Collectors.Worker.dll
+  PerfMonitor.Broker -> D:\GitHub\windows-performance-monitor\artifacts\development-348a609\bin\PerfMonitor.Broker\release_win-x64\perf-monitor-broker.dll
+  PerfMonitor.Broker.Client -> D:\GitHub\windows-performance-monitor\artifacts\development-348a609\bin\PerfMonitor.Broker.Client\release\PerfMonitor.Broker.Client.dll
+  PerfMonitor.Diagnostics -> D:\GitHub\windows-performance-monitor\artifacts\development-348a609\bin\PerfMonitor.Diagnostics\release\PerfMonitor.Diagnostics.dll
+  PerfMonitor.ProviderWorker -> D:\GitHub\windows-performance-monitor\artifacts\development-348a609\bin\PerfMonitor.ProviderWorker\release_win-x64\perf-monitor-provider-worker.dll
+  PerfMonitor.ActionsTests -> D:\GitHub\windows-performance-monitor\artifacts\development-348a609\bin\PerfMonitor.ActionsTests\release\PerfMonitor.ActionsTests.dll
+  PerfMonitor.Desktop -> D:\GitHub\windows-performance-monitor\artifacts\development-348a609\bin\PerfMonitor.Desktop\release_win-x64\perf-monitor-desktop.dll
+  PerfMonitor.Storage.Sqlite -> D:\GitHub\windows-performance-monitor\artifacts\development-348a609\bin\PerfMonitor.Storage.Sqlite\release\PerfMonitor.Storage.Sqlite.dll
+  PerfMonitor.BrokerTests -> D:\GitHub\windows-performance-monitor\artifacts\development-348a609\bin\PerfMonitor.BrokerTests\release\PerfMonitor.BrokerTests.dll
+  PerfMonitor.Support -> D:\GitHub\windows-performance-monitor\artifacts\development-348a609\bin\PerfMonitor.Support\release_win-x64\perf-monitor-support.dll
+  PerfMonitor.Agent -> D:\GitHub\windows-performance-monitor\artifacts\development-348a609\bin\PerfMonitor.Agent\release_win-x64\perf-monitor-agent.dll
+  PerfMonitor.ReleaseTests -> D:\GitHub\windows-performance-monitor\artifacts\development-348a609\bin\PerfMonitor.ReleaseTests\release_win-x64\PerfMonitor.ReleaseTests.dll
+  PerfMonitor.AgentTests -> D:\GitHub\windows-performance-monitor\artifacts\development-348a609\bin\PerfMonitor.AgentTests\release\PerfMonitor.AgentTests.dll
+
+已成功生成。
+    0 个警告
+    0 个错误
+
+已用时间 00:00:01.73

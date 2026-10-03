@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.perfmonitor.local/v1/installer-contract-evidence-v1.schema.json",
+  "title": "PerfMonitor MSI contract evidence v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "passed",
+    "productCode",
+    "productVersion",
+    "manufacturer",
+    "featureLevels",
+    "service",
+    "fileCount",
+    "msiSha256",
+    "signatureMode"
+  ],
+  "properties": {
+    "schemaVersion": {"const": "1.0"},
+    "passed": {"const": true},
+    "productCode": {
+      "type": "string",
+      "pattern": "^\\{[0-9A-Fa-f-]{36}\\}$"
+    },
+    "productVersion": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "manufacturer": {"type": "string", "minLength": 1},
+    "featureLevels": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["Core", "Broker"],
+      "properties": {
+        "Core": {"const": 1},
+        "Broker": {"const": 101}
+      }
+    },
+    "service": {"const": "PerfMonitorBroker"},
+    "fileCount": {"type": "integer", "minimum": 4},
+    "msiSha256": {
+      "type": "string",
+      "pattern": "^[0-9A-F]{64}$"
+    },
+    "signatureMode": {
+      "enum": ["unsigned", "test", "production"]
+    }
+  }
+}

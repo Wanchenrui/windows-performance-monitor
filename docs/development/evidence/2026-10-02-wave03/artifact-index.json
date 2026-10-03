@@ -1,0 +1,270 @@
+{
+  "schemaVersion": 1,
+  "createdUtc": "2026-10-02T16:57:53.425034+00:00",
+  "productVersion": "1.1.0",
+  "sourceHead": "73ec33fd5c27e2658d5ce2c514388b71eb9a406b",
+  "purpose": "Metadata-only index; original evidence remains in local artifacts; no digest fields or new digest calculations.",
+  "fileCount": 42,
+  "totalReferencedBytes": 16683980,
+  "files": [
+    {
+      "path": "artifacts/wave03-final-v3-73ec33f/validation/final-dotnet-locked-restore.log",
+      "sizeBytes": 2856,
+      "classification": "PassedUnifiedCommand",
+      "disposition": "RetainedLocalOriginal"
+    },
+    {
+      "path": "artifacts/wave03-final-v3-73ec33f/validation/final-dotnet-tests.log",
+      "sizeBytes": 6168,
+      "classification": "PassedUnifiedCommand",
+      "disposition": "RetainedLocalOriginal"
+    },
+    {
+      "path": "artifacts/wave03-final-v3-73ec33f/validation/final-dotnet-build.log",
+      "sizeBytes": 3657,
+      "classification": "PassedUnifiedCommand",
+      "disposition": "RetainedLocalOriginal"
+    },
+    {
+      "path": "artifacts/wave03-final-v3-73ec33f/validation/pip-check.log",
+      "sizeBytes": 31,
+      "classification": "PassedUnifiedCommand",
+      "disposition": "RetainedLocalOriginal"
+    },
+    {
+      "path": "artifacts/wave03-final-v3-73ec33f/validation/python-tests.log",
+      "sizeBytes": 1395,
+      "classification": "PassedUnifiedCommand",
+      "disposition": "RetainedLocalOriginal"
+    },
+    {
+      "path": "artifacts/wave03-final-v3-73ec33f/validation/build-server-shutdown.log",
+      "sizeBytes": 154,
+      "classification": "PassedUnifiedCommand",
+      "disposition": "RetainedLocalOriginal"
+    },
+    {
+      "path": "artifacts/wave03-final-v3-73ec33f/validation/final-dotnet-trx/Administrator_HCAIA-WAQHGBEKP_2026-10-03_00_37_41_net10.0.trx",
+      "sizeBytes": 16788,
+      "classification": "PassedUnifiedTrx",
+      "disposition": "RetainedLocalOriginal"
+    },
+    {
+      "path": "artifacts/wave03-final-v3-73ec33f/validation/final-dotnet-trx/Administrator_HCAIA-WAQHGBEKP_2026-10-03_00_37_42_net10.0.trx",
+      "sizeBytes": 45427,
+      "classification": "PassedUnifiedTrx",
+      "disposition": "RetainedLocalOriginal"
+    },
+    {
+      "path": "artifacts/wave03-final-v3-73ec33f/validation/final-dotnet-trx/Administrator_HCAIA-WAQHGBEKP_2026-10-03_00_37_44_net10.0.trx",
+      "sizeBytes": 36904,
+      "classification": "PassedUnifiedTrx",
+      "disposition": "RetainedLocalOriginal"
+    },
+    {
+      "path": "artifacts/wave03-final-v3-73ec33f/validation/final-dotnet-trx/Administrator_HCAIA-WAQHGBEKP_2026-10-03_00_37_45_net10.0.trx",
+      "sizeBytes": 14660,
+      "classification": "PassedUnifiedTrx",
+      "disposition": "RetainedLocalOriginal"
+    },
+    {
+      "path": "artifacts/wave03-final-v3-73ec33f/validation/final-dotnet-trx/Administrator_HCAIA-WAQHGBEKP_2026-10-03_00_37_45_net10.0[1].trx",
+      "sizeBytes": 193623,
+      "classification": "PassedUnifiedTrx",
+      "disposition": "RetainedLocalOriginal"
+    },
+    {
+      "path": "artifacts/wave03-final-v3-73ec33f/validation/final-verification-record.json",
+      "sizeBytes": 8268,
+      "classification": "DriverSummaryFailure",
+      "disposition": "RetainedLocalOriginal"
+    },
+    {
+      "path": "artifacts/wave03-final-v3-73ec33f/validation/continuation/checkonly-command.log",
+      "sizeBytes": 3567,
+      "classification": "CompletedContinuation",
+      "disposition": "RetainedLocalOriginal"
+    },
+    {
+      "path": "artifacts/wave03-final-v3-73ec33f/validation/continuation/checkonly-continuation-v2.json",
+      "sizeBytes": 5256,
+      "classification": "CompletedContinuation",
+      "disposition": "RetainedLocalOriginal"
+    },
+    {
+      "path": "artifacts/wave03-final-v3-73ec33f/validation/continuation/checkonly-continuation.json",
+      "sizeBytes": 5,
+      "classification": "RejectedArtifactWriter",
+      "disposition": "RetainedLocalOriginal"
+    },
+    {
+      "path": "artifacts/wave03-final-v3-73ec33f/validation/source-hashes-before.json",
+      "sizeBytes": 57537,
+      "classification": "HistoricalSourceBindingRecord",
+      "disposition": "RetainedLocalOriginal"
+    },
+    {
+      "path": "artifacts/wave03-final-v3-73ec33f/validation/source-hashes-after.json",
+      "sizeBytes": 57537,
+      "classification": "HistoricalSourceBindingRecord",
+      "disposition": "RetainedLocalOriginal"
+    },
+    {
+      "path": "artifacts/wave03-final-v3-73ec33f/validation/continuation/source-hashes-after-checkonly.json",
+      "sizeBytes": 57307,
+      "classification": "HistoricalSourceBindingRecord",
+      "disposition": "RetainedLocalOriginal"
+    },
+    {
+      "path": "artifacts/wave03-final-v2-73ec33f/validation/python-tests.log",
+      "sizeBytes": 3323,
+      "classification": "FailedUnifiedBomGate",
+      "disposition": "RetainedLocalOriginal"
+    },
+    {
+      "path": "artifacts/wave03-validation-driver/sourcehash-actual-log-self-check-20261002T164045632Z.log",
+      "sizeBytes": 785,
+      "classification": "MetadataParserSupplement",
+      "disposition": "RetainedLocalOriginal"
+    },
+    {
+      "path": "artifacts/wave03-validation-driver/actual-negative-source-check-20261002T164145001Z.json",
+      "sizeBytes": 700,
+      "classification": "MetadataParserSupplement",
+      "disposition": "RetainedLocalOriginal"
+    },
+    {
+      "path": "artifacts/wave03-wp01-before-samples/summary.json",
+      "sizeBytes": 48614,
+      "classification": "SyntheticSnapshotMeasurement",
+      "disposition": "RetainedLocalOriginal"
+    },
+    {
+      "path": "artifacts/wave03-wp01-before-samples/samples.csv",
+      "sizeBytes": 4083356,
+      "classification": "LargeRawRetainedLocal",
+      "disposition": "RetainedLocalOriginal"
+    },
+    {
+      "path": "artifacts/wave03-wp01-after-samples/summary.json",
+      "sizeBytes": 48986,
+      "classification": "SyntheticSnapshotMeasurement",
+      "disposition": "RetainedLocalOriginal"
+    },
+    {
+      "path": "artifacts/wave03-wp01-after-samples/samples.csv",
+      "sizeBytes": 3939390,
+      "classification": "LargeRawRetainedLocal",
+      "disposition": "RetainedLocalOriginal"
+    },
+    {
+      "path": "artifacts/wave03-wp01-after-v2-samples/summary.json",
+      "sizeBytes": 49049,
+      "classification": "SyntheticSnapshotMeasurement",
+      "disposition": "RetainedLocalOriginal"
+    },
+    {
+      "path": "artifacts/wave03-wp01-after-v2-samples/samples.csv",
+      "sizeBytes": 3917889,
+      "classification": "LargeRawRetainedLocal",
+      "disposition": "RetainedLocalOriginal"
+    },
+    {
+      "path": "artifacts/wave03-wp01-final-samples/summary.json",
+      "sizeBytes": 49153,
+      "classification": "SyntheticSnapshotMeasurement",
+      "disposition": "RetainedLocalOriginal"
+    },
+    {
+      "path": "artifacts/wave03-wp01-final-samples/samples.csv",
+      "sizeBytes": 3918858,
+      "classification": "LargeRawRetainedLocal",
+      "disposition": "RetainedLocalOriginal"
+    },
+    {
+      "path": "artifacts/wave03-wp01-validation/independent-recalculation-final.json",
+      "sizeBytes": 40452,
+      "classification": "CompletedOfflineRecalculation",
+      "disposition": "RetainedLocalOriginal"
+    },
+    {
+      "path": "artifacts/wave03-wp04-before-v3/run/probe.json",
+      "sizeBytes": 2969,
+      "classification": "SyntheticSchedulerMeasurement",
+      "disposition": "RetainedLocalOriginal"
+    },
+    {
+      "path": "artifacts/wave03-wp04-before-v3/run/events.csv",
+      "sizeBytes": 11332,
+      "classification": "SyntheticSchedulerMeasurement",
+      "disposition": "RetainedLocalOriginal"
+    },
+    {
+      "path": "artifacts/wave03-wp04-before-v3/run/process-resources.csv",
+      "sizeBytes": 1344,
+      "classification": "SyntheticSchedulerMeasurement",
+      "disposition": "RetainedLocalOriginal"
+    },
+    {
+      "path": "artifacts/wave03-wp04-after-v2/run/probe.json",
+      "sizeBytes": 2996,
+      "classification": "SyntheticSchedulerMeasurement",
+      "disposition": "RetainedLocalOriginal"
+    },
+    {
+      "path": "artifacts/wave03-wp04-after-v2/run/events.csv",
+      "sizeBytes": 25782,
+      "classification": "SyntheticSchedulerMeasurement",
+      "disposition": "RetainedLocalOriginal"
+    },
+    {
+      "path": "artifacts/wave03-wp04-after-v2/run/process-resources.csv",
+      "sizeBytes": 1316,
+      "classification": "SyntheticSchedulerMeasurement",
+      "disposition": "RetainedLocalOriginal"
+    },
+    {
+      "path": "artifacts/wave03-wp04-after-v2/run/capacity-failure.snapshot.json",
+      "sizeBytes": 3549,
+      "classification": "CapturedCapacityFailure",
+      "disposition": "RetainedLocalOriginal"
+    },
+    {
+      "path": "artifacts/wave03-wp04-after-v2/run/capacity-failure.execution.json",
+      "sizeBytes": 779,
+      "classification": "CapturedCapacityFailure",
+      "disposition": "RetainedLocalOriginal"
+    },
+    {
+      "path": "artifacts/wave03-wp04-after-v2/validation/capacity-contract-validation.json",
+      "sizeBytes": 825,
+      "classification": "PassedContractValidationRecord",
+      "disposition": "RetainedLocalOriginal"
+    },
+    {
+      "path": "artifacts/wave03-wp04-targeted-v2/validation/probe-independent-recompute.json",
+      "sizeBytes": 1995,
+      "classification": "CompletedOfflineRecalculation",
+      "disposition": "RetainedLocalOriginal"
+    },
+    {
+      "path": "artifacts/wave03-wp04-targeted-v2/validation/scheduler-targeted.trx",
+      "sizeBytes": 18627,
+      "classification": "PassedTargetedTrx",
+      "disposition": "RetainedLocalOriginal"
+    },
+    {
+      "path": "artifacts/wave03-wp04-targeted-v2/validation/final-wrapper-encoding.json",
+      "sizeBytes": 771,
+      "classification": "HistoricalBomOnlyRepairRecord",
+      "disposition": "RetainedLocalOriginal"
+    }
+  ],
+  "missingOriginalRecords": [
+    {
+      "path": "artifacts/wave03-final-v2-73ec33f/validation/final-verification-record.json",
+      "classification": "NotProducedByFailedWriter",
+      "fabricated": false
+    }
+  ]
+}

@@ -65,6 +65,7 @@ def _validate(schema_name, payload):
         ("history-normal.json", "history-v1.schema.json"),
         ("capabilities-normal.json", "capabilities-v1.schema.json"),
         ("health-normal.json", "health-v1.schema.json"),
+        ("diagnostics-normal.json", "diagnostics-v1.schema.json"),
     ],
 )
 def test_golden_fixtures_validate_against_schema(fixture_name, schema_name):
@@ -92,6 +93,51 @@ def test_contract_allows_unknown_additive_fields():
     _validate("snapshot-v1.schema.json", payload)
 
 
+def test_action_result_has_a_public_schema_and_typed_request_is_closed():
+    result = {
+        "actionId": "0123456789abcdef0123456789abcdef",
+        "idempotencyKey": "fixture-dry-run",
+        "status": "dry_run",
+        "receivedAtUtc": "2026-07-30T06:00:00.010Z",
+        "startedAtUtc": "2026-07-30T06:00:00.012Z",
+        "completedAtUtc": "2026-07-30T06:00:00.020Z",
+        "before": {
+            "diagnosticId": "broker.self_check",
+            "diagnosticRunId": "fixture-run",
+        },
+        "after": {
+            "diagnosticId": "broker.self_check",
+            "diagnosticRunId": "fixture-run",
+        },
+    }
+    _validate("actions-v1.schema.json", result)
+
+    request_schema = {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$ref": (
+            "https://schemas.perfmonitor.local/v1/"
+            "actions-v1.schema.json#/$defs/userActionRequest"
+        ),
+    }
+    validator = Draft202012Validator(
+        request_schema,
+        registry=REGISTRY,
+        format_checker=FormatChecker(),
+    )
+    request = {
+        "idempotencyKey": "fixture-request",
+        "deadlineUtc": "2026-07-30T06:00:10Z",
+        "dryRun": True,
+        "action": {
+            "actionType": "start_approved_diagnostic",
+            "diagnosticId": "broker.self_check",
+        },
+    }
+    assert list(validator.iter_errors(request)) == []
+
+    request["action"]["command"] = "whoami"
+    assert list(validator.iter_errors(request))
+
 def test_catalogs_match_python_contract_constants():
     metric_catalog = _load_json(CONTRACTS / "metric-catalog.json")
     provider_catalog = _load_json(CONTRACTS / "provider-catalog.json")
@@ -100,7 +146,7 @@ def test_catalogs_match_python_contract_constants():
         for item in metric_catalog["metrics"]
     }
     catalog_providers = {
-        item["groupId"]: item["providerId"]
+        (item["groupId"], item["providerId"])
         for item in provider_catalog["providers"]
     }
     catalog_sources = {
@@ -109,9 +155,12 @@ def test_catalogs_match_python_contract_constants():
         for source_id in item["sourceIds"]
     }
 
-    assert catalog_metrics == METRIC_UNITS
-    assert catalog_providers == PROVIDER_IDS
-    assert set(SOURCE_IDS.values()) == catalog_sources
+    assert set(METRIC_UNITS.items()).issubset(catalog_metrics.items())
+    assert {
+        (group_id, provider_id)
+        for group_id, provider_id in PROVIDER_IDS.items()
+    }.issubset(catalog_providers)
+    assert set(SOURCE_IDS.values()).issubset(catalog_sources)
 
 
 def test_contract_never_exposes_python_exception_class_names():

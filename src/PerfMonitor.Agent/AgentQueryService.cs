@@ -1,0 +1,280 @@
+using PerfMonitor.Contracts;
+using PerfMonitor.Core;
+using PerfMonitor.Ipc.NamedPipes;
+using PerfMonitor.Storage.Sqlite;
+
+namespace PerfMonitor.Agent;
+
+internal sealed class AgentQueryService : IAgentIpcService
+{
+    private readonly SnapshotAssembler _assembler;
+    private readonly IHistoryReader _history;
+    private readonly IDiagnosticEventReader _persistedDiagnostics;
+    private readonly IDiagnosticEventReader _recentDiagnostics;
+    private readonly AgentActionGateway _actions;
+    private readonly CapabilitiesContract _capabilities;
+    private readonly AgentLightModeController? _lightMode;
+    private readonly AgentAdaptiveSchedulingController? _adaptiveScheduling;
+
+    public AgentQueryService(
+        SnapshotAssembler assembler,
+        IHistoryReader history,
+        IDiagnosticEventReader persistedDiagnostics,
+        IDiagnosticEventReader recentDiagnostics,
+        AgentActionGateway actions,
+        DiagnosticsCapabilityContract diagnosticsCapabilities,
+        IEnumerable<ProviderDescriptor> descriptors,
+        PipeEndpoint endpoint,
+        TimeSpan snapshotPeriod,
+        AgentLightModeController? lightMode = null,
+        AgentAdaptiveSchedulingController? adaptiveScheduling = null)
+    {
+        _assembler = assembler;
+        _history = history;
+        _persistedDiagnostics = persistedDiagnostics;
+        _recentDiagnostics = recentDiagnostics;
+        _actions = actions;
+        _lightMode = lightMode;
+        _adaptiveScheduling = adaptiveScheduling;
+        _capabilities = BuildCapabilities(
+            assembler.InstanceId,
+            diagnosticsCapabilities,
+            descriptors,
+            endpoint,
+            snapshotPeriod,
+            lightMode is not null,
+            adaptiveScheduling is not null);
+    }
+
+    public string InstanceId => _assembler.InstanceId;
+
+    public AgentSnapshot ReadLatestSnapshot() => _assembler.Read();
+
+    public LightModeContract ReadLightMode() =>
+        _lightMode?.Read() ?? LightModeContract.Unsupported(InstanceId);
+
+    public LightModeContract SetLightMode(bool enabled, CancellationToken cancellationToken) =>
+        _lightMode?.Set(enabled, cancellationToken) ?? LightModeContract.Unsupported(InstanceId);
+
+    public AdaptiveSchedulingContract ReadAdaptiveScheduling() =>
+        _adaptiveScheduling?.Read() ?? AdaptiveSchedulingContract.Unsupported(InstanceId);
+
+    public AdaptiveSchedulingContract SetAdaptiveScheduling(AdaptiveSchedulingRequestContract request, CancellationToken cancellationToken) =>
+        _adaptiveScheduling?.Set(request, cancellationToken) ?? AdaptiveSchedulingContract.Unsupported(InstanceId);
+
+    public HealthContract ReadHealth()
+    {
+        var snapshot = _assembler.Read();
+        return new HealthContract
+        {
+            ContractVersion = ContractVersions.V1,
+            ProductVersion = ProductVersions.Agent,
+            Service = ServiceIds.PerfMonitor,
+            InstanceId = snapshot.InstanceId,
+            Sequence = snapshot.Sequence,
+            CompletedAtUtc = snapshot.CompletedAtUtc,
+            Summary = new SummaryContract
+            {
+                Availability = snapshot.Summary.Availability,
+                Freshness = snapshot.Summary.Freshness,
+            },
+        };
+    }
+
+    public CapabilitiesContract ReadCapabilities()
+    {
+        var actions = _actions.ReadCapabilities();
+        return _capabilities with
+        {
+            Actions = actions,
+            Diagnostics = _capabilities.Diagnostics is null
+                ? null
+                : _capabilities.Diagnostics with
+                {
+                    ActionsSupported =
+                        actions.Actions.Count > 0,
+                },
+        };
+    }
+
+    public ValueTask<ActionResultContract> ExecuteActionAsync(
+        UserActionRequestContract request,
+        CancellationToken cancellationToken) =>
+        _actions.ExecuteAsync(request, cancellationToken);
+
+    public async ValueTask<HistoryContract> QueryHistoryAsync(
+        HistoryQueryContract query,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await _history.QueryAsync(
+                query,
+                InstanceId,
+                cancellationToken).ConfigureAwait(false);
+        }
+        catch (StorageUnavailableException exception)
+        {
+            throw new IpcServiceUnavailableException(
+                exception.ErrorCode);
+        }
+    }
+
+    public async ValueTask<DiagnosticsContract> QueryDiagnosticsAsync(
+        DiagnosticQueryContract query,
+        CancellationToken cancellationToken)
+    {
+        var recent = await _recentDiagnostics.QueryDiagnosticsAsync(
+            query,
+            InstanceId,
+            cancellationToken).ConfigureAwait(false);
+        DiagnosticsContract? persisted = null;
+        try
+        {
+            persisted =
+                await _persistedDiagnostics.QueryDiagnosticsAsync(
+                    query,
+                    InstanceId,
+                    cancellationToken).ConfigureAwait(false);
+        }
+        catch (StorageUnavailableException)
+        {
+            // v0.6.0: RAM diagnostics remain queryable when SQLite
+            // is unavailable. No action endpoint is exposed.
+        }
+
+        var merged = (persisted?.Events ?? [])
+            .Concat(recent.Events)
+            .GroupBy(
+                static item => item.EventId,
+                StringComparer.Ordinal)
+            .Select(static group => group.First())
+            .ToArray();
+        // Sources return reception order. Observation sequence is comparable
+        // only within one Agent epoch; never rank a resolved event by UTC.
+        var epochs = merged.Select((item, index) => (item.InstanceId, index))
+            .GroupBy(item => item.InstanceId, StringComparer.Ordinal)
+            .ToDictionary(group => group.Key, group => group.Max(item => item.index), StringComparer.Ordinal);
+        var candidates = merged.Select((item, index) => (item, index))
+            .OrderByDescending(entry => entry.item.InstanceId == InstanceId)
+            .ThenByDescending(entry => epochs[entry.item.InstanceId])
+            .ThenByDescending(entry => entry.item.ObservationSequence ?? 0)
+            .ThenByDescending(entry => entry.index)
+            .Select(entry => entry.item).ToArray();
+        var selected = candidates
+            .Take(query.MaxEvents)
+            .Reverse()
+            .ToArray();
+        return new DiagnosticsContract
+        {
+            ContractVersion = ContractVersions.V1,
+            ProductVersion = ProductVersions.Agent,
+            InstanceId = InstanceId,
+            Query = query,
+            EventCount = selected.Length,
+            Truncated = recent.Truncated ||
+                persisted?.Truncated == true ||
+                candidates.Length > selected.Length,
+            Events = selected,
+        };
+    }
+
+    private static CapabilitiesContract BuildCapabilities(
+        string instanceId,
+        DiagnosticsCapabilityContract diagnosticsCapabilities,
+        IEnumerable<ProviderDescriptor> descriptors,
+        PipeEndpoint endpoint,
+        TimeSpan snapshotPeriod,
+        bool lightModeSupported,
+        bool adaptiveSchedulingSupported)
+    {
+        var groups = descriptors
+            .Select(descriptor => new ProviderCapabilityContract
+            {
+                GroupId = descriptor.GroupId,
+                ProviderId = descriptor.ProviderId,
+                DefaultPeriodMs = checked((int)Math.Round(
+                    descriptor.DefaultPeriod.TotalMilliseconds,
+                    MidpointRounding.AwayFromZero)),
+                RequiredPrivilege = descriptor.RequiredPrivilege,
+                CostClass = descriptor.CostClass,
+            })
+            .ToList();
+        if (groups.All(
+            group => group.GroupId != GroupIds.Sampler))
+        {
+            groups.Add(new ProviderCapabilityContract
+            {
+                GroupId = GroupIds.Sampler,
+                ProviderId = ProviderIds.Sampler,
+                DefaultPeriodMs = checked((int)Math.Round(
+                    snapshotPeriod.TotalMilliseconds,
+                    MidpointRounding.AwayFromZero)),
+                RequiredPrivilege = "user",
+                CostClass = "low",
+            });
+        }
+
+        groups.Sort(
+            static (left, right) => StringComparer.Ordinal.Compare(
+                left.GroupId,
+                right.GroupId));
+        var baseEndpoint = $"pipe://./{endpoint.PipeName}";
+        var endpoints = new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["snapshot"] = $"{baseEndpoint}/snapshot",
+            ["history"] = $"{baseEndpoint}/history",
+            ["diagnostics"] = $"{baseEndpoint}/diagnostics",
+            ["actions"] = $"{baseEndpoint}/actions",
+            ["capabilities"] = $"{baseEndpoint}/capabilities",
+            ["health"] = $"{baseEndpoint}/health",
+            ["subscribe"] = $"{baseEndpoint}/subscribe",
+        };
+        if (lightModeSupported) endpoints["lightMode"] = $"{baseEndpoint}/light-mode";
+        if (adaptiveSchedulingSupported) endpoints["adaptiveScheduling"] = $"{baseEndpoint}/adaptive-scheduling";
+        return new CapabilitiesContract
+        {
+            ContractVersion = ContractVersions.V1,
+            ProductVersion = ProductVersions.Agent,
+            InstanceId = instanceId,
+            Groups = groups,
+            History = new HistoryCapabilityContract
+            {
+                MetricIds = HistoryPolicy.SupportedMetricIds,
+                DefaultMaxPoints = HistoryPolicy.DefaultMaxPoints,
+                MaxPoints = HistoryPolicy.MaxPoints,
+                RamPointLimit = HistoryPolicy.RamPointLimit,
+                Aggregations = HistoryPolicy.Aggregations,
+            },
+            Diagnostics = diagnosticsCapabilities,
+            Endpoints = endpoints,
+            StableErrorCodes =
+            [
+                StableErrorCodes.AccessDenied,
+                StableErrorCodes.ProcessExited,
+                StableErrorCodes.NotSupported,
+                StableErrorCodes.Timeout,
+                StableErrorCodes.InvalidData,
+                StableErrorCodes.ResourceExhausted,
+                StableErrorCodes.ProviderFailure,
+                IpcErrorCodes.ContractVersionUnsupported,
+                IpcErrorCodes.InvalidRequest,
+                IpcErrorCodes.MessageTooLarge,
+                IpcErrorCodes.RequestTimedOut,
+                IpcErrorCodes.ServiceUnavailable,
+                ActionErrorCodes.ActionNotSupported,
+                ActionErrorCodes.ActionPolicyDenied,
+                ActionErrorCodes.CallerIdentityDenied,
+                ActionErrorCodes.ClientImageDenied,
+                ActionErrorCodes.TargetNotFound,
+                ActionErrorCodes.TargetIdentityChanged,
+                ActionErrorCodes.TargetOwnerMismatch,
+                ActionErrorCodes.TargetProtected,
+                ActionErrorCodes.IdempotencyConflict,
+                ActionErrorCodes.IdempotencyIndeterminate,
+                ActionErrorCodes.AuditUnavailable,
+                ActionErrorCodes.ExecutorFailed,
+            ],
+        };
+    }
+}

@@ -24,6 +24,7 @@ public sealed class FixtureDeserializationTests
     [DataRow("history-normal.json", "history")]
     [DataRow("capabilities-normal.json", "capabilities")]
     [DataRow("health-normal.json", "health")]
+    [DataRow("diagnostics-normal.json", "diagnostics")]
     public void PythonGoldenFixtureDeserializes(string fixtureName, string kind)
     {
         var json = File.ReadAllText(Path.Combine(FixturesDirectory, fixtureName));
@@ -45,6 +46,10 @@ public sealed class FixtureDeserializationTests
             "health" => JsonSerializer.Deserialize<HealthContract>(
                 json,
                 ContractJson.Options),
+            "diagnostics" =>
+                JsonSerializer.Deserialize<DiagnosticsContract>(
+                    json,
+                    ContractJson.Options),
             _ => throw new AssertFailedException($"Unknown fixture kind: {kind}"),
         };
 

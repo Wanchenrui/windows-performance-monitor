@@ -1,0 +1,171 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.perfmonitor.local/v1/soak-evidence-v1.schema.json",
+  "title": "PerfMonitor Agent Soak Evidence v1",
+  "type": "object",
+  "required": [
+    "contractVersion",
+    "productVersion",
+    "profile",
+    "startedAtUtc",
+    "completedAtUtc",
+    "requestedDurationSeconds",
+    "actualElapsedSeconds",
+    "release72HourGate",
+    "snapshots",
+    "resources",
+    "passed"
+  ],
+  "properties": {
+    "contractVersion": {"const": "1.0"},
+    "productVersion": {"type": "string", "minLength": 1},
+    "agentSha256": {
+      "type": "string",
+      "pattern": "^[0-9A-F]{64}$"
+    },
+    "profile": {"enum": ["accelerated-ci", "release-72h"]},
+    "startedAtUtc": {"type": "string", "format": "date-time"},
+    "completedAtUtc": {"type": "string", "format": "date-time"},
+    "requestedDurationSeconds": {"type": "integer", "minimum": 15},
+    "actualElapsedSeconds": {"type": "number", "minimum": 13},
+    "release72HourGate": {
+      "type": "object",
+      "required": ["requiredDurationSeconds", "actualWallClockPassed"],
+      "properties": {
+        "requiredDurationSeconds": {"const": 259200},
+        "actualWallClockPassed": {"type": "boolean"}
+      },
+      "additionalProperties": true
+    },
+    "snapshots": {
+      "type": "object",
+      "required": [
+        "count",
+        "firstSequence",
+        "lastSequence",
+        "maximumAllowed",
+        "passed"
+      ],
+      "properties": {
+        "count": {"type": "integer", "minimum": 2},
+        "firstSequence": {"type": "integer", "minimum": 1},
+        "lastSequence": {"type": "integer", "minimum": 2},
+        "maximumAllowed": {"type": "number", "minimum": 2},
+        "passed": {"const": true}
+      },
+      "additionalProperties": true
+    },
+    "resources": {
+      "type": "object",
+      "required": [
+        "samples",
+        "workingSet",
+        "privateMemory",
+        "gcHeap",
+        "cpuCoreEquivalentMeanPct",
+        "passed"
+      ],
+      "properties": {
+        "samples": {"type": "integer", "minimum": 3},
+        "workingSet": {"$ref": "#/$defs/peakBudget"},
+        "privateMemory": {
+          "type": "object",
+          "required": [
+            "peakMiB",
+            "limitMiB",
+            "headMedianMiB",
+            "tailMedianMiB",
+            "retainedGrowthMiB",
+            "growthLimitMiB",
+            "regressionSlopeMiBPerHour"
+          ],
+          "properties": {
+            "peakMiB": {"type": "number", "minimum": 0},
+            "limitMiB": {"type": "number", "exclusiveMinimum": 0},
+            "headMedianMiB": {"type": "number", "minimum": 0},
+            "tailMedianMiB": {"type": "number", "minimum": 0},
+            "retainedGrowthMiB": {"type": "number"},
+            "growthLimitMiB": {"type": "number", "minimum": 0},
+            "regressionSlopeMiBPerHour": {"type": "number"}
+          },
+          "additionalProperties": true
+        },
+        "gcHeap": {
+          "type": "object",
+          "required": [
+            "firstMiB",
+            "lastMiB",
+            "growthMiB",
+            "growthLimitMiB"
+          ],
+          "properties": {
+            "firstMiB": {"type": "number", "minimum": 0},
+            "lastMiB": {"type": "number", "minimum": 0},
+            "growthMiB": {"type": "number"},
+            "growthLimitMiB": {"type": "number", "minimum": 0}
+          },
+          "additionalProperties": true
+        },
+        "cpuCoreEquivalentMeanPct": {"type": "number", "minimum": 0},
+        "cpuCoreEquivalentLimitPct": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 100
+        },
+        "handlePeak": {"type": "integer", "minimum": 0},
+        "handleLimit": {"type": "integer", "minimum": 1},
+        "handleHeadMedian": {"type": "number", "minimum": 0},
+        "handleTailMedian": {"type": "number", "minimum": 0},
+        "retainedHandleGrowth": {"type": "number"},
+        "retainedHandleGrowthLimit": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "threadPeak": {"type": "integer", "minimum": 0},
+        "threadLimit": {"type": "integer", "minimum": 1},
+        "passed": {"const": true}
+      },
+      "additionalProperties": true
+    },
+    "passed": {"const": true}
+  },
+  "$defs": {
+    "peakBudget": {
+      "type": "object",
+      "required": ["peakMiB", "limitMiB"],
+      "properties": {
+        "peakMiB": {"type": "number", "minimum": 0},
+        "limitMiB": {"type": "number", "exclusiveMinimum": 0}
+      },
+      "additionalProperties": true
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {"profile": {"const": "accelerated-ci"}},
+        "required": ["profile"]
+      },
+      "then": {
+        "required": ["agentSha256"]
+      }
+    },
+    {
+      "if": {
+        "properties": {"profile": {"const": "release-72h"}},
+        "required": ["profile"]
+      },
+      "then": {
+        "required": ["agentSha256"],
+        "properties": {
+          "requestedDurationSeconds": {"minimum": 259200},
+          "actualElapsedSeconds": {"minimum": 259200},
+          "release72HourGate": {
+            "properties": {"actualWallClockPassed": {"const": true}}
+          }
+        }
+      }
+    }
+  ],
+  "additionalProperties": true
+}

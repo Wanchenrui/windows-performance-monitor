@@ -1,0 +1,57 @@
+{
+  "evidenceVersion": "1.0",
+  "executedAtUtc": "2026-07-29T11:51:31.6652239Z",
+  "agentCommit": "1653399",
+  "validatorCommit": "5359d92",
+  "environment": "Windows desktop using the verified CI Agent artifact",
+  "contractVersion": "1.0",
+  "pythonProductVersion": "0.3.0",
+  "agentProductVersion": "0.4.0",
+  "pairs": 10,
+  "alignment": {
+    "maximumMilliseconds": 990.722,
+    "limitMilliseconds": 1500
+  },
+  "cpu": {
+    "pythonMeanPct": 13.63,
+    "agentMeanPct": 13.939,
+    "deviationPoints": 0.309,
+    "tolerancePoints": 3,
+    "passed": true,
+    "p95": {
+      "pythonPct": 16.9,
+      "agentPct": 16.862,
+      "deviationPoints": 0.038
+    }
+  },
+  "memory": {
+    "pythonMeanPct": 47.9,
+    "agentMeanPct": 47.889,
+    "deviationPoints": 0.011,
+    "tolerancePoints": 1,
+    "passed": true,
+    "p95": {
+      "pythonPct": 48,
+      "agentPct": 48.043,
+      "deviationPoints": 0.043
+    }
+  },
+  "semantics": {
+    "passed": true,
+    "unitsAndSources": {
+      "comparisons": 35,
+      "mismatches": []
+    },
+    "volumeCapacity": {
+      "matchedVolumes": 2,
+      "mismatches": []
+    },
+    "processIdentity": {
+      "commonExactIdentities": 5,
+      "invalidOrDuplicate": []
+    },
+    "nullSemantics": {
+      "mismatches": []
+    }
+  }
+}

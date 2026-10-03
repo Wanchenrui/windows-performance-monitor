@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Wix
+    xmlns="http://wixtoolset.org/schemas/v4/wxs"
+    xmlns:netfx="http://wixtoolset.org/schemas/v4/wxs/netfx">
+  <Package
+      Name="PerfMonitor"
+      Manufacturer="$(ProductManufacturer)"
+      Version="$(ProductVersion)"
+      Language="1033"
+      Codepage="65001"
+      Scope="perMachine"
+      InstallerVersion="500"
+      UpgradeCode="97E0D462-D2F8-43A5-B56F-06152D4D502D">
+    <SummaryInformation
+        Description="PerfMonitor Agent, Desktop, and optional privileged Broker"
+        Manufacturer="$(ProductManufacturer)" />
+    <MediaTemplate EmbedCab="yes" CompressionLevel="high" />
+    <MajorUpgrade
+        DowngradeErrorMessage="A newer version of PerfMonitor is already installed."
+        Schedule="afterInstallInitialize" />
+
+    <Property Id="ARPCOMMENTS" Value="Local Windows performance monitoring." />
+    <Property
+        Id="ARPURLINFOABOUT"
+        Value="https://github.com/Wanchenrui/windows-performance-monitor" />
+
+    <Property Id="WINDOWS_CURRENT_BUILD" Secure="yes">
+      <RegistrySearch
+          Id="SearchWindowsCurrentBuild"
+          Root="HKLM"
+          Key="SOFTWARE\Microsoft\Windows NT\CurrentVersion"
+          Name="CurrentBuildNumber"
+          Type="raw"
+          Bitness="always64" />
+    </Property>
+    <Property Id="WINDOWS_INSTALLATION_TYPE" Secure="yes">
+      <RegistrySearch
+          Id="SearchWindowsInstallationType"
+          Root="HKLM"
+          Key="SOFTWARE\Microsoft\Windows NT\CurrentVersion"
+          Name="InstallationType"
+          Type="raw"
+          Bitness="always64" />
+    </Property>
+    <Launch
+        Condition="Installed OR (VersionNT64 AND ((((MsiNTProductType = 1) AND (WINDOWS_CURRENT_BUILD &gt;= 26100) AND (WINDOWS_CURRENT_BUILD &lt; 27000))) OR (((MsiNTProductType &gt; 1) AND (WINDOWS_INSTALLATION_TYPE = &quot;Server&quot;) AND (((WINDOWS_CURRENT_BUILD &gt;= 20348) AND (WINDOWS_CURRENT_BUILD &lt; 20400)) OR ((WINDOWS_CURRENT_BUILD &gt;= 26100) AND (WINDOWS_CURRENT_BUILD &lt; 27000)))))))"
+        Message="PerfMonitor 1.0 supports Windows 11 24H2/25H2 x64 and Windows Server 2022/2025 Desktop Experience x64." />
+
+    <netfx:DotNetCompatibilityCheck
+        Id="CheckDotNetDesktopRuntime"
+        Property="DOTNET_DESKTOP_RUNTIME_CHECK"
+        Version="10.0.0"
+        RuntimeType="desktop"
+        RollForward="minor"
+        Platform="x64" />
+    <Launch
+        Condition="Installed OR DOTNET_DESKTOP_RUNTIME_CHECK = 0"
+        Message="PerfMonitor requires the Microsoft .NET 10 Desktop Runtime (x64)." />
+
+    <StandardDirectory Id="ProgramFiles64Folder">
+      <Directory Id="PerfMonitorInstallRoot" Name="PerfMonitor">
+        <Directory Id="AgentInstallDirectory" Name="agent" />
+        <Directory Id="DesktopInstallDirectory" Name="desktop" />
+        <Directory Id="SupportInstallDirectory" Name="support" />
+        <Directory Id="BrokerInstallDirectory" Name="broker" />
+      </Directory>
+    </StandardDirectory>
+    <StandardDirectory Id="CommonProgramsFolder">
+      <Directory
+          Id="PerfMonitorProgramMenuDirectory"
+          Name="PerfMonitor" />
+    </StandardDirectory>
+    <StandardDirectory Id="CommonStartupFolder" />
+    <StandardDirectory Id="CommonAppDataFolder">
+      <Directory Id="PerfMonitorProgramDataDirectory" Name="PerfMonitor">
+        <Directory
+            Id="PerfMonitorBrokerDataDirectory"
+            Name="broker" />
+      </Directory>
+    </StandardDirectory>
+
+    <Feature
+        Id="Core"
+        Title="PerfMonitor Core"
+        Description="Per-user Agent, Desktop, hardware Provider Worker, and support/recovery tool."
+        Level="1"
+        AllowAbsent="no">
+      <Component
+          Id="AgentExecutableComponent"
+          Guid="489CC930-80C4-4AF5-8EEA-2E0EE17C7547"
+          Directory="AgentInstallDirectory">
+        <File
+            Id="AgentExecutable"
+            Source="!(bindpath.Agent)\perf-monitor-agent.exe"
+            KeyPath="yes">
+          <Shortcut
+              Id="AgentStartupShortcut"
+              Directory="CommonStartupFolder"
+              Name="PerfMonitor Agent"
+              Description="Start the non-elevated PerfMonitor Agent for the signed-in user."
+              Arguments="--quiet"
+              WorkingDirectory="AgentInstallDirectory" />
+        </File>
+      </Component>
+      <Files
+          Include="!(bindpath.Agent)\**"
+          Directory="AgentInstallDirectory">
+        <Exclude
+            Files="!(bindpath.Agent)\perf-monitor-agent.exe" />
+      </Files>
+
+      <Component
+          Id="DesktopExecutableComponent"
+          Guid="D0E88700-8E1D-47B8-A0B5-6C74A27C493B"
+          Directory="DesktopInstallDirectory">
+        <File
+            Id="DesktopExecutable"
+            Source="!(bindpath.Desktop)\perf-monitor-desktop.exe"
+            KeyPath="yes">
+          <Shortcut
+              Id="DesktopStartMenuShortcut"
+              Directory="PerfMonitorProgramMenuDirectory"
+              Name="PerfMonitor"
+              Description="Open the PerfMonitor desktop dashboard."
+              WorkingDirectory="DesktopInstallDirectory" />
+        </File>
+      </Component>
+      <Files
+          Include="!(bindpath.Desktop)\**"
+          Directory="DesktopInstallDirectory">
+        <Exclude
+            Files="!(bindpath.Desktop)\perf-monitor-desktop.exe" />
+      </Files>
+
+      <Component
+          Id="SupportExecutableComponent"
+          Guid="81414064-7B22-4B5D-B030-8AF8FC2F6F27"
+          Directory="SupportInstallDirectory">
+        <File
+            Id="SupportExecutable"
+            Source="!(bindpath.Support)\perf-monitor-support.exe"
+            KeyPath="yes" />
+      </Component>
+      <Files
+          Include="!(bindpath.Support)\**"
+          Directory="SupportInstallDirectory">
+        <Exclude
+            Files="!(bindpath.Support)\perf-monitor-support.exe" />
+      </Files>
+    </Feature>
+
+    <Feature
+        Id="Broker"
+        Title="Privileged Broker"
+        Description="Optional LocalSystem service for explicitly whitelisted privileged actions."
+        Level="101"
+        AllowAbsent="yes">
+      <Component
+          Id="BrokerExecutableComponent"
+          Guid="8FB45588-606A-4185-A97C-0FB3187C3AE5"
+          Directory="BrokerInstallDirectory">
+        <File
+            Id="BrokerExecutable"
+            Source="!(bindpath.Broker)\perf-monitor-broker.exe"
+            KeyPath="yes" />
+        <ServiceInstall
+            Id="PerfMonitorBrokerServiceInstall"
+            Name="PerfMonitorBroker"
+            DisplayName="PerfMonitor Privileged Broker"
+            Description="Executes only policy-approved PerfMonitor privileged actions and records an audit trail."
+            Type="ownProcess"
+            Start="auto"
+            ErrorControl="normal"
+            Account="LocalSystem"
+            Arguments="--service"
+            Vital="yes" />
+        <ServiceControl
+            Id="PerfMonitorBrokerServiceControl"
+            Name="PerfMonitorBroker"
+            Start="install"
+            Stop="both"
+            Remove="uninstall"
+            Wait="yes" />
+      </Component>
+      <Files
+          Include="!(bindpath.Broker)\**"
+          Directory="BrokerInstallDirectory">
+        <Exclude
+            Files="!(bindpath.Broker)\perf-monitor-broker.exe" />
+      </Files>
+      <Component
+          Id="BrokerDataDirectoryComponent"
+          Guid="F14CD9BF-F588-42B1-9CCB-AD2FAABCFD81"
+          Directory="PerfMonitorBrokerDataDirectory"
+          Permanent="yes"
+          NeverOverwrite="yes">
+        <CreateFolder>
+          <PermissionEx
+              Sddl="D:P(A;OICI;FA;;;SY)(A;OICI;FA;;;BA)" />
+        </CreateFolder>
+      </Component>
+    </Feature>
+  </Package>
+</Wix>

@@ -1,0 +1,18 @@
+[
+  {
+    "path": "D:\\GitHub\\windows-performance-monitor\\src\\PerfMonitor.Agent\\bin\\Release\\net10.0-windows10.0.17763.0\\win-x64\\perf-monitor-agent.exe",
+    "sha256": "1485AB64B79360AE9D6D9181A04E6F9E99F878A2BE746F1758B2C6BD8099F51A"
+  },
+  {
+    "path": "D:\\GitHub\\windows-performance-monitor\\src\\PerfMonitor.Agent\\bin\\Release\\net10.0-windows10.0.17763.0\\win-x64\\perf-monitor-agent.dll",
+    "sha256": "007EDFEA393A9EEFE0932010CF6F0AC7489E3A1831F9027C6FE57FBF0657140C"
+  },
+  {
+    "path": "D:\\GitHub\\windows-performance-monitor\\src\\PerfMonitor.Desktop\\bin\\Release\\net10.0-windows10.0.17763.0\\win-x64\\perf-monitor-desktop.exe",
+    "sha256": "4BCF204CBB28B815E65AA4459EE35098BECA92261EF4658D968C2BE978BB2B04"
+  },
+  {
+    "path": "D:\\GitHub\\windows-performance-monitor\\src\\PerfMonitor.Desktop\\bin\\Release\\net10.0-windows10.0.17763.0\\win-x64\\perf-monitor-desktop.dll",
+    "sha256": "6A7285EA01480E475F59F5097B78E996A8B4C0E97A35F31C0C44CFA972BB1BA4"
+  }
+]

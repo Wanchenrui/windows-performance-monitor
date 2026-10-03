@@ -35,3 +35,16 @@ Python 高频 Agent 只有在以下条件全部满足后退役：
 7. 发生回归时可切回最后一个 Python 标签。
 
 Python 源码和 traces 在退役后保留为只读参考，不再承担产品实时采集。
+
+## 0.5 退役结论
+
+默认启动、构建产物和 CI 发布物均已切换为 .NET Agent/Desktop；Python
+不会被打包为产品高频 Agent。Python 路径只允许用于：
+
+1. golden fixture 与 Schema 回归；
+2. Python/.NET 同窗差分；
+3. 显式 `--dev-http` 开发模式；
+4. 回归时读取最后一个 Python 产品标签 `v0.3.0`。
+
+真实 72 小时 Agent 门禁和 0.5 Desktop/Named Pipe/SQLite 门禁均是发布
+前置条件；短时 CI 或虚拟 259,200 周期测试不能替代真实墙钟证据。

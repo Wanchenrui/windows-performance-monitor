@@ -3,6 +3,7 @@
 - 状态：已采用
 - 日期：2026-07-29
 - 首次适用版本：0.3.0
+- 实现状态：Agent/Desktop 边界在 0.5.0 实现；Broker/Worker 待 0.7.x
 
 ## 决策
 
@@ -16,6 +17,9 @@
 
 Agent 是模块化单体，不拆微服务。Desktop 不直接访问 Win32、SQLite 或
 Broker；Broker 不接受任意命令行、脚本、PowerShell、注册表路径或文件路径。
+
+0.5 的 Desktop 使用原生 WPF 首版界面，不引用 Windows Collector 或
+SQLite 项目；其唯一产品数据入口是受版本控制的 Named Pipe Client。
 
 ## 信任边界
 

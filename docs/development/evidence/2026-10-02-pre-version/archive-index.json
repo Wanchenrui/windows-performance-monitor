@@ -1,0 +1,167 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Immutable pre-version development candidate evidence; not validation of version 1.1.0",
+  "repositoryBaseline": "74d29ddfc8a29fac23af5d57068b2aef08c42804",
+  "workingTreeDirtyAtValidation": true,
+  "originalManifestGeneratedAtUtc": "2026-10-02T20:26:55.3088161+08:00",
+  "originalManifestPath": "artifacts/validation/final-artifact-hashes.json",
+  "archivedManifestPath": "docs/development/2026-10-02-pre-version-artifact-hashes.json",
+  "originalManifestSha256": "9685F8B82C006A3A3C4C6B74A743079BC6BC155244630ECFC1BF7FB7BAA0C0B1",
+  "hashAlgorithm": "SHA-256",
+  "copiedFiles": [
+    {
+      "originalPath": "artifacts/validation/final-python-tests.log",
+      "archivedPath": "docs/development/evidence/2026-10-02-pre-version/final-python-tests.log",
+      "sizeBytes": 363,
+      "sha256": "76B069C72F533A523420AF518069161BCCF3A20924969FECCC7DEC0776A09388",
+      "listedInOriginalManifest": true
+    },
+    {
+      "originalPath": "artifacts/validation/final-crash-recovery-schema3.log",
+      "archivedPath": "docs/development/evidence/2026-10-02-pre-version/final-crash-recovery-schema3.log",
+      "sizeBytes": 1880,
+      "sha256": "A626E3A1624373BC5A4F8AB6FD04DE46D1396F235116E44097422369B0C162F5",
+      "listedInOriginalManifest": true
+    },
+    {
+      "originalPath": "artifacts/validation/final-lockfile-review.log",
+      "archivedPath": "docs/development/evidence/2026-10-02-pre-version/final-lockfile-review.log",
+      "sizeBytes": 1291,
+      "sha256": "DCF79A1948FC181A41B1B47ED84CC026D1D424B8F04FB41B99356CD0F1F710F0",
+      "listedInOriginalManifest": true
+    },
+    {
+      "originalPath": "artifacts/validation/final-dotnet-build-ui-wave.log",
+      "archivedPath": "docs/development/evidence/2026-10-02-pre-version/final-dotnet-build-ui-wave.log",
+      "sizeBytes": 3445,
+      "sha256": "504233BB78CEFC9E2FF6CEFA93FD3FD312997D02F3E7CB3DF8B79B42FE2F41B1",
+      "listedInOriginalManifest": true
+    },
+    {
+      "originalPath": "artifacts/validation/final-dotnet-locked-restore-ui-wave.log",
+      "archivedPath": "docs/development/evidence/2026-10-02-pre-version/final-dotnet-locked-restore-ui-wave.log",
+      "sizeBytes": 86,
+      "sha256": "0A5293E62D3BB4D8819D8D749F51206D3AA424744E622337BEE96070823F245B",
+      "listedInOriginalManifest": true
+    },
+    {
+      "originalPath": "artifacts/validation/final-dotnet-tests-ui-wave.log",
+      "archivedPath": "docs/development/evidence/2026-10-02-pre-version/final-dotnet-tests-ui-wave.log",
+      "sizeBytes": 5843,
+      "sha256": "1BE97427EA52F7A92AE20EB29E9CBAA5FACE6B53E19CD5EE06CA328735151271",
+      "listedInOriginalManifest": true
+    },
+    {
+      "originalPath": "artifacts/validation/final-dotnet-trx-ui-wave/Administrator_HCAIA-WAQHGBEKP_2026-10-02_20_12_04_net10.0.trx",
+      "archivedPath": "docs/development/evidence/2026-10-02-pre-version/final-dotnet-trx-ui-wave/Administrator_HCAIA-WAQHGBEKP_2026-10-02_20_12_04_net10.0.trx",
+      "sizeBytes": 44107,
+      "sha256": "F4F7E6DDD5CA39859E45AAC7106D629F4613C1FCE64EC87BC87713FB181327E2",
+      "listedInOriginalManifest": true
+    },
+    {
+      "originalPath": "artifacts/validation/final-dotnet-trx-ui-wave/Administrator_HCAIA-WAQHGBEKP_2026-10-02_20_12_07_net10.0.trx",
+      "archivedPath": "docs/development/evidence/2026-10-02-pre-version/final-dotnet-trx-ui-wave/Administrator_HCAIA-WAQHGBEKP_2026-10-02_20_12_07_net10.0.trx",
+      "sizeBytes": 166144,
+      "sha256": "4FE50156E1B2083A8BF471E7F5FFA9AC8724E6D7FACBDD5125823BB2BB77F9B3",
+      "listedInOriginalManifest": true
+    },
+    {
+      "originalPath": "artifacts/validation/final-dotnet-trx-ui-wave/Administrator_HCAIA-WAQHGBEKP_2026-10-02_20_12_14_net10.0.trx",
+      "archivedPath": "docs/development/evidence/2026-10-02-pre-version/final-dotnet-trx-ui-wave/Administrator_HCAIA-WAQHGBEKP_2026-10-02_20_12_14_net10.0.trx",
+      "sizeBytes": 36904,
+      "sha256": "4ACF91F72A6E9A9211FE0F39E9575C849FA2632C85903D32EED0312A9F36FCED",
+      "listedInOriginalManifest": true
+    },
+    {
+      "originalPath": "artifacts/validation/final-dotnet-trx-ui-wave/Administrator_HCAIA-WAQHGBEKP_2026-10-02_20_12_15_net10.0.trx",
+      "archivedPath": "docs/development/evidence/2026-10-02-pre-version/final-dotnet-trx-ui-wave/Administrator_HCAIA-WAQHGBEKP_2026-10-02_20_12_15_net10.0.trx",
+      "sizeBytes": 16348,
+      "sha256": "A69E0BD8C5A06D8FCE343949A597F701C9092111C09200819B70213067FAFD49",
+      "listedInOriginalManifest": true
+    },
+    {
+      "originalPath": "artifacts/validation/final-dotnet-trx-ui-wave/Administrator_HCAIA-WAQHGBEKP_2026-10-02_20_12_15_net10.0[1].trx",
+      "archivedPath": "docs/development/evidence/2026-10-02-pre-version/final-dotnet-trx-ui-wave/Administrator_HCAIA-WAQHGBEKP_2026-10-02_20_12_15_net10.0[1].trx",
+      "sizeBytes": 14660,
+      "sha256": "E7C7CC502A122C747295E5AD30150D01AC60615A17C280E56974734BE8A46E4A",
+      "listedInOriginalManifest": true
+    },
+    {
+      "originalPath": "artifacts/validation/preview-checkonly-ui-wave.log",
+      "archivedPath": "docs/development/evidence/2026-10-02-pre-version/preview-checkonly-ui-wave.log",
+      "sizeBytes": 1009,
+      "sha256": "BA13DDCB281EF438401BF3DD7A796B8C095DAF75B8A8ED66A17DC921A61E3563",
+      "listedInOriginalManifest": true
+    },
+    {
+      "originalPath": "artifacts/validation/ui-screenshots/20261002-201320-final-hud-main/01-waiting.png",
+      "archivedPath": "docs/development/evidence/2026-10-02-pre-version/ui-screenshots/20261002-201320-final-hud-main/01-waiting.png",
+      "sizeBytes": 14932,
+      "sha256": "C33893CE764DE965DA4EF171E340D246AD8245DB79A05724E840F256E44BD76B",
+      "listedInOriginalManifest": true
+    },
+    {
+      "originalPath": "artifacts/validation/ui-screenshots/20261002-201320-final-hud-main/02-connected.png",
+      "archivedPath": "docs/development/evidence/2026-10-02-pre-version/ui-screenshots/20261002-201320-final-hud-main/02-connected.png",
+      "sizeBytes": 21977,
+      "sha256": "85766082BE00CE0EE9D55FE662450A6B10440943B38ED96FA9FC37D43571839E",
+      "listedInOriginalManifest": true
+    },
+    {
+      "originalPath": "artifacts/validation/ui-screenshots/20261002-201320-final-hud-main/03-disconnected-history.png",
+      "archivedPath": "docs/development/evidence/2026-10-02-pre-version/ui-screenshots/20261002-201320-final-hud-main/03-disconnected-history.png",
+      "sizeBytes": 24752,
+      "sha256": "C38C6FD7B7E900BB2BFC6B670AC11E419806E85B41B7912D932B82419E638C12",
+      "listedInOriginalManifest": true
+    },
+    {
+      "originalPath": "artifacts/validation/ui-screenshots/final-hud-layout/host-02-network-trend.png",
+      "archivedPath": "docs/development/evidence/2026-10-02-pre-version/ui-screenshots/final-hud-layout/host-02-network-trend.png",
+      "sizeBytes": 153098,
+      "sha256": "88B363F46679594FF4714A3464FC9DE02A48A36835E418E639EA7E7F4B986163",
+      "listedInOriginalManifest": true
+    },
+    {
+      "originalPath": "artifacts/validation/ui-screenshots/20261002-201320-final-hud-main/capture-evidence.json",
+      "archivedPath": "docs/development/evidence/2026-10-02-pre-version/ui-screenshots/20261002-201320-final-hud-main/capture-evidence.json",
+      "sizeBytes": 4263,
+      "sha256": "BBBCDCEF6B0DD5442D6C0CCF4B0588B7DB455108A95F0EA61C346DB9A9064046",
+      "listedInOriginalManifest": true
+    },
+    {
+      "originalPath": "artifacts/validation/ui-screenshots/final-hud-layout/layout-host-evidence.json",
+      "archivedPath": "docs/development/evidence/2026-10-02-pre-version/ui-screenshots/final-hud-layout/layout-host-evidence.json",
+      "sizeBytes": 2532,
+      "sha256": "BD289F39C5010C087BD63AF79883CE3E1979EC6244E1959D39C82A21675F4350",
+      "listedInOriginalManifest": true
+    },
+    {
+      "originalPath": "artifacts/validation/agent-smoke-20261002-183448/resources.csv",
+      "archivedPath": "docs/development/evidence/2026-10-02-pre-version/agent-smoke-20261002-183448/resources.csv",
+      "sizeBytes": 1737,
+      "sha256": "EA508A643568475557EB0C1EC7448F89F638BCE083FA73AF0899BF46DD54B142",
+      "listedInOriginalManifest": false
+    },
+    {
+      "originalPath": "artifacts/validation/agent-smoke-20261002-183448/result.json",
+      "archivedPath": "docs/development/evidence/2026-10-02-pre-version/agent-smoke-20261002-183448/result.json",
+      "sizeBytes": 140,
+      "sha256": "7776F98DC357F1077349E5B028AEF4D7BEDF151F6AFDB503148319149A38D30A",
+      "listedInOriginalManifest": false
+    }
+  ],
+  "localOnlySensitiveEvidence": [
+    "artifacts/validation/ui-screenshots/final-hud-layout/host-03-process-drawer.png"
+  ],
+  "scopeLimitations": [
+    "Windows 10 developer machine outside the declared four-target support matrix",
+    "No physical tray/hotkey/focus, mixed-DPI, deployment matrix, real action or 72-hour acceptance",
+    "M0 resources.csv/result.json were not listed in the original manifest and are archived as historical short-run samples only"
+  ],
+  "notArchived": [
+    "Product binaries and bin/obj trees",
+    "SQLite databases/WAL/SHM and full raw snapshots/stdout",
+    "SDK/runtime packages and large vendor metadata",
+    "Screenshots that reveal personal application names"
+  ]
+}

@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../src/PerfMonitor.Core/PerfMonitor.Core.csproj" />
+    <ProjectReference Include="../../src/PerfMonitor.Diagnostics/PerfMonitor.Diagnostics.csproj" />
+  </ItemGroup>
+</Project>

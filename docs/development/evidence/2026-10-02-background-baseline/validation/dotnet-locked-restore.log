@@ -1,0 +1,22 @@
+  正在确定要还原的项目…
+  已还原 D:\GitHub\windows-performance-monitor\src\PerfMonitor.Core\PerfMonitor.Core.csproj (用时 89 毫秒)。
+  已还原 D:\GitHub\windows-performance-monitor\src\PerfMonitor.Actions\PerfMonitor.Actions.csproj (用时 89 毫秒)。
+  已还原 D:\GitHub\windows-performance-monitor\src\PerfMonitor.ProviderWorker.Protocol\PerfMonitor.ProviderWorker.Protocol.csproj (用时 89 毫秒)。
+  已还原 D:\GitHub\windows-performance-monitor\src\PerfMonitor.Diagnostics\PerfMonitor.Diagnostics.csproj (用时 89 毫秒)。
+  已还原 D:\GitHub\windows-performance-monitor\src\PerfMonitor.Contracts\PerfMonitor.Contracts.csproj (用时 89 毫秒)。
+  已还原 D:\GitHub\windows-performance-monitor\src\PerfMonitor.Broker.Protocol\PerfMonitor.Broker.Protocol.csproj (用时 89 毫秒)。
+  已还原 D:\GitHub\windows-performance-monitor\src\PerfMonitor.Broker.Client\PerfMonitor.Broker.Client.csproj (用时 157 毫秒)。
+  已还原 D:\GitHub\windows-performance-monitor\src\PerfMonitor.Ipc.NamedPipes\PerfMonitor.Ipc.NamedPipes.csproj (用时 157 毫秒)。
+  已还原 D:\GitHub\windows-performance-monitor\src\PerfMonitor.Desktop\PerfMonitor.Desktop.csproj (用时 157 毫秒)。
+  已还原 D:\GitHub\windows-performance-monitor\src\PerfMonitor.Collectors.Windows\PerfMonitor.Collectors.Windows.csproj (用时 157 毫秒)。
+  已还原 D:\GitHub\windows-performance-monitor\src\PerfMonitor.Collectors.Worker\PerfMonitor.Collectors.Worker.csproj (用时 157 毫秒)。
+  已还原 D:\GitHub\windows-performance-monitor\src\PerfMonitor.Storage.Sqlite\PerfMonitor.Storage.Sqlite.csproj (用时 173 毫秒)。
+  已还原 D:\GitHub\windows-performance-monitor\src\PerfMonitor.Broker\PerfMonitor.Broker.csproj (用时 176 毫秒)。
+  已还原 D:\GitHub\windows-performance-monitor\src\PerfMonitor.Agent\PerfMonitor.Agent.csproj (用时 177 毫秒)。
+  已还原 D:\GitHub\windows-performance-monitor\src\PerfMonitor.Support\PerfMonitor.Support.csproj (用时 177 毫秒)。
+  已还原 D:\GitHub\windows-performance-monitor\tests\PerfMonitor.ActionsTests\PerfMonitor.ActionsTests.csproj (用时 190 毫秒)。
+  已还原 D:\GitHub\windows-performance-monitor\tests\PerfMonitor.ContractTests\PerfMonitor.ContractTests.csproj (用时 189 毫秒)。
+  已还原 D:\GitHub\windows-performance-monitor\tests\PerfMonitor.BrokerTests\PerfMonitor.BrokerTests.csproj (用时 192 毫秒)。
+  已还原 D:\GitHub\windows-performance-monitor\tests\PerfMonitor.AgentTests\PerfMonitor.AgentTests.csproj (用时 192 毫秒)。
+  已还原 D:\GitHub\windows-performance-monitor\tests\PerfMonitor.ReleaseTests\PerfMonitor.ReleaseTests.csproj (用时 195 毫秒)。
+  已还原 D:\GitHub\windows-performance-monitor\src\PerfMonitor.ProviderWorker\PerfMonitor.ProviderWorker.csproj (用时 228 毫秒)。

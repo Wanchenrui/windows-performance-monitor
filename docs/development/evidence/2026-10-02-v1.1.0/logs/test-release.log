@@ -1,0 +1,45 @@
+  PerfMonitor.ProviderWorker.Protocol -> D:\GitHub\windows-performance-monitor\artifacts\version-1.1.0\bin\PerfMonitor.ProviderWorker.Protocol\release\PerfMonitor.ProviderWorker.Protocol.dll
+  PerfMonitor.Contracts -> D:\GitHub\windows-performance-monitor\artifacts\version-1.1.0\bin\PerfMonitor.Contracts\release\PerfMonitor.Contracts.dll
+  PerfMonitor.Broker.Protocol -> D:\GitHub\windows-performance-monitor\artifacts\version-1.1.0\bin\PerfMonitor.Broker.Protocol\release\PerfMonitor.Broker.Protocol.dll
+  PerfMonitor.Actions -> D:\GitHub\windows-performance-monitor\artifacts\version-1.1.0\bin\PerfMonitor.Actions\release\PerfMonitor.Actions.dll
+  PerfMonitor.Core -> D:\GitHub\windows-performance-monitor\artifacts\version-1.1.0\bin\PerfMonitor.Core\release\PerfMonitor.Core.dll
+  PerfMonitor.ContractTests -> D:\GitHub\windows-performance-monitor\artifacts\version-1.1.0\bin\PerfMonitor.ContractTests\release\PerfMonitor.ContractTests.dll
+D:\GitHub\windows-performance-monitor\artifacts\version-1.1.0\bin\PerfMonitor.ContractTests\release\PerfMonitor.ContractTests.dll (.NETCoreApp,Version=v10.0)的测试运行
+总共 1 个测试文件与指定模式相匹配。
+  PerfMonitor.Diagnostics -> D:\GitHub\windows-performance-monitor\artifacts\version-1.1.0\bin\PerfMonitor.Diagnostics\release\PerfMonitor.Diagnostics.dll
+  PerfMonitor.ActionsTests -> D:\GitHub\windows-performance-monitor\artifacts\version-1.1.0\bin\PerfMonitor.ActionsTests\release\PerfMonitor.ActionsTests.dll
+D:\GitHub\windows-performance-monitor\artifacts\version-1.1.0\bin\PerfMonitor.ActionsTests\release\PerfMonitor.ActionsTests.dll (.NETCoreApp,Version=v10.0)的测试运行
+  PerfMonitor.Broker.Client -> D:\GitHub\windows-performance-monitor\artifacts\version-1.1.0\bin\PerfMonitor.Broker.Client\release\PerfMonitor.Broker.Client.dll
+  PerfMonitor.Ipc.NamedPipes -> D:\GitHub\windows-performance-monitor\artifacts\version-1.1.0\bin\PerfMonitor.Ipc.NamedPipes\release\PerfMonitor.Ipc.NamedPipes.dll
+  PerfMonitor.Collectors.Windows -> D:\GitHub\windows-performance-monitor\artifacts\version-1.1.0\bin\PerfMonitor.Collectors.Windows\release\PerfMonitor.Collectors.Windows.dll
+  PerfMonitor.Collectors.Worker -> D:\GitHub\windows-performance-monitor\artifacts\version-1.1.0\bin\PerfMonitor.Collectors.Worker\release\PerfMonitor.Collectors.Worker.dll
+总共 1 个测试文件与指定模式相匹配。
+  PerfMonitor.Broker -> D:\GitHub\windows-performance-monitor\artifacts\version-1.1.0\bin\PerfMonitor.Broker\release_win-x64\perf-monitor-broker.dll
+  PerfMonitor.Storage.Sqlite -> D:\GitHub\windows-performance-monitor\artifacts\version-1.1.0\bin\PerfMonitor.Storage.Sqlite\release\PerfMonitor.Storage.Sqlite.dll
+  PerfMonitor.Desktop -> D:\GitHub\windows-performance-monitor\artifacts\version-1.1.0\bin\PerfMonitor.Desktop\release_win-x64\perf-monitor-desktop.dll
+结果文件: D:\GitHub\windows-performance-monitor\artifacts\version-1.1.0\test-results\Administrator_HCAIA-WAQHGBEKP_2026-10-02_20_50_10_net10.0.trx
+
+已通过! - 失败:     0，通过:    11，已跳过:     0，总计:    11，持续时间: 163 ms - PerfMonitor.ContractTests.dll (net10.0)
+  PerfMonitor.Support -> D:\GitHub\windows-performance-monitor\artifacts\version-1.1.0\bin\PerfMonitor.Support\release_win-x64\perf-monitor-support.dll
+  PerfMonitor.Agent -> D:\GitHub\windows-performance-monitor\artifacts\version-1.1.0\bin\PerfMonitor.Agent\release_win-x64\perf-monitor-agent.dll
+  PerfMonitor.BrokerTests -> D:\GitHub\windows-performance-monitor\artifacts\version-1.1.0\bin\PerfMonitor.BrokerTests\release\PerfMonitor.BrokerTests.dll
+D:\GitHub\windows-performance-monitor\artifacts\version-1.1.0\bin\PerfMonitor.BrokerTests\release\PerfMonitor.BrokerTests.dll (.NETCoreApp,Version=v10.0)的测试运行
+  PerfMonitor.ReleaseTests -> D:\GitHub\windows-performance-monitor\artifacts\version-1.1.0\bin\PerfMonitor.ReleaseTests\release_win-x64\PerfMonitor.ReleaseTests.dll
+D:\GitHub\windows-performance-monitor\artifacts\version-1.1.0\bin\PerfMonitor.ReleaseTests\release_win-x64\PerfMonitor.ReleaseTests.dll (.NETCoreApp,Version=v10.0)的测试运行
+结果文件: D:\GitHub\windows-performance-monitor\artifacts\version-1.1.0\test-results\Administrator_HCAIA-WAQHGBEKP_2026-10-02_20_50_11_net10.0.trx
+
+已通过! - 失败:     0，通过:    33，已跳过:     0，总计:    33，持续时间: 122 ms - PerfMonitor.ActionsTests.dll (net10.0)
+总共 1 个测试文件与指定模式相匹配。
+总共 1 个测试文件与指定模式相匹配。
+  PerfMonitor.AgentTests -> D:\GitHub\windows-performance-monitor\artifacts\version-1.1.0\bin\PerfMonitor.AgentTests\release\PerfMonitor.AgentTests.dll
+D:\GitHub\windows-performance-monitor\artifacts\version-1.1.0\bin\PerfMonitor.AgentTests\release\PerfMonitor.AgentTests.dll (.NETCoreApp,Version=v10.0)的测试运行
+总共 1 个测试文件与指定模式相匹配。
+结果文件: D:\GitHub\windows-performance-monitor\artifacts\version-1.1.0\test-results\Administrator_HCAIA-WAQHGBEKP_2026-10-02_20_50_14_net10.0.trx
+
+已通过! - 失败:     0，通过:    10，已跳过:     0，总计:    10，持续时间: 991 ms - PerfMonitor.ReleaseTests.dll (net10.0)
+结果文件: D:\GitHub\windows-performance-monitor\artifacts\version-1.1.0\test-results\Administrator_HCAIA-WAQHGBEKP_2026-10-02_20_50_14_net10.0[1].trx
+
+已通过! - 失败:     0，通过:    27，已跳过:     0，总计:    27，持续时间: 1 s - PerfMonitor.BrokerTests.dll (net10.0)
+结果文件: D:\GitHub\windows-performance-monitor\artifacts\version-1.1.0\test-results\Administrator_HCAIA-WAQHGBEKP_2026-10-02_20_50_14_net10.0[2].trx
+
+已通过! - 失败:     0，通过:   123，已跳过:     0，总计:   123，持续时间: 6 s - PerfMonitor.AgentTests.dll (net10.0)

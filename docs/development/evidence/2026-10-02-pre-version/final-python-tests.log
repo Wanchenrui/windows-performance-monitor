@@ -1,0 +1,8 @@
+command: python -m pytest -q -p no:cacheprovider
+interpreter: C:\Users\Administrator\AppData\Local\PerfMonitor\venv-3.12.10\Scripts\python.exe|3.12.10|Windows|AMD64
+
+........................................................................ [ 94%]
+....                                                                     [100%]
+76 passed in 3.31s
+
+exit_code=0

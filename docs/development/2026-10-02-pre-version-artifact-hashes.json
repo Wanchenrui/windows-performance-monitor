@@ -1,0 +1,288 @@
+{
+  "generatedAtUtc": "2026-10-02T12:26:55.3088161+00:00",
+  "hashAlgorithm": "SHA-256",
+  "repositoryHead": "74d29ddfc8a29fac23af5d57068b2aef08c42804",
+  "workingTreeDirty": true,
+  "sdk": {
+    "version": "10.0.302",
+    "path": "C:\\Users\\Administrator\\AppData\\Local\\PerfMonitor\\dotnet-sdk-10.0.302\\dotnet.exe",
+    "dotnetExeSha256": "4377F10C78400F0370B88156773DE9843C07F14E65B3232005EC3179EF38D463"
+  },
+  "python": {
+    "version": "3.12.10",
+    "path": "C:\\Users\\Administrator\\AppData\\Local\\PerfMonitor\\python-3.12.10\\cpython-3.12.10-windows-x86_64-none\\python.exe",
+    "pythonExeSha256": "6461FE8DC13C642302F591C0C1C16B220629F7A336F74CE88AA2CDD31C43E62A",
+    "venv": "C:\\Users\\Administrator\\AppData\\Local\\PerfMonitor\\venv-3.12.10\\Scripts\\python.exe"
+  },
+  "releaseExecutables": [
+    {
+      "path": "src/PerfMonitor.Agent/bin/Release/net10.0-windows10.0.17763.0/win-x64/perf-monitor-agent.exe",
+      "sizeBytes": 162816,
+      "sha256": "1485AB64B79360AE9D6D9181A04E6F9E99F878A2BE746F1758B2C6BD8099F51A"
+    },
+    {
+      "path": "src/PerfMonitor.Broker/bin/Release/net10.0-windows10.0.17763.0/win-x64/perf-monitor-broker.exe",
+      "sizeBytes": 162816,
+      "sha256": "C748BE94CDE201908D685470E61D262C3B70D0F5B895264CA6A2A423B2FE5269"
+    },
+    {
+      "path": "src/PerfMonitor.Desktop/bin/Release/net10.0-windows10.0.17763.0/win-x64/perf-monitor-desktop.exe",
+      "sizeBytes": 170496,
+      "sha256": "4BCF204CBB28B815E65AA4459EE35098BECA92261EF4658D968C2BE978BB2B04"
+    },
+    {
+      "path": "src/PerfMonitor.ProviderWorker/bin/Release/net10.0-windows10.0.17763.0/win-x64/perf-monitor-provider-worker.exe",
+      "sizeBytes": 162816,
+      "sha256": "A8DC814A4D6546C3BB0CCC57A11B66D50E1424A61AE0A63A9FDB0EB5CE6B2F8B"
+    },
+    {
+      "path": "src/PerfMonitor.Support/bin/Release/net10.0-windows10.0.17763.0/win-x64/perf-monitor-support.exe",
+      "sizeBytes": 162816,
+      "sha256": "577DA8FF5E0E097E4481FCFE7876806C2169B423DC01C7C7B9B740F274A28DEF"
+    }
+  ],
+  "releaseOutputDirectoryFingerprints": {
+    "algorithm": "SHA-256 over UTF-8 sorted relative-path|file-SHA256 lines, LF terminated",
+    "directories": [
+      {
+        "directory": "src/PerfMonitor.Agent/bin/Release/net10.0-windows10.0.17763.0/win-x64",
+        "fileCount": 34,
+        "sha256": "3932AB892FB9F3EFC340F53EE97E91F920AC6B77039EB008D5F5EC1EC5BC04FE"
+      },
+      {
+        "directory": "src/PerfMonitor.Broker/bin/Release/net10.0-windows10.0.17763.0/win-x64",
+        "fileCount": 22,
+        "sha256": "DBB4353567DE031D4DC0E87373E5184070B6076D2E3E11141B8197C5237EBC8B"
+      },
+      {
+        "directory": "src/PerfMonitor.Desktop/bin/Release/net10.0-windows10.0.17763.0/win-x64",
+        "fileCount": 13,
+        "sha256": "2FD6EA95CD5204B98FE0B8AFE7DC429761D6644E51745B9C3CBB235707AD06D9"
+      },
+      {
+        "directory": "src/PerfMonitor.ProviderWorker/bin/Release/net10.0-windows10.0.17763.0/win-x64",
+        "fileCount": 21,
+        "sha256": "489EE8A23301742F4FFB5FF4A682D879A967C6BB53986204E88EA5AE8E5E50A9"
+      },
+      {
+        "directory": "src/PerfMonitor.Support/bin/Release/net10.0-windows10.0.17763.0/win-x64",
+        "fileCount": 21,
+        "sha256": "54919E9E493B544A5A20C3F9126C9E89E11F86E9B1C0C19D974CBAF6D8673B4E"
+      }
+    ]
+  },
+  "evidenceFiles": [
+    {
+      "path": "artifacts/validation/final-python-tests.log",
+      "sizeBytes": 363,
+      "sha256": "76B069C72F533A523420AF518069161BCCF3A20924969FECCC7DEC0776A09388"
+    },
+    {
+      "path": "artifacts/validation/python-dependencies-setup.log",
+      "sizeBytes": 5660,
+      "sha256": "38AB3926F9BED4619842F9F7A9B3485E9BF4A960AEE31CE9F74BC0B8035C414F"
+    },
+    {
+      "path": "artifacts/validation/python-install.log",
+      "sizeBytes": 1018,
+      "sha256": "7F54438BA60CF2E44B4AF30FE1923AC4348B35124264CB0F1BAAD4CEBE72B6EF"
+    },
+    {
+      "path": "artifacts/validation/uv-release-metadata.json",
+      "sizeBytes": 98091,
+      "sha256": "9F3F23F6842B14B28D1C0C9CFDAF3486C62AB5845C632CB2F0C579911DB58A56"
+    },
+    {
+      "path": "artifacts/validation/dotnet-sdk-install.log",
+      "sizeBytes": 4488,
+      "sha256": "8D1AE2D966C258242561DB453C67F7C65B514FA732B3CD2F6933EA3DCD9623EE"
+    },
+    {
+      "path": "artifacts/validation/dotnet-10.0-release-metadata.json",
+      "sizeBytes": 1060831,
+      "sha256": "57DE082A2F54060256B2018F16FEE16D03DF7A9D9523F651F0EBBE94750DFE45"
+    },
+    {
+      "path": "artifacts/validation/final-crash-recovery-schema3.log",
+      "sizeBytes": 1880,
+      "sha256": "A626E3A1624373BC5A4F8AB6FD04DE46D1396F235116E44097422369B0C162F5"
+    },
+    {
+      "path": "artifacts/validation/final-lockfile-review.log",
+      "sizeBytes": 1291,
+      "sha256": "DCF79A1948FC181A41B1B47ED84CC026D1D424B8F04FB41B99356CD0F1F710F0"
+    },
+    {
+      "path": "artifacts/validation/final-diff-check.log",
+      "sizeBytes": 3921,
+      "sha256": "ADA5D1E3EE1F73BB742545766B47E608EAF14AB930CBCD521C7EBFE4C2F3609C"
+    },
+    {
+      "path": "artifacts/validation/dotnet-temporal-storage-review.log",
+      "sizeBytes": 2688,
+      "sha256": "A8CADE5D68BF3956AF478D1FFAEF3944662D4FE42BE257F51F8785925772E40F"
+    },
+    {
+      "path": "artifacts/validation/temporal-storage-review.trx",
+      "sizeBytes": 84391,
+      "sha256": "C8FBF33DE39E4F88D009D88C08BACA19A9D57BD5CA0BCC4A0115FF7422E13B5F"
+    },
+    {
+      "path": "artifacts/validation/dotnet-temporal-quality-tests.log",
+      "sizeBytes": 2799,
+      "sha256": "970C4AF117D7F679E5574483CCB897DDC3E0A0C2D403ABBF417B2BCA527DB1A5"
+    },
+    {
+      "path": "artifacts/validation/temporal-quality.trx",
+      "sizeBytes": 50487,
+      "sha256": "4B193BE643A5DD70E6C17E819D898685CA5FFC122EDBA94C0800A548215D8681"
+    },
+    {
+      "path": "artifacts/preview/Start-Preview.ps1",
+      "sizeBytes": 6482,
+      "sha256": "4779CE406540710BE7C946A16979EBD3B509458B14737EFDDAD164D605A216A3"
+    },
+    {
+      "path": "artifacts/validation/final-dotnet-build-ui-wave.log",
+      "sizeBytes": 3445,
+      "sha256": "504233BB78CEFC9E2FF6CEFA93FD3FD312997D02F3E7CB3DF8B79B42FE2F41B1"
+    },
+    {
+      "path": "artifacts/validation/final-dotnet-locked-restore-ui-wave.log",
+      "sizeBytes": 86,
+      "sha256": "0A5293E62D3BB4D8819D8D749F51206D3AA424744E622337BEE96070823F245B"
+    },
+    {
+      "path": "artifacts/validation/final-dotnet-tests-ui-wave.log",
+      "sizeBytes": 5843,
+      "sha256": "1BE97427EA52F7A92AE20EB29E9CBAA5FACE6B53E19CD5EE06CA328735151271"
+    },
+    {
+      "path": "artifacts/validation/final-dotnet-trx-ui-wave/Administrator_HCAIA-WAQHGBEKP_2026-10-02_20_12_04_net10.0.trx",
+      "sizeBytes": 44107,
+      "sha256": "F4F7E6DDD5CA39859E45AAC7106D629F4613C1FCE64EC87BC87713FB181327E2"
+    },
+    {
+      "path": "artifacts/validation/final-dotnet-trx-ui-wave/Administrator_HCAIA-WAQHGBEKP_2026-10-02_20_12_07_net10.0.trx",
+      "sizeBytes": 166144,
+      "sha256": "4FE50156E1B2083A8BF471E7F5FFA9AC8724E6D7FACBDD5125823BB2BB77F9B3"
+    },
+    {
+      "path": "artifacts/validation/final-dotnet-trx-ui-wave/Administrator_HCAIA-WAQHGBEKP_2026-10-02_20_12_14_net10.0.trx",
+      "sizeBytes": 36904,
+      "sha256": "4ACF91F72A6E9A9211FE0F39E9575C849FA2632C85903D32EED0312A9F36FCED"
+    },
+    {
+      "path": "artifacts/validation/final-dotnet-trx-ui-wave/Administrator_HCAIA-WAQHGBEKP_2026-10-02_20_12_15_net10.0.trx",
+      "sizeBytes": 16348,
+      "sha256": "A69E0BD8C5A06D8FCE343949A597F701C9092111C09200819B70213067FAFD49"
+    },
+    {
+      "path": "artifacts/validation/final-dotnet-trx-ui-wave/Administrator_HCAIA-WAQHGBEKP_2026-10-02_20_12_15_net10.0[1].trx",
+      "sizeBytes": 14660,
+      "sha256": "E7C7CC502A122C747295E5AD30150D01AC60615A17C280E56974734BE8A46E4A"
+    },
+    {
+      "path": "artifacts/validation/new-ui-acceptance-matrix.md",
+      "sizeBytes": 5972,
+      "sha256": "A36B8A427000EBDE0FD837D69A8EB6320F7CF02FCBB69CA8C24D51AD0BF98BD5"
+    },
+    {
+      "path": "artifacts/validation/new-ui-evidence-capture-plan.md",
+      "sizeBytes": 8450,
+      "sha256": "9C9BE7BA3D44A7E71EDE2AB426468EB69B6B911451541AC43FA12B12832A5826"
+    },
+    {
+      "path": "artifacts/validation/preview-checkonly-ui-wave.log",
+      "sizeBytes": 1009,
+      "sha256": "BA13DDCB281EF438401BF3DD7A796B8C095DAF75B8A8ED66A17DC921A61E3563"
+    },
+    {
+      "path": "artifacts/validation/ui-screenshots/20261002-201320-final-hud-main/01-waiting.png",
+      "sizeBytes": 14932,
+      "sha256": "C33893CE764DE965DA4EF171E340D246AD8245DB79A05724E840F256E44BD76B"
+    },
+    {
+      "path": "artifacts/validation/ui-screenshots/20261002-201320-final-hud-main/02-connected.png",
+      "sizeBytes": 21977,
+      "sha256": "85766082BE00CE0EE9D55FE662450A6B10440943B38ED96FA9FC37D43571839E"
+    },
+    {
+      "path": "artifacts/validation/ui-screenshots/20261002-201320-final-hud-main/03-disconnected-history.png",
+      "sizeBytes": 24752,
+      "sha256": "C38C6FD7B7E900BB2BFC6B670AC11E419806E85B41B7912D932B82419E638C12"
+    },
+    {
+      "path": "artifacts/validation/ui-screenshots/20261002-201320-final-hud-main/capture-evidence.json",
+      "sizeBytes": 4263,
+      "sha256": "BBBCDCEF6B0DD5442D6C0CCF4B0588B7DB455108A95F0EA61C346DB9A9064046"
+    },
+    {
+      "path": "artifacts/validation/ui-screenshots/capture-layout-host.ps1",
+      "sizeBytes": 3473,
+      "sha256": "CE9759B84938C410F545CC5EECEF858D98513822250A23026B28A4A552D811D2"
+    },
+    {
+      "path": "artifacts/validation/ui-screenshots/capture-real-wpf.ps1",
+      "sizeBytes": 8498,
+      "sha256": "FBE971BB75E8AE1184223B84F165994C9480710EDE9403383830AFF9C379FDB3"
+    },
+    {
+      "path": "artifacts/validation/ui-screenshots/final-hud-layout/host-01-compact.png",
+      "sizeBytes": 50070,
+      "sha256": "4FC39A981B2757EF7D1BC46573F2E1863AE92C414E115D2C3058447297049BB3"
+    },
+    {
+      "path": "artifacts/validation/ui-screenshots/final-hud-layout/host-02-network-trend.png",
+      "sizeBytes": 153098,
+      "sha256": "88B363F46679594FF4714A3464FC9DE02A48A36835E418E639EA7E7F4B986163"
+    },
+    {
+      "path": "artifacts/validation/ui-screenshots/final-hud-layout/host-03-process-drawer.png",
+      "sizeBytes": 181658,
+      "sha256": "153AD17DD020EA2EFC734971D9835D8A969B6833C48190420F9E76545FE44AC7"
+    },
+    {
+      "path": "artifacts/validation/ui-screenshots/final-hud-layout/launch-evidence.json",
+      "sizeBytes": 1207,
+      "sha256": "2758BE4F3FE051ECB1A3984605B92DFB5A413FC84BFBF5B01C5A8651071E849F"
+    },
+    {
+      "path": "artifacts/validation/ui-screenshots/final-hud-layout/layout-host-evidence.json",
+      "sizeBytes": 2532,
+      "sha256": "BD289F39C5010C087BD63AF79883CE3E1979EC6244E1959D39C82A21675F4350"
+    },
+    {
+      "path": "docs/development/2026-10-02-validation.md",
+      "sizeBytes": 13189,
+      "sha256": "4E0A0DC562F83781F476A7A3DB9E17AAD6DE3A6CD55FF80A10CF57B4E25BFA75"
+    }
+  ],
+  "releaseAssemblies": [
+    {
+      "path": "src/PerfMonitor.Agent/bin/Release/net10.0-windows10.0.17763.0/win-x64/perf-monitor-agent.dll",
+      "sizeBytes": 58880,
+      "sha256": "007EDFEA393A9EEFE0932010CF6F0AC7489E3A1831F9027C6FE57FBF0657140C"
+    },
+    {
+      "path": "src/PerfMonitor.Broker/bin/Release/net10.0-windows10.0.17763.0/win-x64/perf-monitor-broker.dll",
+      "sizeBytes": 104448,
+      "sha256": "D269B1577C84C68774A86B363EB7A37F129E926D653761BF2BB966F16EF73354"
+    },
+    {
+      "path": "src/PerfMonitor.Desktop/bin/Release/net10.0-windows10.0.17763.0/win-x64/perf-monitor-desktop.dll",
+      "sizeBytes": 108032,
+      "sha256": "6A7285EA01480E475F59F5097B78E996A8B4C0E97A35F31C0C44CFA972BB1BA4"
+    },
+    {
+      "path": "src/PerfMonitor.ProviderWorker/bin/Release/net10.0-windows10.0.17763.0/win-x64/perf-monitor-provider-worker.dll",
+      "sizeBytes": 22016,
+      "sha256": "743D45CF19B35E9735270CCC42C74027C6FDC696E1A534FD796539D7CD0880F1"
+    },
+    {
+      "path": "src/PerfMonitor.Support/bin/Release/net10.0-windows10.0.17763.0/win-x64/perf-monitor-support.dll",
+      "sizeBytes": 78336,
+      "sha256": "E034423D8A47E982A0537CE115DA3495AF6505CC1C4ACC882738619E6D05F55E"
+    }
+  ]
+}
