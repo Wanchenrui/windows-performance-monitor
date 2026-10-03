@@ -31,3 +31,7 @@
 已打开真实安装界面供用户操作：进程 PID `35172`，窗口标题“安装 PerfMonitor”，窗口句柄 `134080`，检查时响应正常、stderr 为空，尚无安装标记或产品进程。日志位于包根目录 `installer-ui.stdout.log` / `installer-ui.stderr.log`。此记录只证明安装入口已打开，不证明用户已完成安装或真实采集成功。
 
 下一步优先处理用户此次实际安装与使用中发现的问题，再继续围绕选中进程、明确授权、原值保存及到期/冲突恢复推进性能优化。
+
+## 提交与推送
+
+安装入口与本轮说明已提交为 `37d4cfe`（`feat: add local user installer for real candidate use`），已成功推送 `origin/codex/v1.0.0-release-architecture`。未查询或宣称该提交的远端 CI 已通过；本节只记录实际提交和推送结果。
