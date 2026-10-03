@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using PerfMonitor.Contracts;
 
 namespace PerfMonitor.Core;
 
@@ -9,6 +10,8 @@ public sealed class ProviderScheduler : IAsyncDisposable
     private readonly TimeProvider _timeProvider;
     private readonly int _logicalProcessorCount;
     private readonly SemaphoreSlim _concurrency;
+    private readonly SemaphoreSlim? _optionalConcurrency;
+    private readonly HashSet<string> _reservedGroupIds;
     private readonly CancellationTokenSource _stopping = new();
     private readonly List<Task> _runners = [];
     private readonly ConcurrentDictionary<
@@ -22,7 +25,8 @@ public sealed class ProviderScheduler : IAsyncDisposable
         IProviderResultSink sink,
         int maxConcurrency,
         TimeProvider? timeProvider = null,
-        int? logicalProcessorCount = null)
+        int? logicalProcessorCount = null,
+        IEnumerable<string>? reservedGroupIds = null)
     {
         _providers = providers.ToArray();
         if (_providers.Count == 0)
@@ -53,10 +57,27 @@ public sealed class ProviderScheduler : IAsyncDisposable
             1,
             logicalProcessorCount ?? Environment.ProcessorCount);
         _concurrency = new SemaphoreSlim(maxConcurrency, maxConcurrency);
+        _reservedGroupIds = reservedGroupIds?.ToHashSet(StringComparer.Ordinal) ?? [];
+        var knownGroups = _providers.Select(provider => provider.Descriptor.GroupId)
+            .ToHashSet(StringComparer.Ordinal);
+        if (!_reservedGroupIds.IsSubsetOf(knownGroups))
+        {
+            throw new ArgumentException("Reserved groups must have registered providers.", nameof(reservedGroupIds));
+        }
+        // Optional calls acquire this gate before the total gate, preserving one
+        // of the existing slots for basic collection. A single-slot configuration
+        // keeps shared scheduling compatibility and cannot provide this isolation.
+        if (maxConcurrency > 1 && _reservedGroupIds.Count > 0 &&
+            _providers.Any(provider => !_reservedGroupIds.Contains(provider.Descriptor.GroupId)))
+        {
+            _optionalConcurrency = new SemaphoreSlim(maxConcurrency - 1, maxConcurrency - 1);
+        }
     }
 
     public IReadOnlyList<ProviderDescriptor> Descriptors =>
         _providers.Select(provider => provider.Descriptor).ToArray();
+
+    public ProviderSamplingMode? SamplingMode { get; init; }
 
     public void Start()
     {
@@ -126,8 +147,10 @@ public sealed class ProviderScheduler : IAsyncDisposable
         long skippedBusyTotal = 0;
         var consecutiveFailures = 0;
         Task<ProviderResult>? inFlight = null;
+        long? inFlightRevision = null;
         CancellationTokenSource? collectionCancellation = null;
         var slotHeld = false;
+        var optional = _optionalConcurrency is not null && !_reservedGroupIds.Contains(descriptor.GroupId);
 
         try
         {
@@ -142,6 +165,36 @@ public sealed class ProviderScheduler : IAsyncDisposable
                     nextDeadline,
                     wakeTimestamp);
 
+                if (SamplingMode?.IsPaused(descriptor.GroupId) == true)
+                {
+                    collectionCancellation?.Cancel();
+                    if (inFlight?.IsCompleted == true)
+                    {
+                        _ = await inFlight.ConfigureAwait(false);
+                        inFlight = null;
+                        collectionCancellation?.Dispose();
+                        collectionCancellation = null;
+                        if (slotHeld)
+                        {
+                            ReleaseConcurrency(optional);
+                            slotHeld = false;
+                        }
+                    }
+                    var pausedExecution = new ProviderExecution(descriptor, scheduledAtUtc,
+                        wakeUtc, wakeUtc, 0,
+                        Math.Max(0, _timeProvider.GetElapsedTime(nextDeadline, wakeTimestamp).TotalMilliseconds),
+                        missedTotal, skippedBusyTotal)
+                    {
+                        CompletedTimestamp = wakeTimestamp,
+                    };
+                    await _sink.PublishAsync(ProviderResult.Paused(descriptor), pausedExecution,
+                        stoppingToken).ConfigureAwait(false);
+                    consecutiveFailures = 0;
+                    nextDeadline = AdvanceDeadline(nextDeadline, basePeriodTicks, 0,
+                        wakeTimestamp, ref missedTotal);
+                    continue;
+                }
+
                 if (inFlight is not null)
                 {
                     if (!inFlight.IsCompleted)
@@ -149,7 +202,7 @@ public sealed class ProviderScheduler : IAsyncDisposable
                         skippedBusyTotal++;
                         var timeoutResult = ProviderResult.Timeout(
                             descriptor,
-                            wakeUtc);
+                            wakeUtc) with { CollectionRevision = inFlightRevision };
                         var busyExecution = new ProviderExecution(
                             descriptor,
                             scheduledAtUtc,
@@ -182,16 +235,46 @@ public sealed class ProviderScheduler : IAsyncDisposable
                     collectionCancellation = null;
                     if (slotHeld)
                     {
-                        _concurrency.Release();
+                        ReleaseConcurrency(optional);
                         slotHeld = false;
                     }
                 }
 
-                await _concurrency.WaitAsync(stoppingToken)
-                    .ConfigureAwait(false);
+                if (!await TryAcquireConcurrencyAsync(descriptor.Timeout, optional, stoppingToken)
+                    .ConfigureAwait(false))
+                {
+                    var capacityTimestamp = _timeProvider.GetTimestamp();
+                    var capacityUtc = _timeProvider.GetUtcNow();
+                    skippedBusyTotal++;
+                    consecutiveFailures++;
+                    // Queue expiration is a scheduler status, not a Provider observation.
+                    var capacityResult = ProviderResult.Failure(descriptor, capacityUtc,
+                        AvailabilityStates.Timeout, StableErrorCodes.Timeout) with
+                    {
+                        ObservedAtUtc = null,
+                    };
+                    var capacityExecution = new ProviderExecution(descriptor, scheduledAtUtc,
+                        capacityUtc, capacityUtc, 0,
+                        Math.Max(0, _timeProvider.GetElapsedTime(nextDeadline, capacityTimestamp).TotalMilliseconds),
+                        missedTotal, skippedBusyTotal)
+                    {
+                        CompletedTimestamp = capacityTimestamp,
+                    };
+                    await _sink.PublishAsync(capacityResult, capacityExecution, stoppingToken)
+                        .ConfigureAwait(false);
+                    nextDeadline = AdvanceDeadline(nextDeadline, basePeriodTicks,
+                        consecutiveFailures, capacityTimestamp, ref missedTotal);
+                    continue;
+                }
+                if (SamplingMode?.IsPaused(descriptor.GroupId) == true)
+                {
+                    ReleaseConcurrency(optional);
+                    continue;
+                }
                 slotHeld = true;
                 var startedTimestamp = _timeProvider.GetTimestamp();
                 var startedAtUtc = _timeProvider.GetUtcNow();
+                inFlightRevision = SamplingMode?.Revision;
                 var context = new ProviderContext(
                     _timeProvider,
                     startedAtUtc,
@@ -221,7 +304,7 @@ public sealed class ProviderScheduler : IAsyncDisposable
                     inFlight = null;
                     collectionCancellation.Dispose();
                     collectionCancellation = null;
-                    _concurrency.Release();
+                    ReleaseConcurrency(optional);
                     slotHeld = false;
                     consecutiveFailures = IsSuccessful(result)
                         ? 0
@@ -257,6 +340,7 @@ public sealed class ProviderScheduler : IAsyncDisposable
                     StartedTimestamp = startedTimestamp,
                     CompletedTimestamp = completedTimestamp,
                 };
+                result = result with { CollectionRevision = inFlightRevision };
                 await _sink.PublishAsync(
                     result,
                     execution,
@@ -294,9 +378,52 @@ public sealed class ProviderScheduler : IAsyncDisposable
             collectionCancellation?.Dispose();
             if (slotHeld)
             {
-                _concurrency.Release();
+                ReleaseConcurrency(optional);
             }
         }
+    }
+
+    private async Task<bool> TryAcquireConcurrencyAsync(
+        TimeSpan timeout,
+        bool optional,
+        CancellationToken stoppingToken)
+    {
+        using var capacityCancellation = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken);
+        capacityCancellation.CancelAfter(timeout);
+        var optionalHeld = false;
+        var totalHeld = false;
+        var acquired = false;
+        try
+        {
+            if (optional)
+            {
+                await _optionalConcurrency!.WaitAsync(capacityCancellation.Token).ConfigureAwait(false);
+                optionalHeld = true;
+            }
+            await _concurrency.WaitAsync(capacityCancellation.Token).ConfigureAwait(false);
+            totalHeld = true;
+            capacityCancellation.Token.ThrowIfCancellationRequested();
+            acquired = true;
+            return true;
+        }
+        catch (OperationCanceledException) when (!stoppingToken.IsCancellationRequested)
+        {
+            return false;
+        }
+        finally
+        {
+            if (!acquired)
+            {
+                if (totalHeld) _concurrency.Release();
+                if (optionalHeld) _optionalConcurrency!.Release();
+            }
+        }
+    }
+
+    private void ReleaseConcurrency(bool optional)
+    {
+        _concurrency.Release();
+        if (optional) _optionalConcurrency!.Release();
     }
 
     private static bool IsSuccessful(ProviderResult result) =>

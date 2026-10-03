@@ -81,6 +81,8 @@ public static class SourceIds
         "windows.pdh.physical-disk-total.v1";
     public const string Power =
         "windows.get-system-power-status.v1";
+    public const string PowerBatteryState = "windows.system-battery-state.v1";
+    public const string WindowsGpuEngine = "windows.pdh.gpu-engine.v1";
     public const string LibreHardwareMonitor =
         "librehardwaremonitor.sensor-api.v1";
     public const string Volumes = "windows.volume-api.v1";

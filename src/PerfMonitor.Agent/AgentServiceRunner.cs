@@ -24,7 +24,10 @@ public static class AgentServiceRunner
         using var instanceLease = AgentInstanceLease.Acquire(
             options.DataDirectory);
         var providers = AgentProviderFactory.CreateDefault();
+        var samplingMode = new ProviderSamplingMode();
         var assembler = new SnapshotAssembler(
+            providers.Select(provider => provider.Descriptor)) { SamplingMode = samplingMode };
+        var lightMode = new AgentLightModeController(samplingMode, assembler,
             providers.Select(provider => provider.Descriptor));
         var endpoint = PipeEndpoint.ForCurrentUser();
         var databasePath = Path.Combine(
@@ -74,7 +77,8 @@ public static class AgentServiceRunner
             diagnosticPolicy.ToCapabilities(),
             providers.Select(provider => provider.Descriptor),
             endpoint,
-            options.Sampling.OutputPeriod);
+            options.Sampling.OutputPeriod,
+            lightMode);
         await using var server = options.EnableIpc
             ? new NamedPipeAgentServer(
                 endpoint,
@@ -84,7 +88,12 @@ public static class AgentServiceRunner
         await using var scheduler = new ProviderScheduler(
             providers,
             assembler,
-            options.Sampling.MaxConcurrency);
+            options.Sampling.MaxConcurrency,
+            reservedGroupIds:
+            [
+                GroupIds.SystemCpu, GroupIds.Memory, GroupIds.Network,
+                GroupIds.DiskIo, GroupIds.Uptime, GroupIds.Self,
+            ]) { SamplingMode = samplingMode };
         var fanout = new SnapshotFanout(
             [storage, diagnostics, subscriptions]);
 

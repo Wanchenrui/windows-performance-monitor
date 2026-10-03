@@ -155,6 +155,25 @@ public sealed class NamedPipeAgentClient : IAsyncDisposable
             "health",
             cancellationToken);
 
+    public Task<LightModeContract> GetLightModeAsync(CancellationToken cancellationToken) =>
+        !Capabilities.Endpoints.ContainsKey("lightMode")
+            ? Task.FromResult(LightModeContract.Unsupported(InstanceId))
+            : RequestAsync<LightModeContract>(new IpcRequestMessage
+            {
+                Type = "getLightMode",
+                RequestId = Guid.NewGuid().ToString("N"),
+            }, "lightMode", cancellationToken);
+
+    public Task<LightModeContract> SetLightModeAsync(bool enabled, CancellationToken cancellationToken) =>
+        !Capabilities.Endpoints.ContainsKey("lightMode")
+            ? Task.FromResult(LightModeContract.Unsupported(InstanceId))
+            : RequestAsync<LightModeContract>(new IpcRequestMessage
+            {
+                Type = "setLightMode",
+                RequestId = Guid.NewGuid().ToString("N"),
+                LightModeEnabled = enabled,
+            }, "lightMode", cancellationToken);
+
     public Task<HistoryContract> QueryHistoryAsync(
         HistoryQueryContract query,
         CancellationToken cancellationToken) =>

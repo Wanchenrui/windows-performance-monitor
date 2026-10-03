@@ -20,6 +20,7 @@
   <ItemGroup>
     <ProjectReference Include="../PerfMonitor.Contracts/PerfMonitor.Contracts.csproj" />
     <ProjectReference Include="../PerfMonitor.Core/PerfMonitor.Core.csproj" />
+    <ProjectReference Include="../PerfMonitor.Diagnostics/PerfMonitor.Diagnostics.csproj" />
     <ProjectReference Include="../PerfMonitor.Ipc.NamedPipes/PerfMonitor.Ipc.NamedPipes.csproj" />
   </ItemGroup>
 </Project>

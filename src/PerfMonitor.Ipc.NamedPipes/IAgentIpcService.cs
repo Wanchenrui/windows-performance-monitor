@@ -13,6 +13,11 @@ public interface IAgentIpcService
 
     CapabilitiesContract ReadCapabilities();
 
+    LightModeContract ReadLightMode() => LightModeContract.Unsupported(InstanceId);
+
+    LightModeContract SetLightMode(bool enabled, CancellationToken cancellationToken) =>
+        LightModeContract.Unsupported(InstanceId);
+
     ValueTask<HistoryContract> QueryHistoryAsync(
         HistoryQueryContract query,
         CancellationToken cancellationToken);

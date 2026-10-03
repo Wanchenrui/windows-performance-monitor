@@ -13,6 +13,7 @@ internal sealed class AgentQueryService : IAgentIpcService
     private readonly IDiagnosticEventReader _recentDiagnostics;
     private readonly AgentActionGateway _actions;
     private readonly CapabilitiesContract _capabilities;
+    private readonly AgentLightModeController? _lightMode;
 
     public AgentQueryService(
         SnapshotAssembler assembler,
@@ -23,24 +24,33 @@ internal sealed class AgentQueryService : IAgentIpcService
         DiagnosticsCapabilityContract diagnosticsCapabilities,
         IEnumerable<ProviderDescriptor> descriptors,
         PipeEndpoint endpoint,
-        TimeSpan snapshotPeriod)
+        TimeSpan snapshotPeriod,
+        AgentLightModeController? lightMode = null)
     {
         _assembler = assembler;
         _history = history;
         _persistedDiagnostics = persistedDiagnostics;
         _recentDiagnostics = recentDiagnostics;
         _actions = actions;
+        _lightMode = lightMode;
         _capabilities = BuildCapabilities(
             assembler.InstanceId,
             diagnosticsCapabilities,
             descriptors,
             endpoint,
-            snapshotPeriod);
+            snapshotPeriod,
+            lightMode is not null);
     }
 
     public string InstanceId => _assembler.InstanceId;
 
     public AgentSnapshot ReadLatestSnapshot() => _assembler.Read();
+
+    public LightModeContract ReadLightMode() =>
+        _lightMode?.Read() ?? LightModeContract.Unsupported(InstanceId);
+
+    public LightModeContract SetLightMode(bool enabled, CancellationToken cancellationToken) =>
+        _lightMode?.Set(enabled, cancellationToken) ?? LightModeContract.Unsupported(InstanceId);
 
     public HealthContract ReadHealth()
     {
@@ -164,7 +174,8 @@ internal sealed class AgentQueryService : IAgentIpcService
         DiagnosticsCapabilityContract diagnosticsCapabilities,
         IEnumerable<ProviderDescriptor> descriptors,
         PipeEndpoint endpoint,
-        TimeSpan snapshotPeriod)
+        TimeSpan snapshotPeriod,
+        bool lightModeSupported)
     {
         var groups = descriptors
             .Select(descriptor => new ProviderCapabilityContract
@@ -198,6 +209,17 @@ internal sealed class AgentQueryService : IAgentIpcService
                 left.GroupId,
                 right.GroupId));
         var baseEndpoint = $"pipe://./{endpoint.PipeName}";
+        var endpoints = new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["snapshot"] = $"{baseEndpoint}/snapshot",
+            ["history"] = $"{baseEndpoint}/history",
+            ["diagnostics"] = $"{baseEndpoint}/diagnostics",
+            ["actions"] = $"{baseEndpoint}/actions",
+            ["capabilities"] = $"{baseEndpoint}/capabilities",
+            ["health"] = $"{baseEndpoint}/health",
+            ["subscribe"] = $"{baseEndpoint}/subscribe",
+        };
+        if (lightModeSupported) endpoints["lightMode"] = $"{baseEndpoint}/light-mode";
         return new CapabilitiesContract
         {
             ContractVersion = ContractVersions.V1,
@@ -213,17 +235,7 @@ internal sealed class AgentQueryService : IAgentIpcService
                 Aggregations = HistoryPolicy.Aggregations,
             },
             Diagnostics = diagnosticsCapabilities,
-            Endpoints = new Dictionary<string, string>(
-                StringComparer.Ordinal)
-            {
-                ["snapshot"] = $"{baseEndpoint}/snapshot",
-                ["history"] = $"{baseEndpoint}/history",
-                ["diagnostics"] = $"{baseEndpoint}/diagnostics",
-                ["actions"] = $"{baseEndpoint}/actions",
-                ["capabilities"] = $"{baseEndpoint}/capabilities",
-                ["health"] = $"{baseEndpoint}/health",
-                ["subscribe"] = $"{baseEndpoint}/subscribe",
-            },
+            Endpoints = endpoints,
             StableErrorCodes =
             [
                 StableErrorCodes.AccessDenied,

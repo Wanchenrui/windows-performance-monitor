@@ -15,7 +15,12 @@ public static class AgentRunner
         await using var scheduler = new ProviderScheduler(
             providers,
             assembler,
-            options.MaxConcurrency);
+            options.MaxConcurrency,
+            reservedGroupIds:
+            [
+                GroupIds.SystemCpu, GroupIds.Memory, GroupIds.Network,
+                GroupIds.DiskIo, GroupIds.Uptime, GroupIds.Self,
+            ]);
         scheduler.Start();
 
         if (options.Warmup > TimeSpan.Zero)

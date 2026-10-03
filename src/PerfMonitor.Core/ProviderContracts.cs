@@ -64,6 +64,20 @@ public sealed record ProviderResult(
     IReadOnlyList<ProviderError> Errors,
     JsonNode? Data)
 {
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? CollectionState { get; init; }
+
+    // Local scheduling epoch, never part of contract JSON.
+    [JsonIgnore]
+    internal long? CollectionRevision { get; init; }
+
+    public static ProviderResult Paused(ProviderDescriptor descriptor) => new(
+        descriptor.GroupId, descriptor.ProviderId, null, AvailabilityStates.Unavailable,
+        ProviderCoverage.Limited, [], null)
+    {
+        CollectionState = "paused",
+    };
+
     public static ProviderResult Failure(
         ProviderDescriptor descriptor,
         DateTimeOffset observedAtUtc,

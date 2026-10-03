@@ -11,8 +11,9 @@ internal static class AgentProviderFactory
         var providers = new List<IMetricProvider>();
         providers.AddRange(
             WindowsProviderFactory.CreateDefault());
-        providers.AddRange(
-            HardwareWorkerProviderFactory.CreateDefault());
+        providers.AddRange(HardwareWorkerProviderFactory.CreateDefault().Select(provider =>
+            provider.Descriptor.GroupId == PerfMonitor.Contracts.GroupIds.Gpu
+                ? new GpuLoadFallbackProvider(provider) : provider));
         return providers;
     }
 }

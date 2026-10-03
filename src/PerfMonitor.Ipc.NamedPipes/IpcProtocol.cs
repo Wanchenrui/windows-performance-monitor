@@ -36,6 +36,7 @@ public sealed record IpcRequestMessage
     public DateTimeOffset? DeadlineUtc { get; init; }
     public bool? DryRun { get; init; }
     public ActionRequestContract? Action { get; init; }
+    public bool? LightModeEnabled { get; init; }
 }
 
 public sealed record IpcErrorPayload

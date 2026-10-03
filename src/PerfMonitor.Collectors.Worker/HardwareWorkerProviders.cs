@@ -30,14 +30,30 @@ internal abstract class HardwareWorkerProviderBase :
             var response = await _coordinator.CollectAsync(
                 context,
                 cancellationToken).ConfigureAwait(false);
-            return MapResponse(response, context.UtcNow);
+            var result = MapResponse(response, context.UtcNow);
+            if (result.Data is JsonObject data)
+            {
+                data["readout"] = new JsonObject
+                {
+                    ["primary"] = SourceIds.LibreHardwareMonitor,
+                    ["primaryStatus"] = result.Availability,
+                };
+            }
+            return result with
+            {
+                CollectionState = response.Coverage.Enumerated == 0 &&
+                    response.Errors.Any(error => error.DeviceId is null)
+                        ? "worker_open_failed"
+                        : result.Availability == AvailabilityStates.NotSupported
+                            ? "hardware_unreported" : null,
+            };
         }
         catch (OperationCanceledException) when (
             cancellationToken.IsCancellationRequested)
         {
             return ProviderResult.Timeout(
                 Descriptor,
-                context.UtcNow);
+                context.UtcNow) with { CollectionState = "worker_timeout" };
         }
         catch (FileNotFoundException)
         {
@@ -45,7 +61,7 @@ internal abstract class HardwareWorkerProviderBase :
                 Descriptor,
                 context.UtcNow,
                 AvailabilityStates.NotSupported,
-                StableErrorCodes.NotSupported);
+                StableErrorCodes.NotSupported) with { CollectionState = "worker_missing" };
         }
         catch (UnauthorizedAccessException)
         {
@@ -53,7 +69,7 @@ internal abstract class HardwareWorkerProviderBase :
                 Descriptor,
                 context.UtcNow,
                 AvailabilityStates.PermissionDenied,
-                StableErrorCodes.AccessDenied);
+                StableErrorCodes.AccessDenied) with { CollectionState = "worker_access_denied" };
         }
         catch (Win32Exception exception) when (
             exception.NativeErrorCode == 5)
@@ -62,7 +78,7 @@ internal abstract class HardwareWorkerProviderBase :
                 Descriptor,
                 context.UtcNow,
                 AvailabilityStates.PermissionDenied,
-                StableErrorCodes.AccessDenied);
+                StableErrorCodes.AccessDenied) with { CollectionState = "worker_access_denied" };
         }
         catch (WorkerRestartLimitException)
         {
@@ -70,7 +86,7 @@ internal abstract class HardwareWorkerProviderBase :
                 Descriptor,
                 context.UtcNow,
                 AvailabilityStates.Unavailable,
-                StableErrorCodes.ResourceExhausted);
+                StableErrorCodes.ResourceExhausted) with { CollectionState = "worker_backoff" };
         }
         catch (WorkerResourceLimitException)
         {
@@ -78,7 +94,7 @@ internal abstract class HardwareWorkerProviderBase :
                 Descriptor,
                 context.UtcNow,
                 AvailabilityStates.Unavailable,
-                StableErrorCodes.ResourceExhausted);
+                StableErrorCodes.ResourceExhausted) with { CollectionState = "worker_resource_limit" };
         }
         catch (InvalidDataException)
         {
@@ -86,7 +102,7 @@ internal abstract class HardwareWorkerProviderBase :
                 Descriptor,
                 context.UtcNow,
                 AvailabilityStates.Error,
-                StableErrorCodes.InvalidData);
+                StableErrorCodes.InvalidData) with { CollectionState = "worker_invalid_data" };
         }
         catch (WorkerCommunicationException)
         {
@@ -94,7 +110,7 @@ internal abstract class HardwareWorkerProviderBase :
                 Descriptor,
                 context.UtcNow,
                 AvailabilityStates.Unavailable,
-                StableErrorCodes.ProviderFailure);
+                StableErrorCodes.ProviderFailure) with { CollectionState = "worker_failed" };
         }
     }
 
@@ -259,7 +275,8 @@ internal sealed class GpuWorkerProvider :
                     {
                         [MetricIds.GpuDeviceCount] =
                             MetricJson.Value(
-                                enumerated,
+                                response.Coverage.Enumerated == 0 && workerErrors.Any(error => error.DeviceId is null)
+                                    ? (long?)null : enumerated,
                                 Units.Count,
                                 SourceIds.LibreHardwareMonitor),
                         [MetricIds.GpuLoadMaxPercent] =
@@ -443,7 +460,8 @@ internal sealed class TemperatureWorkerProvider :
                     {
                         [MetricIds.HardwareTemperatureSensorCount] =
                             MetricJson.Value(
-                                0,
+                                response.Coverage.Enumerated == 0 && workerErrors.Any(error => error.DeviceId is null)
+                                    ? (long?)null : 0,
                                 Units.Count,
                                 SourceIds.LibreHardwareMonitor),
                         [MetricIds.HardwareTemperatureMaxCelsius] =

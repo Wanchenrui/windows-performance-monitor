@@ -242,6 +242,25 @@ public sealed class NamedPipeAgentServer : IAsyncDisposable
                             clientStopping.Token).ConfigureAwait(false);
                         break;
 
+                    case "getLightMode":
+                        await WritePayloadAsync(pipe, writeGate, "lightMode", request.RequestId,
+                            _service.ReadLightMode(), negotiation.MaxMessageSize,
+                            clientStopping.Token).ConfigureAwait(false);
+                        break;
+
+                    case "setLightMode":
+                        if (request.LightModeEnabled is not { } enabled)
+                        {
+                            await WriteErrorAsync(pipe, writeGate, request.RequestId,
+                                IpcErrorCodes.InvalidRequest, negotiation.MaxMessageSize,
+                                clientStopping.Token).ConfigureAwait(false);
+                            break;
+                        }
+                        await WritePayloadAsync(pipe, writeGate, "lightMode", request.RequestId,
+                            _service.SetLightMode(enabled, clientStopping.Token), negotiation.MaxMessageSize,
+                            clientStopping.Token).ConfigureAwait(false);
+                        break;
+
                     case "queryHistory":
                         await HandleHistoryAsync(
                             pipe,

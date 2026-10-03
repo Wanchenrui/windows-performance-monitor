@@ -1,3 +1,4 @@
+using System.Text.Json;
 using System.Text.Json.Nodes;
 using PerfMonitor.Contracts;
 using PerfMonitor.Core;
@@ -5,7 +6,9 @@ using PerfMonitor.Core;
 namespace PerfMonitor.Desktop;
 
 public sealed record GroupPresentation(string GroupId, string Name, string Status, string Detail, bool IsHealthy);
-public sealed record ProcessPresentation(string Name, double? Cpu);
+public sealed record DesktopProcessIdentity(int Pid, long CreationTimeTicks);
+public sealed record ProcessPresentation(string Name, double? Cpu,
+    DesktopProcessIdentity? Identity = null, long? WorkingSetBytes = null, long? PrivateBytes = null);
 
 /// <summary>Formats contract quality for display without collecting or diagnosing.</summary>
 public static class SnapshotPresentation
@@ -40,6 +43,9 @@ public static class SnapshotPresentation
         if (!state.LatestSnapshot.Groups.TryGetValue(groupId, out var group))
             return new(groupId, name, connected ? "缺测" : historicalStatus + " · 缺测",
                 "快照未包含此采集组" + (connected ? "" : " · 等待新快照"), false);
+        if (group.CollectionState == "paused")
+            return new(groupId, name, connected ? "已暂停 · 轻量模式" : historicalStatus + " · 已暂停",
+                "本软件主动暂停此可选组 · 恢复原设置后继续采集", false);
 
         var statuses = new List<string> { Availability(group.Availability) };
         var details = new List<string>();
@@ -153,25 +159,72 @@ public static class SnapshotPresentation
 
     public static IReadOnlyList<ProcessPresentation> ProcessRows(DesktopConnectionState state)
     {
-        if (state.LatestSnapshot?.Groups.GetValueOrDefault(GroupIds.Processes) is not { Data: JsonArray rows } group) return [];
-        var usable = group.Availability is (AvailabilityStates.Available or AvailabilityStates.Partial) &&
-            group.Freshness is (FreshnessStates.Fresh or FreshnessStates.Stale) && group.ObservedAtUtc is not null &&
-            !group.Errors.Any(error => error.MetricId == MetricIds.ProcessCpuNormalized);
-        return rows.OfType<JsonObject>().Take(4096).Select(row =>
-        {
-            var name = row["name"] is JsonValue text && text.TryGetValue<string>(out var parsed) ? parsed : "未知进程";
-            double? cpu = null;
-            if (usable && row["cpuReady"] is JsonValue ready && ready.TryGetValue<bool>(out var valid) && valid &&
-                row["metrics"] is JsonObject metrics && metrics[MetricIds.ProcessCpuNormalized] is JsonObject metric &&
-                metric["value"] is JsonValue value)
-            {
-                var number = value.TryGetValue<double>(out var floating) ? floating :
-                    value.TryGetValue<long>(out var integer) ? integer : value.TryGetValue<int>(out var small) ? small : double.NaN;
-                if (double.IsFinite(number) && number is >= 0 and <= 100) cpu = number;
-            }
-            return new ProcessPresentation(name.Length > 64 ? name[..64] : name, cpu);
-        }).OrderByDescending(row => row.Cpu).Take(12).ToArray();
+        if (state.LatestSnapshot?.Groups.GetValueOrDefault(GroupIds.Processes) is not { } group ||
+            group.ReadOnlyData is not { ValueKind: JsonValueKind.Array } rows) return [];
+        return rows.EnumerateArray().Where(row => row.ValueKind == JsonValueKind.Object).Take(4096).Select(row => ProcessRow(group, row))
+            .OrderByDescending(row => row.Cpu).Take(12).ToArray();
     }
+
+    public static ProcessPresentation? FindProcess(DesktopConnectionState state, DesktopProcessIdentity identity)
+    {
+        if (state.LatestSnapshot?.Groups.GetValueOrDefault(GroupIds.Processes) is not { } group ||
+            group.ReadOnlyData is not { ValueKind: JsonValueKind.Array } rows) return null;
+        foreach (var row in rows.EnumerateArray().Take(4096))
+            if (row.ValueKind == JsonValueKind.Object && ReadIdentity(row) == identity) return ProcessRow(group, row);
+        return null;
+    }
+
+    public static IReadOnlyDictionary<DesktopProcessIdentity, ProcessPresentation> FindProcesses(
+        DesktopConnectionState state, IEnumerable<DesktopProcessIdentity> identities)
+    {
+        var requested = identities.ToHashSet();
+        var found = new Dictionary<DesktopProcessIdentity, ProcessPresentation>();
+        if (requested.Count == 0 || state.LatestSnapshot?.Groups.GetValueOrDefault(GroupIds.Processes) is not { } group ||
+            group.ReadOnlyData is not { ValueKind: JsonValueKind.Array } rows) return found;
+        foreach (var row in rows.EnumerateArray().Take(4096))
+            if (row.ValueKind == JsonValueKind.Object && ReadIdentity(row) is { } identity && requested.Contains(identity))
+                found.TryAdd(identity, ProcessRow(group, row));
+        return found;
+    }
+
+    private static ProcessPresentation ProcessRow(SnapshotGroup group, JsonElement row)
+    {
+        var usable = group.Availability is (AvailabilityStates.Available or AvailabilityStates.Partial) &&
+            group.Freshness is (FreshnessStates.Fresh or FreshnessStates.Stale) && group.ObservedAtUtc is not null;
+        var nameField = ProcessField(row, "name");
+        var name = nameField.ValueKind == JsonValueKind.String ? nameField.GetString() ?? "未知进程" : "未知进程";
+        double? cpu = null;
+        if (usable && !group.Errors.Any(error => error.MetricId == MetricIds.ProcessCpuNormalized) &&
+            ProcessField(row, "cpuReady").ValueKind == JsonValueKind.True)
+        {
+            var value = ProcessField(ProcessField(ProcessField(row, "metrics"), MetricIds.ProcessCpuNormalized), "value");
+            if (value.ValueKind == JsonValueKind.Number && value.TryGetDouble(out var number) &&
+                double.IsFinite(number) && number is >= 0 and <= 100) cpu = number;
+        }
+        return new(name.Length > 64 ? name[..64] : name, cpu, ReadIdentity(row),
+            usable ? ReadProcessBytes(row, group, MetricIds.ProcessWorkingSetBytes) : null,
+            usable ? ReadProcessBytes(row, group, MetricIds.ProcessPrivateBytes) : null);
+    }
+
+    private static DesktopProcessIdentity? ReadIdentity(JsonElement row)
+    {
+        var identity = ProcessField(row, "identity");
+        var pid = ProcessField(identity, "pid"); var created = ProcessField(identity, "creationTimeTicks");
+        if (pid.ValueKind == JsonValueKind.Number && pid.TryGetInt32(out var processId) && processId > 0 &&
+            created.ValueKind == JsonValueKind.Number && created.TryGetInt64(out var ticks) && ticks > 0)
+            return new(processId, ticks);
+        return null;
+    }
+
+    private static long? ReadProcessBytes(JsonElement row, SnapshotGroup group, string metricId)
+    {
+        if (group.Errors.Any(error => error.MetricId == metricId)) return null;
+        var value = ProcessField(ProcessField(ProcessField(row, "metrics"), metricId), "value");
+        return value.ValueKind == JsonValueKind.Number && value.TryGetInt64(out var bytes) && bytes >= 0 ? bytes : null;
+    }
+
+    private static JsonElement ProcessField(JsonElement element, string name) =>
+        element.ValueKind == JsonValueKind.Object && element.TryGetProperty(name, out var value) ? value : default;
 
     public static string Reason(string code) => code switch
     {

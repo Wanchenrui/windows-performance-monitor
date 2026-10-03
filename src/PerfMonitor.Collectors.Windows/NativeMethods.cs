@@ -54,6 +54,32 @@ internal static class NativeMethods
         public double DoubleValue;
     }
 
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct SystemBatteryState
+    {
+        public byte AcOnLine;
+        public byte BatteryPresent;
+        public byte Charging;
+        public byte Discharging;
+        public byte Spare1;
+        public byte Spare2;
+        public byte Spare3;
+        public byte Tag;
+        public uint MaxCapacity;
+        public uint RemainingCapacity;
+        public uint Rate;
+        public uint EstimatedTime;
+        public uint DefaultAlert1;
+        public uint DefaultAlert2;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct PdhFormattedCounterItem
+    {
+        public nint Name;
+        public PdhFormattedCounterValue Value;
+    }
+
     [DllImport("kernel32.dll", SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]
     internal static extern bool GetSystemTimes(
@@ -73,6 +99,14 @@ internal static class NativeMethods
     [return: MarshalAs(UnmanagedType.Bool)]
     internal static extern bool GetSystemPowerStatus(
         out SystemPowerStatus status);
+
+    [DllImport("powrprof.dll")]
+    internal static extern uint CallNtPowerInformation(
+        int informationLevel,
+        nint inputBuffer,
+        uint inputLength,
+        out SystemBatteryState output,
+        uint outputLength);
 
     [DllImport(
         "pdh.dll",
@@ -103,6 +137,10 @@ internal static class NativeMethods
         uint format,
         out uint counterType,
         out PdhFormattedCounterValue value);
+
+    [DllImport("pdh.dll", EntryPoint = "PdhGetFormattedCounterArrayW", CharSet = CharSet.Unicode)]
+    internal static extern uint PdhGetFormattedCounterArray(
+        nint counter, uint format, ref uint bufferSize, out uint itemCount, nint buffer);
 
     [DllImport("pdh.dll")]
     internal static extern uint PdhCloseQuery(nint query);

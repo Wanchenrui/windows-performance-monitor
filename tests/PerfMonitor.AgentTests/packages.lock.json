@@ -162,6 +162,7 @@
         "dependencies": {
           "PerfMonitor.Contracts": "[1.0.0, )",
           "PerfMonitor.Core": "[1.0.0, )",
+          "PerfMonitor.Diagnostics": "[1.1.0, )",
           "PerfMonitor.Ipc.NamedPipes": "[1.0.0, )"
         }
       },

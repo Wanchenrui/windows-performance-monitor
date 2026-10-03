@@ -149,6 +149,14 @@ internal sealed class HardwareWorkerClient : IHardwareWorkerClient
 
             _workerInstanceId = response.WorkerInstanceId;
             _lastSequence = response.Sequence;
+            // Opening the reader can fail without crashing the Worker. Discard
+            // that unusable session so the next scheduled collection can reopen
+            // it, within the same existing start budget. Empty unsupported
+            // hardware responses do not trigger restarts.
+            if (response.Coverage.Enumerated == 0 && response.Devices.Count == 0 &&
+                response.Status is WorkerStatuses.Error or WorkerStatuses.PermissionDenied &&
+                response.Errors.Any(error => error.DeviceId is null))
+                await ResetSessionAsync().ConfigureAwait(false);
             return response;
         }
         finally
@@ -180,9 +188,12 @@ internal sealed class HardwareWorkerClient : IHardwareWorkerClient
         CancellationToken cancellationToken)
     {
         var startedAt = EnsureStartAllowed();
+        cancellationToken.ThrowIfCancellationRequested();
+        // Failed starts consume budget too; a missing executable or rejected
+        // process must not cause an unbounded sequence of launch attempts.
+        _starts.Enqueue(startedAt);
         var session = await _sessionFactory.StartAsync(
             cancellationToken).ConfigureAwait(false);
-        _starts.Enqueue(startedAt);
         return session;
     }
 

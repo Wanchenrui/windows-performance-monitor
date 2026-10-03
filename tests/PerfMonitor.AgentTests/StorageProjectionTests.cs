@@ -248,7 +248,11 @@ public sealed class StorageProjectionTests
             } }),
         };
         foreach (var id in new[] { GroupIds.Gpu, GroupIds.Sensors })
-            ((JsonObject)groups[id].Data!)["devices"] = new JsonArray(new JsonObject { ["name"] = Sensitive, ["deviceId"] = Sensitive });
+        {
+            var data = (JsonObject)groups[id].Data!;
+            data["devices"] = new JsonArray(new JsonObject { ["name"] = Sensitive, ["deviceId"] = Sensitive });
+            groups[id] = groups[id] with { Data = data };
+        }
         return Snapshot(sequence, time, elapsed, groups);
     }
 
