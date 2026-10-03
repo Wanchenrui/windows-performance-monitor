@@ -21,7 +21,7 @@ namespace PerfMonitor.Desktop;
 public enum ResourceView { Cpu, Memory, Network, Disk }
 public enum DashboardPanel { Processes, Diagnostics, Quality, LightMode }
 
-public sealed class MainWindow : Window
+public sealed partial class MainWindow : Window
 {
     private static readonly Brush Surface = Paint("#171A1E"), Raised = Paint("#1D2227"), Primary = Paint("#E8EDF1"),
         Muted = Paint("#8D99A5"), Line = Paint("#30373E"), Warning = Paint("#DDBB78");
@@ -114,7 +114,7 @@ public sealed class MainWindow : Window
     private async Task StopSessionCoreAsync()
     {
         _renderer.Close(); _session.StateChanged -= OnStateChanged; _stopping.Cancel();
-        try { await Task.WhenAll(_sessionTask ?? Task.CompletedTask, _queryTask ?? Task.CompletedTask, _lightTask ?? Task.CompletedTask); }
+        try { await Task.WhenAll(_sessionTask ?? Task.CompletedTask, _queryTask ?? Task.CompletedTask, _lightTask ?? Task.CompletedTask, _exportTask ?? Task.CompletedTask); }
         catch (OperationCanceledException) { }
         _stopping.Dispose();
     }
@@ -201,17 +201,19 @@ public sealed class MainWindow : Window
         var heading = new Grid(); heading.ColumnDefinitions.Add(new() { Width = new GridLength(1, GridUnitType.Star) }); heading.ColumnDefinitions.Add(new() { Width = new GridLength(112) });
         var title = new StackPanel(); foreach (var text in new[] { _title, _legend, _value, _quality }) title.Children.Add(text); heading.Children.Add(title);
         Grid.SetColumn(_heroRing, 1); heading.Children.Add(_heroRing); body.Children.Add(heading); Grid.SetRow(_chart, 1); _chart.MinHeight = 140; body.Children.Add(_chart);
-        var footer = new Grid(); footer.ColumnDefinitions.Add(new() { Width = new GridLength(1, GridUnitType.Star) }); footer.ColumnDefinitions.Add(new() { Width = GridLength.Auto });
+        var footer = new StackPanel();
+        var navigation = new WrapPanel();
         var ranges = new StackPanel { Orientation = Orientation.Horizontal };
         foreach (var seconds in new[] { 60, 300 })
         {
             var button = Action(seconds == 60 ? "最近 60 秒" : "最近 5 分钟", (_, _) => { _chart.WindowSeconds = seconds; RenderState(_state); });
             _ranges[seconds] = button; ranges.Children.Add(button);
         }
-        footer.Children.Add(ranges); var panels = new StackPanel { Orientation = Orientation.Horizontal };
+        navigation.Children.Add(ranges); var panels = new WrapPanel();
         panels.Children.Add(Action("进程", (_, _) => OpenPanel(DashboardPanel.Processes))); panels.Children.Add(Action("诊断", (_, _) => OpenPanel(DashboardPanel.Diagnostics))); panels.Children.Add(Action("质量", (_, _) => OpenPanel(DashboardPanel.Quality)));
         panels.Children.Add(Action("轻量模式", (_, _) => OpenPanel(DashboardPanel.LightMode)));
-        Grid.SetColumn(panels, 1); footer.Children.Add(panels); Grid.SetRow(footer, 2); body.Children.Add(footer); surface.Child = body; _details.Children.Add(surface);
+        navigation.Children.Add(panels); footer.Children.Add(navigation); footer.Children.Add(BuildTrendExportControls());
+        Grid.SetRow(footer, 2); body.Children.Add(footer); surface.Child = body; _details.Children.Add(surface);
         var drawerRoot = new Grid(); drawerRoot.RowDefinitions.Add(new() { Height = GridLength.Auto }); drawerRoot.RowDefinitions.Add(new() { Height = new GridLength(1, GridUnitType.Star) });
         var header = new DockPanel(); var close = Action("×", (_, _) => { _drawer.Visibility = Visibility.Collapsed; _panel = null; UpdateDrawerLayout(); }); DockPanel.SetDock(close, Dock.Right); header.Children.Add(close); header.Children.Add(_drawerTitle); drawerRoot.Children.Add(header);
         var scroll = new ScrollViewer { Content = _drawerRows, VerticalScrollBarVisibility = ScrollBarVisibility.Auto, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
@@ -220,7 +222,11 @@ public sealed class MainWindow : Window
         _drawerRows.MaxWidth = 284;
         Grid.SetRow(scroll, 1); drawerRoot.Children.Add(scroll); _drawer.Child = drawerRoot; _details.Children.Add(_drawer);
     }
-    private void OnStateChanged(DesktopConnectionState state) => _renderer.Publish(state);
+    private void OnStateChanged(DesktopConnectionState state)
+    {
+        TrackExportConnection(state);
+        _renderer.Publish(state);
+    }
     private void UpdateVisibility()
     {
         var visible = IsVisible && WindowState != WindowState.Minimized; _renderer.SetEnabled(visible);
@@ -278,7 +284,7 @@ public sealed class MainWindow : Window
             _quality.Foreground = cpu is null ? Warning : Muted;
             _heroRing.Visibility = Visibility.Visible; _heroRing.Accent = Tint("#C5DB74"); _heroRing.Update(cpu, historical);
         }
-        RefreshCharts(); if (_panel is not null) PopulateDrawer();
+        RefreshCharts(); UpdateExportControls(); if (_panel is not null) PopulateDrawer();
     }
     private void UpdateDrawerLayout()
     {
@@ -303,6 +309,7 @@ public sealed class MainWindow : Window
     {
         if (_panel == DashboardPanel.Processes) { PopulateProcessDrawer(); return; }
         if (_panel == DashboardPanel.Quality) { PopulateQualityDrawer(); return; }
+        if (_panel == DashboardPanel.Diagnostics) { PopulateDiagnosticsDrawer(); return; }
         _drawerRows.Children.Clear();
         if (_panel == DashboardPanel.LightMode)
         {
@@ -324,20 +331,10 @@ public sealed class MainWindow : Window
             else Row("等待模式状态", "连接后刷新可用状态", "不会自动开启", Muted);
             if (_lightError is not null) Row("操作状态", _lightError, "", Warning);
         }
-        else if (_panel == DashboardPanel.Diagnostics)
-        {
-            _drawerTitle.Text = "诊断事件"; _drawerRows.Children.Add(Action(_queryBusy ? "查询中…" : "刷新最近 24 小时", async (_, _) => await QueryDiagnosticsAsync()));
-            _drawerRows.Children.Add(Text("最近 24 小时 · 仅上次查询结果", 10, Muted));
-            var summary = Text(_diagnostics is null ? "按需查询本机诊断" : SnapshotPresentation.DiagnosticsSummary(_diagnostics, _state), 12, Muted);
-            summary.MaxWidth = 276; _drawerRows.Children.Add(summary);
-            if (_diagnostics is not null) foreach (var item in _diagnostics.Events.GroupBy(item => (item.InstanceId, item.RuleId, item.SubjectId))
-                .Select(group => group.MaxBy(item => item.ObservationSequence ?? 0)!).Reverse().Take(12))
-                DiagnosticRow(item);
-        }
     }
     private Task QueryDiagnosticsAsync()
     {
-        if (_queryBusy || _stopTask is not null) return _queryTask ?? Task.CompletedTask;
+        if (_queryBusy || _exportBusy || _stopTask is not null) return _queryTask ?? Task.CompletedTask;
         return _queryTask = QueryDiagnosticsCoreAsync();
     }
     private Task QueryLightModeAsync(bool? enabled = null)
@@ -376,25 +373,33 @@ public sealed class MainWindow : Window
     }
     private async Task QueryDiagnosticsCoreAsync()
     {
-        if (_queryBusy || _stopTask is not null) return; _queryBusy = true;
+        if (_queryBusy || _stopTask is not null) return; _queryBusy = true; _diagnosticQueryError = null;
         var queryToken = _stopping.Token;
+        var connection = CaptureExportConnection();
+        var seconds = SelectedDiagnosticSeconds();
         if (_panel == DashboardPanel.Diagnostics) PopulateDrawer();
         try
         {
             await using var client = await NamedPipeAgentClient.ConnectAsync(_endpoint, TimeSpan.FromSeconds(3), queryToken);
-            var now = DateTimeOffset.UtcNow; _diagnostics = await client.QueryDiagnosticsAsync(new() { FromEpochMs = now.AddHours(-24).ToUnixTimeMilliseconds(), ToEpochMs = now.ToUnixTimeMilliseconds(), MaxEvents = 100 }, queryToken);
+            EnsureExportConnection(connection, client.InstanceId);
+            var query = CreateDiagnosticRange(seconds);
+            var response = await client.QueryDiagnosticsAsync(query, queryToken);
+            EnsureExportConnection(connection, response.InstanceId);
+            EnsureDiagnosticRangeResponse(query, response);
+            _diagnostics = response;
         }
         catch (OperationCanceledException) when (_stopping.IsCancellationRequested) { }
-        catch (Exception exception) when (exception is IOException or TimeoutException or IpcProtocolException or IpcRemoteException)
-        { if (_panel == DashboardPanel.Diagnostics) _drawerRows.Children.Add(Text("诊断暂不可用 · 等待连接后重试", 12, Warning)); }
-        finally { _queryBusy = false; if (_stopTask is null && _panel == DashboardPanel.Diagnostics && _diagnostics is not null) PopulateDrawer(); }
+        catch (ExportConnectionChangedException) { _diagnosticQueryError = "连接已变化 · 查询未确认，请刷新"; }
+        catch (Exception exception) when (exception is IOException or TimeoutException or UnauthorizedAccessException or IpcProtocolException or IpcRemoteException)
+        { _diagnosticQueryError = "诊断暂不可用 · 等待连接后重试"; }
+        finally { _queryBusy = false; UpdateExportControls(); if (_stopTask is null && _panel == DashboardPanel.Diagnostics) PopulateDrawer(); }
     }
-    private void Row(string title, string status, string detail, Brush color)
+    private void Row(string title, string status, string detail, Brush color, Panel? target = null)
     {
         var row = new StackPanel { Margin = new Thickness(0, 0, 0, 12) }; row.Children.Add(Text(title, 12, Primary, FontWeights.SemiBold));
-        row.Children.Add(Text(status, 11, color)); if (detail.Length > 0) row.Children.Add(Text(detail, 10, Muted)); _drawerRows.Children.Add(row);
+        row.Children.Add(Text(status, 11, color)); if (detail.Length > 0) row.Children.Add(Text(detail, 10, Muted)); (target ?? _drawerRows).Children.Add(row);
     }
-    private void DiagnosticRow(DiagnosticEventContract item)
+    private void DiagnosticRow(DiagnosticEventContract item, Panel target)
     {
         var current = _state.Status == DesktopConnectionStatus.Connected && _diagnostics?.InstanceId == _state.InstanceId &&
             item.InstanceId == _state.InstanceId && item.ObservationSequence is > 0;
@@ -405,15 +410,15 @@ public sealed class MainWindow : Window
         content.Children.Add(Text($"{status} · {item.LastSeenUtc.ToLocalTime():MM-dd HH:mm:ss}", 10, color));
         var button = Action(content, (_, _) => { _diagnosticEventId = _diagnosticEventId == item.EventId ? null : item.EventId; PopulateDrawer(); });
         button.ToolTip = "查看依据、可能原因与建议";
-        MarkSelected(button, _diagnosticEventId == item.EventId); _drawerRows.Children.Add(button);
+        MarkSelected(button, _diagnosticEventId == item.EventId); target.Children.Add(button);
         if (_diagnosticEventId != item.EventId) return;
         var explanation = DiagnosticExplainer.Explain(item,
             _state.Status == DesktopConnectionStatus.Connected && _state.LatestSnapshot?.InstanceId == _state.InstanceId ? _state.LatestSnapshot : null);
-        Row("现象", explanation.Phenomenon, "", Primary);
-        Row("依据", explanation.Evidence, "", Muted);
-        Row("可能原因", explanation.PossibleCauses, "", Muted);
-        Row("可以怎么做", explanation.Suggestions, "仅建议，不会直接修改系统", Paint("#77D9C8"));
-        if (!string.IsNullOrWhiteSpace(explanation.Limitation)) Row("数据限制", explanation.Limitation, "", Warning);
+        Row("现象", explanation.Phenomenon, "", Primary, target);
+        Row("依据", explanation.Evidence, "", Muted, target);
+        Row("可能原因", explanation.PossibleCauses, "", Muted, target);
+        Row("可以怎么做", explanation.Suggestions, "仅建议，不会直接修改系统", Paint("#77D9C8"), target);
+        if (!string.IsNullOrWhiteSpace(explanation.Limitation)) Row("数据限制", explanation.Limitation, "", Warning, target);
     }
     private void PopulateQualityDrawer()
     {
